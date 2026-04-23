@@ -1,0 +1,1569 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#070711" />
+    <title>RoadmapX: Learn & Track Tech Skills</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- HEADER -->
+      <header id="header">
+        <div class="hdr-left">
+          <div class="hdr-title">⚡ RoadmapX</div>
+          <div class="hdr-sub" id="hdr-sub">
+            AI • DSA • Web Dev • Data Science
+          </div>
+        </div>
+        <div class="hdr-right">
+          <div class="hdr-streak" id="hdr-streak">🔥 0</div>
+          <button
+            class="hdr-btn"
+            title="Stats" onclick="window.location.href='stats.html'">📊</button><button class="hdr-btn" title="Profile"
+            onclick="window.location.href='profile.html'"
+          >
+            👤
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <div id="content">
+        <!-- ──────── TAB: HOME ──────── -->
+        <div class="tab-panel active" id="tab-home">
+          <div class="home-bg"></div>
+          <div class="home-orb home-orb-1"></div>
+          <div class="home-orb home-orb-2"></div>
+
+          <div class="home-inner">
+            <div class="home-logo">⚡</div>
+            <div class="home-title">RoadmapX</div>
+            <div class="home-subtitle">
+              Choose your path and start mastering skills
+            </div>
+
+            <div class="home-paths">
+              <!-- AI Card -->
+              <button
+                class="home-path-card ai-card"
+                onclick="APP.switchTab('ai')"
+              >
+                <div class="home-card-ico">🤖</div>
+                <div class="home-card-body">
+                  <div class="home-card-title">AI Roadmap</div>
+                  <div class="home-card-desc">
+                    Python → ML → Deep Learning → NLP → LLMs → MLOps
+                  </div>
+                  <div class="home-card-meta">
+                    <span class="home-card-tag">BEGINNER → PRO</span>
+                  </div>
+                  <div class="home-card-prog">
+                    <div
+                      class="home-card-prog-fill"
+                      id="home-ai-prog"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                </div>
+                <div class="home-card-arrow">›</div>
+              </button>
+
+              <!-- DSA Card -->
+              <button
+                class="home-path-card dsa-card"
+                onclick="APP.switchTab('dsa')"
+              >
+                <div class="home-card-ico">💻</div>
+                <div class="home-card-body">
+                  <div class="home-card-title">DSA Roadmap</div>
+                  <div class="home-card-desc">
+                    Arrays → Trees → Graphs → DP → Competitive Programming
+                  </div>
+                  <div class="home-card-meta">
+                    <span class="home-card-tag">20 TOPICS</span>
+                    <span class="home-card-tag">C++ FOCUSED</span>
+                  </div>
+                  <div class="home-card-prog">
+                    <div
+                      class="home-card-prog-fill"
+                      id="home-dsa-prog"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                </div>
+                <div class="home-card-arrow">›</div>
+              </button>
+            </div>
+
+            <button
+              class="home-continue-btn"
+              id="home-continue-btn"
+              onclick="APP.continueLastSession()"
+              style="display: none"
+            >
+              <span class="home-continue-icon">↩️</span>
+              <span id="home-continue-label">Continue Last Session</span>
+            </button>
+
+            <div class="home-stats-strip">
+              <div class="home-stat-pill">
+                <div
+                  class="home-stat-pill-val"
+                  id="home-stat-ai"
+                  style="color: var(--c1)"
+                >
+                  0
+                </div>
+                <div class="home-stat-pill-lbl">AI Days Done</div>
+              </div>
+              <div class="home-stat-pill">
+                <div
+                  class="home-stat-pill-val"
+                  id="home-stat-dsa"
+                  style="color: var(--c2)"
+                >
+                  0
+                </div>
+                <div class="home-stat-pill-lbl">DSA Topics Done</div>
+              </div>
+
+               <div class="home-stat-pill">
+               <div
+                class="home-stat-pill-val"
+    id="home-stat-streak"
+    style="color: var(--c3)"
+  >
+    🔥 0
+  </div>
+  <div class="home-stat-pill-lbl">Current Streak</div>
+</div>
+
+              <div class="home-stat-pill">
+                <div
+                  class="home-stat-pill-val"
+                  id="home-stat-rev"
+                  style="color: var(--c4)"
+                >
+                  0
+                </div>
+                <div class="home-stat-pill-lbl">Revisions Due</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+<div class="tab-panel" id="tab-files">
+  <div class="section">
+    <div class="section-title">📁 Files</div>
+    <div class="card">
+      <div class="card-title">Upload a File</div>
+      <input type="file" id="file-input" style="margin-top:10px;color:var(--t1);font-size:13px;" />
+    </div>
+    <div class="card">
+      <div class="card-title">Your Files</div>
+      <div id="file-list" style="font-size:13px;color:var(--t2);margin-top:8px;">
+        <p>No files yet 📂</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── TAB: STREAKS ──────── -->
+<div class="tab-panel" id="tab-streaks">
+  <div class="section">
+    <div class="section-title">🔥 Streaks</div>
+    <div class="card">
+      <div class="card-title">Current Streak</div>
+      <div id="streaks-current" style="font-size:40px;text-align:center;padding:16px;">🔥 0</div>
+      <div style="text-align:center;font-size:12px;color:var(--t2);padding-bottom:10px;">days in a row</div>
+    </div>
+    <div class="card">
+      <div class="card-title">How it works</div>
+      <p style="font-size:12px;color:var(--t2);line-height:1.7;">
+        Open the app every day to keep your streak alive. Miss a day and it resets to 1.
+        Your streak is shown in the header (🔥) and on the Home screen.
+      </p>
+    </div>
+  </div>
+</div>
+        <!-- /tab-home -->
+
+        <!-- ──────── TAB: AI ROADMAP ──────── -->
+        <div class="tab-panel" id="tab-ai">
+          <!-- AI Sub-Tab Navigation -->
+          <div class="section-subtab-bar" id="ai-subtab-bar">
+            <button
+              class="section-subtab active"
+              id="ai-subtab-roadmap"
+              onclick="APP.switchAISub('roadmap',this)"
+            >
+              📚 Roadmap
+            </button>
+            <button
+              class="section-subtab"
+              id="ai-subtab-revision"
+              onclick="APP.switchAISub('revision',this)"
+            >
+              🔁 Revision
+            </button>
+            <button
+              class="section-subtab"
+              id="ai-subtab-pomo"
+              onclick="APP.switchAISub('pomo',this)"
+            >
+              ⏱ Pomo
+            </button>
+            <button
+              class="section-subtab"
+              id="ai-subtab-notes"
+              onclick="APP.switchAISub('notes',this)"
+            >
+              📝 Notes
+            </button>
+            <button
+              class="section-subtab"
+              id="ai-subtab-projects"
+              onclick="APP.switchAISub('projects',this)"
+            >
+              🚀 Projects
+            </button>
+          </div>
+
+          <!-- ── SUB: Roadmap ── -->
+          <div id="ai-sub-roadmap">
+            <!-- SCREEN 1: LEVEL SELECTION -->
+            <div id="ai-screen-levels">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="APP.goBack()">
+                  <span>←</span> Home
+                </button>
+                <span class="back-home-title">🤖 AI Roadmap</span>
+              </div>
+              <div class="section" style="padding-top: 10px">
+                <div class="section-title">Choose Your Level</div>
+                <div class="ai-level-subtitle">
+                  Select the right starting point for your AI journey
+                </div>
+
+                <button
+                  class="ai-level-card beginner-card"
+                  onclick="APP.selectAILevel('beginner')"
+                >
+                  <div class="ai-level-left">
+                    <div class="ai-level-dot">🟢</div>
+                    <div class="ai-level-info">
+                      <div class="ai-level-name">Beginner</div>
+                      <div
+                        class="ai-level-duration-badge"
+                        style="
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 4px;
+                          padding: 2px 9px;
+                          border-radius: 999px;
+                          background: rgba(6, 214, 160, 0.12);
+                          border: 1px solid rgba(6, 214, 160, 0.3);
+                          font-size: 10px;
+                          font-weight: 800;
+                          color: var(--c5);
+                          font-family: var(--font-mono);
+                          margin: 3px 0 6px;
+                          letter-spacing: 0.5px;
+                        "
+                      >
+                        📅 45 Days
+                      </div>
+                      <div class="ai-level-goal">
+                        Start from zero — Python, logic, and core AI
+                        foundations. Build confidence step by step with hands-on
+                        mini-projects and guided exercises.
+                      </div>
+                      <div class="ai-level-tags" style="margin-top: 7px">
+                        <span class="ai-ltag">~90 HRS</span>
+                        <span class="ai-ltag">PYTHON</span>
+                        <span class="ai-ltag">BEGINNER FRIENDLY</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="ai-level-arrow"
+                    style="font-size: 22px; color: var(--c5); opacity: 0.8"
+                  >
+                    ›
+                  </div>
+                </button>
+
+                <button
+                  class="ai-level-card intermediate-card"
+                  onclick="APP.selectAILevel('intermediate')"
+                >
+                  <div class="ai-level-left">
+                    <div class="ai-level-dot">🟡</div>
+                    <div class="ai-level-info">
+                      <div class="ai-level-name">Intermediate</div>
+                      <div
+                        class="ai-level-duration-badge"
+                        style="
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 4px;
+                          padding: 2px 9px;
+                          border-radius: 999px;
+                          background: rgba(255, 209, 102, 0.12);
+                          border: 1px solid rgba(255, 209, 102, 0.3);
+                          font-size: 10px;
+                          font-weight: 800;
+                          color: var(--c4);
+                          font-family: var(--font-mono);
+                          margin: 3px 0 6px;
+                          letter-spacing: 0.5px;
+                        "
+                      >
+                        📅 60 Days
+                      </div>
+                      <div class="ai-level-goal">
+                        Dive into Data Science and Machine Learning. Work with
+                        real datasets, build predictive models, and understand
+                        the math behind the algorithms.
+                      </div>
+                      <div class="ai-level-tags" style="margin-top: 7px">
+                        <span class="ai-ltag itag">~120 HRS</span>
+                        <span class="ai-ltag itag">ML/DATA</span>
+                        <span class="ai-ltag itag">SKLEARN · PANDAS</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="ai-level-arrow"
+                    style="font-size: 22px; color: var(--c4); opacity: 0.8"
+                  >
+                    ›
+                  </div>
+                </button>
+
+                <button
+                  class="ai-level-card advanced-card"
+                  onclick="APP.selectAILevel('advanced')"
+                >
+                  <div class="ai-level-left">
+                    <div class="ai-level-dot">🔴</div>
+                    <div class="ai-level-info">
+                      <div class="ai-level-name">Advanced</div>
+                      <div
+                        class="ai-level-duration-badge"
+                        style="
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 4px;
+                          padding: 2px 9px;
+                          border-radius: 999px;
+                          background: rgba(255, 107, 107, 0.12);
+                          border: 1px solid rgba(255, 107, 107, 0.3);
+                          font-size: 10px;
+                          font-weight: 800;
+                          color: var(--c3);
+                          font-family: var(--font-mono);
+                          margin: 3px 0 6px;
+                          letter-spacing: 0.5px;
+                        "
+                      >
+                        📅 90 Days
+                      </div>
+                      <div class="ai-level-goal">
+                        Master Deep Learning, NLP, Computer Vision, LLMs and
+                        MLOps. Build production-ready AI systems and deploy
+                        real-world applications.
+                      </div>
+                      <div class="ai-level-tags" style="margin-top: 7px">
+                        <span class="ai-ltag atag">~180 HRS</span>
+                        <span class="ai-ltag atag">DL · NLP · CV</span>
+                        <span class="ai-ltag atag">PRODUCTION</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="ai-level-arrow"
+                    style="font-size: 22px; color: var(--c3); opacity: 0.8"
+                  >
+                    ›
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- SCREEN 2: WEEK LIST -->
+            <div id="ai-screen-weeks" style="display: none">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="APP.goBack()">
+                  <span>←</span> Levels
+                </button>
+                <span class="back-home-title" id="ai-weeks-title"
+                  >Beginner</span
+                >
+              </div>
+              <!-- Inline Revision Panel — after level selection, top-right under header -->
+              <div id="ai-inline-rev-weeks"></div>
+              <div id="ai-level-summary"></div>
+              <div class="section" style="padding-top: 6px">
+                <div id="ai-weeks-list"></div>
+              </div>
+            </div>
+
+            <!-- SCREEN 3: DAY LIST -->
+            <div id="ai-screen-days" style="display: none">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="APP.goBack()">
+                  <span>←</span> Weeks
+                </button>
+                <span class="back-home-title" id="ai-days-title">Week 1</span>
+              </div>
+              <!-- Inline Revision Panel -->
+              <div id="ai-inline-rev-days"></div>
+              <div id="ai-week-summary"></div>
+              <div class="section" style="padding-top: 6px">
+                <div id="ai-structured-days-list"></div>
+              </div>
+            </div>
+          </div>
+          <!-- /ai-sub-roadmap -->
+
+          <!-- ── SUB: AI Revision ── -->
+          <div id="ai-sub-revision" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">🤖 AI Revision Schedule</span>
+            </div>
+            <div class="section-rev-intro">
+              <div class="rev-intro-text">
+                Spaced repetition helps you remember what you learn. Complete
+                topics in the AI roadmap to auto-schedule revisions at Day +1,
+                +3, +7, +14, +30.
+              </div>
+            </div>
+            <div class="filter-row" style="padding: 10px 12px 0">
+              <button
+                class="filter-chip active"
+                onclick="APP.setAIRevFilter('all',this)"
+              >
+                All
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setAIRevFilter('due',this)"
+              >
+                Due Today
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setAIRevFilter('overdue',this)"
+              >
+                Overdue
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setAIRevFilter('pending',this)"
+              >
+                Upcoming
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setAIRevFilter('done',this)"
+              >
+                Done
+              </button>
+            </div>
+            <div class="section" style="padding-top: 8px">
+              <div id="ai-revision-list"></div>
+            </div>
+          </div>
+          <!-- /ai-sub-revision -->
+
+          <!-- ── SUB: AI Pomodoro ── -->
+          <div id="ai-sub-pomo" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">🤖 AI Focus Timer</span>
+            </div>
+            <div class="section-pomo-wrap">
+              <div class="section-pomo-label">AI Session — Pomodoro Timer</div>
+              <div
+                class="pomo-duration-row"
+                style="justify-content: center; margin-bottom: 12px"
+              >
+                <span class="pomo-dur-label">Focus:</span>
+                <input
+                  class="pomo-dur-input"
+                  id="ai-pomo-dur-input"
+                  type="number"
+                  value="25"
+                  min="1"
+                  max="120"
+                />
+                <span class="pomo-dur-label">min</span>
+                <button
+                  class="pomo-dur-btn"
+                  onclick="APP.setSectionPomoDuration('ai')"
+                >
+                  Set
+                </button>
+                <button
+                  class="pomo-alarm-btn"
+                  id="ai-pomo-alarm-stop"
+                  onclick="APP.stopSectionAlarm('ai')"
+                  style="display: none"
+                >
+                  🔔 Stop
+                </button>
+              </div>
+              <div class="pomo-ring-wrap">
+                <div class="pomo-ring" id="ai-pomo-ring">
+                  <div class="pomo-center">
+                    <div class="pomo-time" id="ai-pomo-time">25:00</div>
+                    <div class="pomo-mode" id="ai-pomo-mode">FOCUS</div>
+                  </div>
+                </div>
+                <div class="pomo-session-count" id="ai-pomo-dots"></div>
+                <div class="pomo-controls">
+                  <button
+                    class="pomo-btn start"
+                    id="ai-pomo-start-btn"
+                    onclick="APP.sectionPomoToggle('ai')"
+                  >
+                    ▶ Start
+                  </button>
+                  <button
+                    class="pomo-btn reset"
+                    onclick="APP.sectionPomoReset('ai')"
+                  >
+                    ↺ Reset
+                  </button>
+                  <button
+                    class="pomo-btn stop"
+                    onclick="APP.sectionPomoSkip('ai')"
+                  >
+                    ⏭ Skip
+                  </button>
+                </div>
+              </div>
+              <div class="section" style="padding-top: 0">
+                <div class="focus-hours-card">
+                  <div class="focus-hours-val" id="ai-pomo-focus-hours">
+                    0.0
+                  </div>
+                  <div class="focus-hours-lbl">AI Focus Hours 🤖</div>
+                </div>
+                <div class="section-title">📊 AI Sessions</div>
+                <div class="pomo-stats-row">
+                  <div class="pomo-stat">
+                    <div class="pomo-stat-val" id="ai-ps-sessions">0</div>
+                    <div class="pomo-stat-lbl">Sessions</div>
+                  </div>
+                  <div class="pomo-stat">
+                    <div class="pomo-stat-val" id="ai-ps-hours">0.0</div>
+                    <div class="pomo-stat-lbl">Hours</div>
+                  </div>
+                  <div class="pomo-stat">
+                    <div class="pomo-stat-val" id="ai-ps-streak">0</div>
+                    <div class="pomo-stat-lbl">Streak 🔥</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /ai-sub-pomo -->
+
+          <!-- ── SUB: AI Notes ── -->
+          <div id="ai-sub-notes" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">🤖 AI Study Notes</span>
+            </div>
+            <div class="section">
+              <div class="section-title">📝 AI Study Notes</div>
+              <div class="card" style="margin-bottom: 10px">
+                <div class="card-header">
+                  <span class="card-title">Today's AI Notes</span>
+                  <span class="card-badge badge-done" id="ai-notes-pomo-badge"
+                    >🍅 0</span
+                  >
+                </div>
+                <textarea
+                  class="notes-ta"
+                  id="ai-notes-ta"
+                  placeholder="Write what you studied in AI today...&#10;&#10;• Concepts learned&#10;• Model results&#10;• Code snippets&#10;• Papers to revisit"
+                  oninput="APP.aiAutoSaveNotes()"
+                ></textarea>
+                <div class="notes-meta">
+                  <span id="ai-notes-wc">0 words</span>
+                  <button class="notes-save-btn" onclick="APP.aiSaveNotes()">
+                    💾 Save
+                  </button>
+                </div>
+              </div>
+              <div class="section-title">📋 Saved AI Entries</div>
+              <div id="ai-notes-list"></div>
+            </div>
+          </div>
+          <!-- /ai-sub-notes -->
+
+          <!-- ── SUB: AI Projects ── -->
+          <div id="ai-sub-projects" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">🤖 AI Projects</span>
+            </div>
+            <div class="section">
+              <div class="section-title">🚀 My AI Projects</div>
+              <button class="add-btn" onclick="APP.openProjectModal('ai')">
+                <div class="add-btn-ico">➕</div>
+                <span>Add AI Project</span>
+              </button>
+              <div id="ai-projects-list"></div>
+            </div>
+          </div>
+          <!-- /ai-sub-projects -->
+        </div>
+        <!-- /tab-ai -->
+
+        <!-- ──────── TAB: DSA ROADMAP ──────── -->
+        <div class="tab-panel" id="tab-dsa">
+          <!-- DSA Sub-Tab Navigation -->
+          <div class="section-subtab-bar" id="dsa-subtab-bar">
+            <button
+              class="section-subtab active"
+              id="dsa-subtab-roadmap"
+              onclick="APP.switchDSASub('roadmap',this)"
+            >
+              📚 Roadmap
+            </button>
+            <button
+              class="section-subtab"
+              id="dsa-subtab-revision"
+              onclick="APP.switchDSASub('revision',this)"
+            >
+              🔁 Revision
+            </button>
+            <button
+              class="section-subtab"
+              id="dsa-subtab-pomo"
+              onclick="APP.switchDSASub('pomo',this)"
+            >
+              ⏱ Pomo
+            </button>
+            <button
+              class="section-subtab"
+              id="dsa-subtab-notes"
+              onclick="APP.switchDSASub('notes',this)"
+            >
+              📝 Notes
+            </button>
+            <button
+              class="section-subtab"
+              id="dsa-subtab-projects"
+              onclick="APP.switchDSASub('projects',this)"
+            >
+              🚀 Projects
+            </button>
+          </div>
+
+          <!-- ── SUB: Roadmap ── -->
+          <div id="dsa-sub-roadmap">
+            <!-- SCREEN 1: OVERVIEW + WEEK CARDS -->
+            <div id="dsa-screen-weeks">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="APP.goBack()">
+                  <span>←</span> Home
+                </button>
+                <span class="back-home-title">💻 DSA Roadmap</span>
+              </div>
+              <!-- Inline Revision Panel -->
+              <div id="dsa-inline-rev-overview"></div>
+              <div class="section" style="padding-top: 10px; padding-bottom: 0">
+                <div class="hours-row">
+                  <div class="hours-card">
+                    <div class="hours-val" id="dsa-hrs-total">0</div>
+                    <div class="hours-lbl">Total Hrs</div>
+                  </div>
+                  <div class="hours-card">
+                    <div class="hours-val done-color" id="dsa-hrs-done">0</div>
+                    <div class="hours-lbl">Done Hrs</div>
+                  </div>
+                  <div class="hours-card">
+                    <div class="hours-val rem-color" id="dsa-hrs-rem">0</div>
+                    <div class="hours-lbl">Remaining</div>
+                  </div>
+                </div>
+                <div class="prog-wrap">
+                  <div class="prog-track">
+                    <div
+                      class="prog-fill"
+                      id="dsa-prog-fill"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <div class="prog-label">
+                    <span id="dsa-prog-text">0 topics</span
+                    ><span id="dsa-prog-pct">0%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section" style="padding-top: 8px">
+                <div class="section-title">📅 Weekly Plan</div>
+                <div id="dsa-weeks-list"></div>
+              </div>
+            </div>
+
+            <!-- SCREEN 2: WEEK DETAIL -->
+            <div id="dsa-screen-detail" style="display: none">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="APP.goBack()">
+                  <span>←</span> Weeks
+                </button>
+                <span class="back-home-title" id="dsa-detail-title"
+                  >Week 1</span
+                >
+              </div>
+              <!-- Inline Revision Panel -->
+              <div id="dsa-inline-rev"></div>
+              <div id="dsa-week-summary-bar"></div>
+              <div class="section" style="padding-top: 6px">
+                <div id="dsa-topics-list"></div>
+              </div>
+            </div>
+          </div>
+          <!-- /dsa-sub-roadmap -->
+
+          <!-- ── SUB: DSA Revision ── -->
+          <div id="dsa-sub-revision" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">💻 DSA Revision Schedule</span>
+            </div>
+            <div class="section-rev-intro">
+              <div class="rev-intro-text">
+                Spaced repetition helps you remember DSA topics. Complete topics
+                in the DSA roadmap to auto-schedule revisions at Day +1, +3, +7,
+                +14, +30.
+              </div>
+            </div>
+            <div class="filter-row" style="padding: 10px 12px 0">
+              <button
+                class="filter-chip active"
+                onclick="APP.setDSARevFilter('all',this)"
+              >
+                All
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setDSARevFilter('due',this)"
+              >
+                Due Today
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setDSARevFilter('overdue',this)"
+              >
+                Overdue
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setDSARevFilter('pending',this)"
+              >
+                Upcoming
+              </button>
+              <button
+                class="filter-chip"
+                onclick="APP.setDSARevFilter('done',this)"
+              >
+                Done
+              </button>
+            </div>
+            <div class="section" style="padding-top: 8px">
+              <div id="dsa-revision-list"></div>
+            </div>
+          </div>
+          <!-- /dsa-sub-revision -->
+
+          <!-- ── SUB: DSA Pomodoro ── -->
+          <div id="dsa-sub-pomo" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">💻 DSA Focus Timer</span>
+            </div>
+            <div class="section-pomo-wrap">
+              <div class="section-pomo-label">DSA Session — Pomodoro Timer</div>
+              <div
+                class="pomo-duration-row"
+                style="justify-content: center; margin-bottom: 12px"
+              >
+                <span class="pomo-dur-label">Focus:</span>
+                <input
+                  class="pomo-dur-input"
+                  id="dsa-pomo-dur-input"
+                  type="number"
+                  value="25"
+                  min="1"
+                  max="120"
+                />
+                <span class="pomo-dur-label">min</span>
+                <button
+                  class="pomo-dur-btn"
+                  onclick="APP.setSectionPomoDuration('dsa')"
+                >
+                  Set
+                </button>
+                <button
+                  class="pomo-alarm-btn"
+                  id="dsa-pomo-alarm-stop"
+                  onclick="APP.stopSectionAlarm('dsa')"
+                  style="display: none"
+                >
+                  🔔 Stop
+                </button>
+              </div>
+              <div class="pomo-ring-wrap">
+                <div class="pomo-ring" id="dsa-pomo-ring">
+                  <div class="pomo-center">
+                    <div class="pomo-time" id="dsa-pomo-time">25:00</div>
+                    <div class="pomo-mode" id="dsa-pomo-mode">FOCUS</div>
+                  </div>
+                </div>
+                <div class="pomo-session-count" id="dsa-pomo-dots"></div>
+                <div class="pomo-controls">
+                  <button
+                    class="pomo-btn start"
+                    id="dsa-pomo-start-btn"
+                    onclick="APP.sectionPomoToggle('dsa')"
+                  >
+                    ▶ Start
+                  </button>
+                  <button
+                    class="pomo-btn reset"
+                    onclick="APP.sectionPomoReset('dsa')"
+                  >
+                    ↺ Reset
+                  </button>
+                  <button
+                    class="pomo-btn stop"
+                    onclick="APP.sectionPomoSkip('dsa')"
+                  >
+                    ⏭ Skip
+                  </button>
+                </div>
+              </div>
+              <div class="section" style="padding-top: 0">
+                <div class="focus-hours-card">
+                  <div class="focus-hours-val" id="dsa-pomo-focus-hours">
+                    0.0
+                  </div>
+                  <div class="focus-hours-lbl">DSA Focus Hours 💻</div>
+                </div>
+                <div class="section-title">📊 DSA Sessions</div>
+                <div class="pomo-stats-row">
+                  <div class="pomo-stat">
+                    <div class="pomo-stat-val" id="dsa-ps-sessions">0</div>
+                    <div class="pomo-stat-lbl">Sessions</div>
+                  </div>
+                  <div class="pomo-stat">
+                    <div class="pomo-stat-val" id="dsa-ps-hours">0.0</div>
+                    <div class="pomo-stat-lbl">Hours</div>
+                  </div>
+                  <div class="pomo-stat">
+                    <div class="pomo-stat-val" id="dsa-ps-streak">0</div>
+                    <div class="pomo-stat-lbl">Streak 🔥</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /dsa-sub-pomo -->
+
+          <!-- ── SUB: DSA Notes ── -->
+          <div id="dsa-sub-notes" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">💻 DSA Study Notes</span>
+            </div>
+            <div class="section">
+              <div class="section-title">📝 DSA Study Notes</div>
+              <div class="card" style="margin-bottom: 10px">
+                <div class="card-header">
+                  <span class="card-title">Today's DSA Notes</span>
+                  <span class="card-badge badge-done" id="dsa-notes-pomo-badge"
+                    >🍅 0</span
+                  >
+                </div>
+                <textarea
+                  class="notes-ta"
+                  id="dsa-notes-ta"
+                  placeholder="Write what you practiced in DSA today...&#10;&#10;• Problems solved&#10;• Patterns recognized&#10;• Time complexity notes&#10;• Edge cases to remember"
+                  oninput="APP.dsaAutoSaveNotes()"
+                ></textarea>
+                <div class="notes-meta">
+                  <span id="dsa-notes-wc">0 words</span>
+                  <button class="notes-save-btn" onclick="APP.dsaSaveNotes()">
+                    💾 Save
+                  </button>
+                </div>
+              </div>
+              <div class="section-title">📋 Saved DSA Entries</div>
+              <div id="dsa-notes-list"></div>
+            </div>
+          </div>
+          <!-- /dsa-sub-notes -->
+
+          <!-- ── SUB: DSA Projects ── -->
+          <div id="dsa-sub-projects" style="display: none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <span>←</span> Home
+              </button>
+              <span class="back-home-title">💻 DSA Projects</span>
+            </div>
+            <div class="section">
+              <div class="section-title">🚀 My DSA Projects</div>
+              <button class="add-btn" onclick="APP.openProjectModal('dsa')">
+                <div class="add-btn-ico">➕</div>
+                <span>Add DSA Project</span>
+              </button>
+              <div id="dsa-projects-list"></div>
+            </div>
+          </div>
+          <!-- /dsa-sub-projects -->
+        </div>
+        <!-- /tab-dsa -->
+
+        <!-- ──────── TAB: REVISION (accessible via AI/DSA inline panels) ──────── -->
+        <div class="tab-panel" id="tab-revision">
+          <div class="filter-row" style="padding-top: 12px">
+            <button
+              class="filter-chip active"
+              onclick="APP.setRevFilter('all',this)"
+            >
+              All
+            </button>
+            <button class="filter-chip" onclick="APP.setRevFilter('ai',this)">
+              AI
+            </button>
+            <button class="filter-chip" onclick="APP.setRevFilter('dsa',this)">
+              DSA
+            </button>
+            <button class="filter-chip" onclick="APP.setRevFilter('due',this)">
+              Due Today
+            </button>
+            <button
+              class="filter-chip"
+              onclick="APP.setRevFilter('overdue',this)"
+            >
+              Overdue
+            </button>
+            <button
+              class="filter-chip"
+              onclick="APP.setRevFilter('pending',this)"
+            >
+              Pending
+            </button>
+            <button class="filter-chip" onclick="APP.setRevFilter('done',this)">
+              Done
+            </button>
+          </div>
+          <div class="section">
+            <div id="revision-list"></div>
+          </div>
+        </div>
+
+        <!-- ──────── TAB: STREAK ──────── -->
+        <div class="tab-panel" id="tab-streak">
+          <div class="section">
+            <div class="section-title">🔥 Study Streaks</div>
+            <div class="streak-cards" id="streak-cards"></div>
+          </div>
+        </div>
+
+        <!-- ──────── TAB: FILES ──────── -->
+        <div class="tab-panel" id="tab-files">
+          <div class="section">
+            <div class="section-title">📂 File Storage</div>
+            <div
+              class="file-upload-area"
+              id="upload-area"
+              onclick="document.getElementById('file-input').click()"
+            >
+              <div class="file-upload-ico">📎</div>
+              <div class="file-upload-title">Tap to upload files</div>
+              <div class="file-upload-sub">
+                PDF, images, docs — saved to browser storage
+              </div>
+            </div>
+            <input
+              type="file"
+              id="file-input"
+              class="file-input"
+              multiple
+              accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx"
+              onchange="APP.handleFileUpload(event)"
+            />
+            <div id="files-list"></div>
+          </div>
+        </div>
+
+        <!-- ──────── TAB: PROFILE ──────── -->
+        <div class="tab-panel" id="tab-profile">
+          <div style="padding-top: 12px">
+            <div class="profile-header">
+              <div class="profile-avatar">🎓</div>
+              <div class="profile-name" id="profile-name">Learner</div>
+              <div class="profile-sub" id="profile-sub">
+                Started your journey
+              </div>
+            </div>
+            <div class="section" style="padding-top: 0">
+              <div class="section-title">📊 Overview Stats</div>
+              <div class="stats-grid">
+                <div class="stat-card ai">
+                  <div class="stat-val" id="p-ai-done">0</div>
+                  <div class="stat-lbl">AI Days Done</div>
+                </div>
+                <div class="stat-card dsa">
+                  <div class="stat-val" id="p-dsa-done">0</div>
+                  <div class="stat-lbl">DSA Days Done</div>
+                </div>
+                <div class="stat-card proj">
+                  <div class="stat-val" id="p-proj-count">0</div>
+                  <div class="stat-lbl">Projects</div>
+                </div>
+                <div class="stat-card extra">
+                  <div class="stat-val" id="p-notes-count">0</div>
+                  <div class="stat-lbl">Notes Saved</div>
+                </div>
+              </div>
+              <div class="section-title" style="margin-top: 12px">
+                ⏱️ Hours Tracking
+              </div>
+              <div class="hours-row">
+                <div class="hours-card">
+                  <div class="hours-val" id="p-hrs-total">0</div>
+                  <div class="hours-lbl">AI Total Hrs</div>
+                </div>
+                <div class="hours-card">
+                  <div class="hours-val done-color" id="p-hrs-done">0</div>
+                  <div class="hours-lbl">Completed</div>
+                </div>
+                <div class="hours-card">
+                  <div class="hours-val rem-color" id="p-hrs-rem">0</div>
+                  <div class="hours-lbl">Remaining</div>
+                </div>
+              </div>
+              <div class="section-title" style="margin-top: 12px">
+                🔥 Streaks
+              </div>
+              <div class="stats-grid">
+                <div class="stat-card ai">
+                  <div class="stat-val" id="p-ai-streak">0</div>
+                  <div class="stat-lbl">AI Streak 🔥</div>
+                </div>
+                <div class="stat-card dsa">
+                  <div class="stat-val" id="p-dsa-streak">0</div>
+                  <div class="stat-lbl">DSA Streak 🔥</div>
+                </div>
+              </div>
+              <div class="section-title" style="margin-top: 12px">
+                🍅 Pomodoro Totals
+              </div>
+              <div class="focus-hours-card">
+                <div class="focus-hours-val" id="p-focus-hours">0.0</div>
+                <div class="focus-hours-lbl">Total Focus Hours 🎯</div>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-card ai">
+                  <div class="stat-val" id="p-pom-ai">0</div>
+                  <div class="stat-lbl">AI Sessions</div>
+                </div>
+                <div class="stat-card dsa">
+                  <div class="stat-val" id="p-pom-dsa">0</div>
+                  <div class="stat-lbl">DSA Sessions</div>
+                </div>
+                <div class="stat-card proj">
+                  <div class="stat-val" id="p-pom-proj">0</div>
+                  <div class="stat-lbl">Project Sessions</div>
+                </div>
+                <div class="stat-card extra">
+                  <div class="stat-val" id="p-pom-extra">0</div>
+                  <div class="stat-lbl">Extra Sessions</div>
+                </div>
+              </div>
+              <!-- Combined total (AI + DSA) as required -->
+              <div
+                class="stat-card total"
+                style="
+                  margin-top: 8px;
+                  padding: 14px;
+                  background: linear-gradient(
+                    135deg,
+                    rgba(0, 245, 212, 0.06),
+                    rgba(123, 47, 255, 0.06)
+                  );
+                  border: 1px solid rgba(0, 245, 212, 0.15);
+                "
+              >
+                <div class="stat-val" id="p-pom-total">0</div>
+                <div class="stat-lbl" style="font-size: 11px">
+                  Combined AI + DSA Pomodoro Sessions 🏆
+                </div>
+              </div>
+              <div class="section-title" style="margin-top: 12px">
+                📈 Progress Analytics
+              </div>
+              <div class="graph-canvas-wrap">
+                <div class="graph-title">
+                  Daily Study Consistency (Last 14 Days)
+                </div>
+                <canvas id="chart-consistency" class="mini-chart"></canvas>
+              </div>
+              <div class="graph-canvas-wrap">
+                <div class="graph-title">Pomodoro Sessions by Category</div>
+                <canvas id="chart-pomo" class="mini-chart"></canvas>
+              </div>
+              <div class="graph-canvas-wrap">
+                <div class="graph-title">
+                  Progress Over Time (AI Days Completed)
+                </div>
+                <canvas id="chart-progress" class="mini-chart"></canvas>
+              </div>
+            </div>
+            <!-- ATTENDANCE (moved from bottom nav into Profile) -->
+        <div class="tab-panel" id="tab-attendance">
+          <div class="section">
+            <div class="section-title">📋 Attendance Tracker</div>
+            <div class="att-btn-row">
+              <button
+                class="att-btn present-btn"
+                onclick="APP.markAttendance('present')"
+              >
+                ✅ Mark Present Today
+              </button>
+              <button
+                class="att-btn absent-btn"
+                onclick="APP.markAttendance('absent')"
+              >
+                ❌ Mark Absent Today
+              </button>
+            </div>
+            <div class="att-stats" id="att-stats"></div>
+            <div
+              style="
+                font-size: 11px;
+                font-weight: 700;
+                color: var(--t2);
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+                font-family: var(--font-mono);
+                margin: 10px 0 6px;
+              "
+            >
+              Last 35 Days
+            </div>
+            <div class="att-grid" id="att-grid"></div>
+          </div>
+        </div>
+      </div>
+      <!-- /content -->
+
+      <!-- BOTTOM NAV -->
+      <nav id="bottom-nav">
+        <button class="nav-item active" id="nav-home" onclick="switchToTab('home')">
+          <span class="nav-ico">🏠</span><span class="nav-lbl">Home</span>
+        </button>
+        <button class="nav-item" id="nav-streak" onclick="switchToTab('streak')">
+          <span class="nav-ico">🔥</span><span class="nav-lbl">Streak</span>
+        </button>
+        <button class="nav-item" id="nav-files" onclick="switchToTab('files')">
+          <span class="nav-ico">📂</span><span class="nav-lbl">Files</span>
+        </button>
+        <button class="nav-item" id="nav-calendar" onclick="switchToTab('calendar')">
+          <span class="nav-ico">📅</span><span class="nav-lbl">Calendar</span>
+        </button>
+        <button class="nav-item" id="nav-goals" onclick="switchToTab('goals')">
+          <span class="nav-ico">🎯</span><span class="nav-lbl">Goals</span>
+        </button>
+        <button class="nav-item" id="nav-badges" onclick="switchToTab('badges')">
+          <span class="nav-ico">🏆</span><span class="nav-lbl">Badges</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modal-project">
+      <div class="modal">
+        <div class="modal-title">
+          <span id="proj-modal-title">Add Project</span>
+          <button class="modal-close" onclick="APP.closeModal('modal-project')">
+            ✕
+          </button>
+        </div>
+        <input type="hidden" id="proj-source" value="" />
+        <div class="field-group">
+          <label class="field-label">Project Name</label>
+          <input
+            class="field-input"
+            id="proj-name"
+            placeholder="e.g. AI Chatbot with RAG"
+          />
+        </div>
+        <div class="field-group">
+          <label class="field-label">GitHub Link</label>
+          <input
+            class="field-input"
+            id="proj-github"
+            type="url"
+            placeholder="https://github.com/you/project"
+          />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Live Demo URL</label>
+          <input
+            class="field-input"
+            id="proj-demo"
+            type="url"
+            placeholder="https://your-demo.com"
+          />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Files Count</label>
+          <input
+            class="field-input"
+            id="proj-files"
+            type="number"
+            placeholder="Number of files"
+            min="0"
+          />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Notes / Description</label>
+          <textarea
+            class="field-input"
+            id="proj-notes"
+            placeholder="Describe the project..."
+          ></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tech Stack / Tags</label>
+          <input
+            class="field-input"
+            id="proj-tags"
+            placeholder="Python, TensorFlow, FastAPI..."
+          />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Progress % (0–100)</label>
+          <input
+            class="field-input"
+            id="proj-progress"
+            type="number"
+            placeholder="e.g. 40"
+            min="0"
+            max="100"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary" onclick="APP.saveProject()">
+            💾 Save Project
+          </button>
+          <button
+            class="btn-secondary"
+            onclick="APP.closeModal('modal-project')"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-confirm">
+      <div class="modal">
+        <div class="modal-title">
+          <span id="confirm-title">Confirm</span>
+          <button class="modal-close" onclick="APP.closeModal('modal-confirm')">
+            ✕
+          </button>
+        </div>
+        <p
+          id="confirm-text"
+          style="
+            font-size: 13px;
+            color: var(--t2);
+            line-height: 1.6;
+            margin-bottom: 16px;
+          "
+        ></p>
+        <div class="modal-actions">
+          <button
+            class="btn-primary"
+            id="confirm-ok"
+            style="
+              background: linear-gradient(135deg, #ff6b6b, #ef476f);
+              color: #fff;
+            "
+          >
+            Confirm
+          </button>
+          <button
+            class="btn-secondary"
+            onclick="APP.closeModal('modal-confirm')"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────── TAB: CALENDAR ──────── -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="section">
+        <div class="section-title">📅 Study Calendar</div>
+      </div>
+      <div class="calendar-wrap">
+        <div class="calendar-header">
+          <button class="cal-nav-btn" onclick="APP.calPrev()">‹</button>
+          <div class="cal-month-title" id="cal-month-title">April 2026</div>
+          <button class="cal-nav-btn" onclick="APP.calNext()">›</button>
+        </div>
+        <div class="cal-weekdays">
+          <div class="cal-weekday">Sun</div>
+          <div class="cal-weekday">Mon</div>
+          <div class="cal-weekday">Tue</div>
+          <div class="cal-weekday">Wed</div>
+          <div class="cal-weekday">Thu</div>
+          <div class="cal-weekday">Fri</div>
+          <div class="cal-weekday">Sat</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+          <div class="cal-legend-item">
+            <div
+              class="cal-legend-dot"
+              style="background: rgba(6, 214, 160, 0.5)"
+            ></div>
+            Studied
+          </div>
+          <div class="cal-legend-item">
+            <div
+              class="cal-legend-dot"
+              style="background: rgba(255, 107, 107, 0.4)"
+            ></div>
+            Missed
+          </div>
+          <div class="cal-legend-item">
+            <div
+              class="cal-legend-dot"
+              style="background: rgba(123, 47, 255, 0.4)"
+            ></div>
+            Revision
+          </div>
+        </div>
+      </div>
+      <div class="section" style="padding-top: 4px">
+        <div class="section-title">📋 Day Detail</div>
+        <div
+          id="cal-day-detail"
+          style="
+            font-size: 12px;
+            color: var(--t2);
+            padding: 10px;
+            background: var(--bg2);
+            border-radius: var(--r8);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+          "
+        >
+          Click a day to see details.
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────── TAB: GOALS ──────── -->
+    <div class="tab-panel" id="tab-goals">
+      <div class="section">
+        <div class="section-title">🎯 Study Goals</div>
+        <div class="goals-set-row">
+          <div class="goals-input-wrap">
+            <div class="goals-input-label">Daily (hrs)</div>
+            <input
+              class="goals-input"
+              id="goal-daily"
+              type="number"
+              min="0.5"
+              max="12"
+              step="0.5"
+              value="2"
+            />
+          </div>
+          <div class="goals-input-wrap">
+            <div class="goals-input-label">Weekly (hrs)</div>
+            <input
+              class="goals-input"
+              id="goal-weekly"
+              type="number"
+              min="1"
+              max="80"
+              step="1"
+              value="10"
+            />
+          </div>
+          <div class="goals-input-wrap">
+            <div class="goals-input-label">Days/Month</div>
+            <input
+              class="goals-input"
+              id="goal-days"
+              type="number"
+              min="1"
+              max="31"
+              step="1"
+              value="20"
+            />
+          </div>
+          <button class="goals-save-btn" onclick="APP.saveGoals()">Set</button>
+        </div>
+      </div>
+      <div class="goals-grid" id="goals-grid"></div>
+      <div class="section" style="padding-top: 4px">
+        <div class="section-title">📈 Goal History</div>
+        <div id="goals-history" style="font-size: 12px; color: var(--t2)"></div>
+      </div>
+    </div>
+
+    <!-- ──────── TAB: BADGES ──────── -->
+    <div class="tab-panel" id="tab-badges">
+      <div class="section">
+        <div class="section-title">🏆 Achievements</div>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-level-row">
+          <div class="xp-level-badge">
+            <span class="xp-level-ico" id="xp-level-ico">🌱</span>
+            <span class="xp-level-name" id="xp-level-name">Beginner</span>
+          </div>
+          <span class="xp-points-text" id="xp-points-text">0 XP</span>
+        </div>
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" id="xp-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="section" style="padding-top: 4px">
+        <div class="section-title">🎖️ Badges</div>
+      </div>
+      <div class="badges-grid" id="badges-grid"></div>
+    </div>
+
+    <!-- AI MENTOR MODAL -->
+    <div class="ai-modal-overlay" id="ai-modal-overlay">
+      <div class="ai-modal">
+        <div class="ai-modal-header">
+          <div class="ai-modal-title">🤖 AI Mentor</div>
+          <button class="ai-modal-close" onclick="APP.closeAIModal()">✕</button>
+        </div>
+        <div class="ai-modal-tabs">
+          <button
+            class="ai-tab-btn active"
+            onclick="APP.setAITab('explain',this)"
+          >
+            💡 Explain
+          </button>
+          <button class="ai-tab-btn" onclick="APP.setAITab('notes',this)">
+            📝 Notes
+          </button>
+          <button class="ai-tab-btn" onclick="APP.setAITab('practice',this)">
+            🧪 Practice
+          </button>
+          <button class="ai-tab-btn" onclick="APP.setAITab('project',this)">
+            🚀 Project Idea
+          </button>
+        </div>
+        <div class="ai-modal-body">
+          <div class="ai-response-area" id="ai-response-area">
+            Select a mode above and tap "Ask AI" to get started.
+          </div>
+          <button class="ai-ask-btn" id="ai-ask-btn" onclick="APP.askAI()">
+            🤖 Ask AI
+          </button>
+          <textarea
+            class="ai-note-area"
+            id="ai-note-area"
+            placeholder="AI-generated notes will appear here. You can edit them..."
+            style="display: none"
+          ></textarea>
+          <button
+            class="ai-save-note-btn"
+            id="ai-save-note-btn"
+            onclick="APP.saveAINote()"
+            style="display: none"
+          >
+            💾 Save Note
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+<div id="bottom-nav">
+
+<button class="nav-item active" id="nav-home" onclick="APP.switchTab('home')">
+  <div class="nav-ico">🏠</div>
+  <div class="nav-lbl">Home</div>
+</button>
+
+<button class="nav-item" id="nav-files" onclick="APP.switchTab('files')">
+  <div class="nav-ico">📁</div>
+  <div class="nav-lbl">Files</div>
+</button>
+
+<button class="nav-item" id="nav-streaks" onclick="APP.switchTab('streaks')">
+  <div class="nav-ico">🔥</div>
+  <div class="nav-lbl">Streaks</div>
+</button>
+
+</div>
+
+    <!-- PWA INSTALL BANNER -->
+    <div class="pwa-banner" id="pwa-banner">
+      <div class="pwa-banner-ico">📱</div>
+      <div class="pwa-banner-text">
+        <div class="pwa-banner-title">Install RoadmapX</div>
+        <div class="pwa-banner-sub">Add to home screen for offline access</div>
+      </div>
+      <button class="pwa-install-btn" onclick="APP.installPWA()">
+        Install
+      </button>
+      <button class="pwa-close-btn" onclick="APP.dismissPWA()">✕</button>
+    </div>
+
+    <!-- XP TOAST -->
+    <div class="xp-toast" id="xp-toast">+50 XP 🎉</div>
+
+    <!-- TOAST -->
+    <div id="toast"></div>
+
+
+    <script src="auth_guard.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+
