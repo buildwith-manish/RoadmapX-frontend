@@ -53,7 +53,7 @@ async function doLogin() {
     const res = await fetch(`${API}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem("rx_token", data.token);
+      localStorage.setItem("rx_token", "true");
       localStorage.setItem("rx_user", data.username);
       showMsg("login", "Access granted. Redirecting...", "success");
       setTimeout(() => { window.location.href = HOME; }, 700);
