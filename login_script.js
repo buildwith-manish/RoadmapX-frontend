@@ -50,7 +50,7 @@ async function doLogin() {
   if (!username || !password) { showMsg("login", "Both fields required.", "error"); return; }
   setLoading("login-btn", true);
   try {
-    const res = await fetch("/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
+    const res = await fetch(`${API}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
     const data = await res.json();
     if (data.success) {
       localStorage.setItem("rx_token", data.token);
@@ -101,7 +101,7 @@ async function signupStep2() {
   if (password !== confirm) { showMsg("signup", "Passwords do not match.", "error"); return; }
   setLoading("signup-btn", true);
   try {
-    const res = await fetch("/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
+    const res = await fetch(`${API}/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
     const data = await res.json();
     if (data.success) {
       showMsg("signup", "Account created! Please login.", "success");
