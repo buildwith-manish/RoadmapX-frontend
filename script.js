@@ -5416,6 +5416,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════
 //  NAVIGATION STACK + BACK BUTTON + BROWSER HISTORY
 // ═══════════════════════════════════════════════════════
+
+// Each entry is a full state object:
+//   { tab: 'home' }
+//   { tab: 'ai', view: 'levels' }
+//   { tab: 'ai', view: 'weeks',  level: 'beginner' }
+//   { tab: 'ai', view: 'days',   level: 'beginner', week: 3 }
 let navStack = [{ tab: 'home' }];
 let __navSuppress = false;
 
@@ -5425,37 +5431,53 @@ function __hideBottomNavIf(tab) {
   nav.style.display = (tab === 'ai' || tab === 'dsa') ? 'none' : '';
 }
 
+// Push a full state object onto the stack.
+// Consecutive duplicate states are collapsed so normal tab-switches
+// don't flood the stack.
 function __pushNavState(s) {
   if (__navSuppress) return;
+  // Avoid pushing an identical state twice in a row
+  const top = navStack[navStack.length - 1];
+  if (top && top.tab === s.tab && top.view === s.view &&
+      top.level === s.level && top.week === s.week) return;
   navStack.push(s);
   try {
-    history.pushState({ __nav: true, tab: s.tab }, '', '#' + s.tab);
+    history.pushState({ __nav: true, ...s }, '', '#' + s.tab);
   } catch (e) { /* ignore */ }
 }
 
-function __applyNavState(state) {
+// Restore a full state object without adding anything to the stack.
+function __applyNavState(s) {
   __navSuppress = true;
-
   try {
-    if (state.tab) {
-      APP.switchTab(state.tab);
+    if (s.tab === 'ai' && s.view === 'weeks' && s.level) {
+      // Restore: AI tab → level screen (weeks list)
+      APP.switchTab('ai');
+      if (typeof APP.selectAILevel === 'function') {
+        // Call the *original* wrapped function bypassing our wrapper's push
+        const __origLvl2 = APP.__origSelectAILevel || APP.selectAILevel;
+        __origLvl2.call(APP, s.level);
+      }
+    } else if (s.tab === 'ai' && s.view === 'days' && s.level && s.week != null) {
+      // Restore: AI tab → week screen (days list)
+      APP.switchTab('ai');
+      if (typeof APP.selectAILevel === 'function') {
+        const __origLvl2 = APP.__origSelectAILevel || APP.selectAILevel;
+        __origLvl2.call(APP, s.level);
+      }
+      if (typeof APP.selectAIWeek === 'function') {
+        const __origWk2 = APP.__origSelectAIWeek || APP.selectAIWeek;
+        __origWk2.call(APP, s.week);
+      }
+    } else {
+      // Normal tab switch
+      APP.switchTab(s.tab);
     }
-
-    if (state.view === 'level') {
-      APP.selectAILevel(state.level);
-    }
-
-    if (state.view === 'week') {
-      APP.selectAIWeek(state.week);
-    }
-
   } finally {
     __navSuppress = false;
   }
-
-  __hideBottomNavIf(state.tab);
+  __hideBottomNavIf(s.tab);
 }
-
 
 // ── Single, consolidated APP.switchTab override ──────────────────────────────
 // Merges: extra-tab handling (calendar/goals/badges), pomo hooks, and nav tracking
@@ -5484,7 +5506,11 @@ APP.switchTab = function (name) {
 
   // Navigation tracking + bottom-nav visibility
   __hideBottomNavIf(name);
-  if (!__navSuppress) __pushNavState({ tab: name });
+  // When switching to 'ai', record the levels screen as the base view
+  if (!__navSuppress) {
+    const view = (name === 'ai') ? 'levels' : undefined;
+    __pushNavState({ tab: name, view });
+  }
 };
 
 // ── goBack — step back through nav stack ─────────────────────────────────────
@@ -5494,65 +5520,38 @@ APP.goBack = function () {
     const prev = navStack[navStack.length - 1];
     __applyNavState(prev);
   } else {
-    APP.switchTab('home');
+    // Only one entry left — stay (or go home if it isn't home already)
+    const cur = navStack[0];
+    if (!cur || cur.tab !== 'home') APP.switchTab('home');
   }
 };
 
-// ── Wrap selectAILevel ────────────────────────────────────────────────────────
+// ── Wrap selectAILevel — push { tab:'ai', view:'weeks', level } ───────────────
 if (APP.selectAILevel) {
   const __origLvl = APP.selectAILevel.bind(APP);
-
+  // Keep a reference so __applyNavState can call it suppressed
+  APP.__origSelectAILevel = __origLvl;
   APP.selectAILevel = function (level) {
     __origLvl(level);
-
-    if (!__navSuppress) {
-      __pushNavState({
-        tab: 'ai',
-        view: 'level',
-        level: level
-      });
-    }
+    if (!__navSuppress) __pushNavState({ tab: 'ai', view: 'weeks', level: level });
   };
 }
 
-// ── Wrap selectAIWeek ─────────────────────────────────────────────────────────
+// ── Wrap selectAIWeek — push { tab:'ai', view:'days', level, week } ───────────
 if (APP.selectAIWeek) {
   const __origWk = APP.selectAIWeek.bind(APP);
-APP.selectAIWeek = function (week) {
-  _origWk(week);
-
-  if (!__navSuppress) {
-    __pushNavState({
-      tab: 'ai',
-      view: 'week',
-      week: week
-    });
-  }
-};
+  // Keep a reference so __applyNavState can call it suppressed
+  APP.__origSelectAIWeek = __origWk;
+  APP.selectAIWeek = function (week) {
+    // Read current level from the top of the stack (or aiCurrentLevel if accessible)
+    const topState = navStack[navStack.length - 1];
+    const level = (topState && topState.level) ? topState.level : null;
+    __origWk(week);
+    if (!__navSuppress) __pushNavState({ tab: 'ai', view: 'days', level: level, week: week });
+  };
 }
 
-// =========================
-// NAV STATE APPLY FUNCTION
-// =========================
-function __applyNavState(state) {
-  __navSuppress = true;
-
-  if (state.tab) {
-    APP.switchTab(state.tab);
-  }
-
-  if (state.view === 'level') {
-    APP.selectAILevel(state.level);
-  }
-
-  if (state.view === 'week') {
-    APP.selectAIWeek(state.week);
-  }
-
-  __navSuppress = false;
-}
-
-// ── Phone / browser hardware back button ─────────────────────────────────
+// ── Phone / browser hardware back button ─────────────────────────────────────
 window.addEventListener('popstate', function () {
   if (navStack.length > 1) {
     navStack.pop();
@@ -5567,11 +5566,8 @@ window.addEventListener('popstate', function () {
 document.addEventListener('DOMContentLoaded', function () {
   setTimeout(function () {
     // Reset to a clean single-entry stack representing the current tab
-       const startTab = 'home';
-
-navStack = [{
-  tab: startTab
-}];
+    const startTab = (typeof state !== 'undefined' && state.currentTab) ? state.currentTab : 'home';
+    navStack = [{ tab: startTab }];
     __hideBottomNavIf(startTab);
   }, 700); // slightly after APP.init (500 ms) finishes
 });
