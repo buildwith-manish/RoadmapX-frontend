@@ -2099,14 +2099,23 @@ const APP = (function() {
   }
 
   function backToLevels() {
-    showScreen('ai-screen-levels');
-    aiCurrentLevel = null;
-    aiCurrentWeek = null;
+    if (typeof APP !== 'undefined' && APP.goBack) {
+      APP.goBack();
+    } else {
+      showScreen('ai-screen-levels');
+      aiCurrentLevel = null;
+      aiCurrentWeek = null;
+    }
   }
 
   function backToWeeks() {
-    if (aiCurrentLevel) selectAILevel(aiCurrentLevel);
-    else showScreen('ai-screen-levels');
+    if (typeof APP !== 'undefined' && APP.goBack) {
+      APP.goBack();
+    } else if (aiCurrentLevel) {
+      selectAILevel(aiCurrentLevel);
+    } else {
+      showScreen('ai-screen-levels');
+    }
   }
 
   // ═══════════════════════════════════════════════════════
@@ -5431,12 +5440,9 @@ function __hideBottomNavIf(tab) {
   nav.style.display = (tab === 'ai' || tab === 'dsa') ? 'none' : '';
 }
 
-// Push a full state object onto the stack.
-// Consecutive duplicate states are collapsed so normal tab-switches
-// don't flood the stack.
+// Push a full state object — collapses identical consecutive states
 function __pushNavState(s) {
   if (__navSuppress) return;
-  // Avoid pushing an identical state twice in a row
   const top = navStack[navStack.length - 1];
   if (top && top.tab === s.tab && top.view === s.view &&
       top.level === s.level && top.week === s.week) return;
@@ -5446,31 +5452,26 @@ function __pushNavState(s) {
   } catch (e) { /* ignore */ }
 }
 
-// Restore a full state object without adding anything to the stack.
+// Restore a full state object without touching the stack
 function __applyNavState(s) {
   __navSuppress = true;
   try {
     if (s.tab === 'ai' && s.view === 'weeks' && s.level) {
-      // Restore: AI tab → level screen (weeks list)
       APP.switchTab('ai');
-      if (typeof APP.selectAILevel === 'function') {
-        // Call the *original* wrapped function bypassing our wrapper's push
-        const __origLvl2 = APP.__origSelectAILevel || APP.selectAILevel;
-        __origLvl2.call(APP, s.level);
-      }
+      const fn = APP.__origSelectAILevel || APP.selectAILevel;
+      if (fn) fn.call(APP, s.level);
     } else if (s.tab === 'ai' && s.view === 'days' && s.level && s.week != null) {
-      // Restore: AI tab → week screen (days list)
       APP.switchTab('ai');
-      if (typeof APP.selectAILevel === 'function') {
-        const __origLvl2 = APP.__origSelectAILevel || APP.selectAILevel;
-        __origLvl2.call(APP, s.level);
-      }
-      if (typeof APP.selectAIWeek === 'function') {
-        const __origWk2 = APP.__origSelectAIWeek || APP.selectAIWeek;
-        __origWk2.call(APP, s.week);
-      }
+      const fnL = APP.__origSelectAILevel || APP.selectAILevel;
+      if (fnL) fnL.call(APP, s.level);
+      const fnW = APP.__origSelectAIWeek || APP.selectAIWeek;
+      if (fnW) fnW.call(APP, s.week);
+    } else if (s.tab === 'ai' && s.view === 'levels') {
+      APP.switchTab('ai');
+      // Show the levels screen directly
+      const showScreenFn = (typeof showScreen === 'function') ? showScreen : null;
+      if (showScreenFn) showScreenFn('ai-screen-levels');
     } else {
-      // Normal tab switch
       APP.switchTab(s.tab);
     }
   } finally {
@@ -5480,10 +5481,8 @@ function __applyNavState(s) {
 }
 
 // ── Single, consolidated APP.switchTab override ──────────────────────────────
-// Merges: extra-tab handling (calendar/goals/badges), pomo hooks, and nav tracking
 APP.switchTab = function (name) {
   if (['calendar', 'goals', 'badges'].includes(name)) {
-    // Handle tabs that live outside the core APP panel set
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const panel = document.getElementById('tab-' + name);
@@ -5504,9 +5503,7 @@ APP.switchTab = function (name) {
     }
   }
 
-  // Navigation tracking + bottom-nav visibility
   __hideBottomNavIf(name);
-  // When switching to 'ai', record the levels screen as the base view
   if (!__navSuppress) {
     const view = (name === 'ai') ? 'levels' : undefined;
     __pushNavState({ tab: name, view });
@@ -5520,16 +5517,14 @@ APP.goBack = function () {
     const prev = navStack[navStack.length - 1];
     __applyNavState(prev);
   } else {
-    // Only one entry left — stay (or go home if it isn't home already)
     const cur = navStack[0];
     if (!cur || cur.tab !== 'home') APP.switchTab('home');
   }
 };
 
-// ── Wrap selectAILevel — push { tab:'ai', view:'weeks', level } ───────────────
+// ── Wrap selectAILevel — records { tab:'ai', view:'weeks', level } ────────────
 if (APP.selectAILevel) {
   const __origLvl = APP.selectAILevel.bind(APP);
-  // Keep a reference so __applyNavState can call it suppressed
   APP.__origSelectAILevel = __origLvl;
   APP.selectAILevel = function (level) {
     __origLvl(level);
@@ -5537,13 +5532,11 @@ if (APP.selectAILevel) {
   };
 }
 
-// ── Wrap selectAIWeek — push { tab:'ai', view:'days', level, week } ───────────
+// ── Wrap selectAIWeek — records { tab:'ai', view:'days', level, week } ────────
 if (APP.selectAIWeek) {
   const __origWk = APP.selectAIWeek.bind(APP);
-  // Keep a reference so __applyNavState can call it suppressed
   APP.__origSelectAIWeek = __origWk;
   APP.selectAIWeek = function (week) {
-    // Read current level from the top of the stack (or aiCurrentLevel if accessible)
     const topState = navStack[navStack.length - 1];
     const level = (topState && topState.level) ? topState.level : null;
     __origWk(week);
@@ -5565,11 +5558,10 @@ window.addEventListener('popstate', function () {
 // ── Seed nav stack once the app has initialised ───────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
   setTimeout(function () {
-    // Reset to a clean single-entry stack representing the current tab
     const startTab = (typeof state !== 'undefined' && state.currentTab) ? state.currentTab : 'home';
     navStack = [{ tab: startTab }];
     __hideBottomNavIf(startTab);
-  }, 700); // slightly after APP.init (500 ms) finishes
+  }, 700);
 });
 
 })(); // end IIFE
