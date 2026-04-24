@@ -5416,7 +5416,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════
 //  NAVIGATION STACK + BACK BUTTON + BROWSER HISTORY
 // ═══════════════════════════════════════════════════════
-let navStack = ['home'];
+let navStack = [{ tab: 'home' }];
 let __navSuppress = false;
 
 function __hideBottomNavIf(tab) {
@@ -5427,21 +5427,35 @@ function __hideBottomNavIf(tab) {
 
 function __pushNavState(s) {
   if (__navSuppress) return;
-  navStack.push(s.tab);
+  navStack.push(s);
   try {
     history.pushState({ __nav: true, tab: s.tab }, '', '#' + s.tab);
   } catch (e) { /* ignore */ }
 }
 
-function __applyNavState(tab) {
+function __applyNavState(state) {
   __navSuppress = true;
+
   try {
-    APP.switchTab(tab);
+    if (state.tab) {
+      APP.switchTab(state.tab);
+    }
+
+    if (state.view === 'level') {
+      APP.selectAILevel(state.level);
+    }
+
+    if (state.view === 'week') {
+      APP.selectAIWeek(state.week);
+    }
+
   } finally {
     __navSuppress = false;
   }
-  __hideBottomNavIf(tab);
+
+  __hideBottomNavIf(state.tab);
 }
+
 
 // ── Single, consolidated APP.switchTab override ──────────────────────────────
 // Merges: extra-tab handling (calendar/goals/badges), pomo hooks, and nav tracking
@@ -5487,22 +5501,58 @@ APP.goBack = function () {
 // ── Wrap selectAILevel ────────────────────────────────────────────────────────
 if (APP.selectAILevel) {
   const __origLvl = APP.selectAILevel.bind(APP);
+
   APP.selectAILevel = function (level) {
     __origLvl(level);
-    if (!__navSuppress) __pushNavState({ tab: 'ai' });
+
+    if (!__navSuppress) {
+      __pushNavState({
+        tab: 'ai',
+        view: 'level',
+        level: level
+      });
+    }
   };
 }
 
 // ── Wrap selectAIWeek ─────────────────────────────────────────────────────────
 if (APP.selectAIWeek) {
   const __origWk = APP.selectAIWeek.bind(APP);
-  APP.selectAIWeek = function (week) {
-    __origWk(week);
-    if (!__navSuppress) __pushNavState({ tab: 'ai' });
-  };
+APP.selectAIWeek = function (week) {
+  _origWk(week);
+
+  if (!__navSuppress) {
+    __pushNavState({
+      tab: 'ai',
+      view: 'week',
+      week: week
+    });
+  }
+};
 }
 
-// ── Phone / browser hardware back button ─────────────────────────────────────
+// =========================
+// NAV STATE APPLY FUNCTION
+// =========================
+function __applyNavState(state) {
+  __navSuppress = true;
+
+  if (state.tab) {
+    APP.switchTab(state.tab);
+  }
+
+  if (state.view === 'level') {
+    APP.selectAILevel(state.level);
+  }
+
+  if (state.view === 'week') {
+    APP.selectAIWeek(state.week);
+  }
+
+  __navSuppress = false;
+}
+
+// ── Phone / browser hardware back button ─────────────────────────────────
 window.addEventListener('popstate', function () {
   if (navStack.length > 1) {
     navStack.pop();
@@ -5517,8 +5567,11 @@ window.addEventListener('popstate', function () {
 document.addEventListener('DOMContentLoaded', function () {
   setTimeout(function () {
     // Reset to a clean single-entry stack representing the current tab
-    const startTab = (typeof state !== 'undefined' && state.currentTab) ? state.currentTab : 'home';
-    navStack = [startTab];
+       const startTab = 'home';
+
+navStack = [{
+  tab: startTab
+}];
     __hideBottomNavIf(startTab);
   }, 700); // slightly after APP.init (500 ms) finishes
 });
