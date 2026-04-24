@@ -1,49 +1,37 @@
 /**
- * notes_storage.js — RoadmapX Notes Storage Module (v2)
- * Backend: https://roadmapx-backend-3qmc.onrender.com
+ * notes_storage.js — RoadmapX Notes Storage Module (FIXED v3)
  *
- * Behaviour:
- *  - Always auto-saves draft to localStorage while typing
- *  - On page load:
- *      logged-in  → load notes from backend (/get-text)
- *      guest      → load notes from localStorage
- *  - Save button:
- *      logged-in  → POST to backend (/save-text), clear localStorage copy
- *      guest      → show login prompt (do NOT save to backend)
- *  - After login (call window.NotesBridge.syncAfterLogin()):
- *      take localStorage notes → save each to backend → clear localStorage
- *
- * Auth detection: session cookie via GET /me
- * Backend endpoints: POST /save-text  { title, content }
- *                    GET  /get-text
+ * FIXES:
+ *  1. No longer makes its own /me auth check — uses HybridData.isLoggedIn()
+ *     as the single source of truth, eliminating duplicate calls & desync.
+ *  2. Guests: drafts persist across refresh via localStorage.
+ *  3. syncAfterLogin() is idempotent (won't double-upload on HMR / re-mount).
+ *  4. initNotes() waits for rx:authReady event before running.
+ *  5. All containers are null-checked before innerHTML writes.
  */
-
 (function () {
   "use strict";
 
-  /* ─────────────────────────── config ─────────────────────────────────── */
-
   const API = "https://roadmapx-backend-3qmc.onrender.com";
 
-  /* ─────────────────────────────── state ──────────────────────────────── */
+  // ── Auth ────────────────────────────────────────────────
+  // FIX: delegate to HybridData — single source of truth
+  function isLoggedIn() {
+    return !!(window.HybridData && window.HybridData.isLoggedIn());
+  }
 
-  let _isLoggedIn = false;
-  let _username   = null;
-
-  /* ─────────────────────────── helpers ────────────────────────────────── */
-
-  const GUEST_AI_KEY   = "roadmapx_notes_ai_guest";
-  const GUEST_DSA_KEY  = "roadmapx_notes_dsa_guest";
-  const GUEST_AI_DRAFT = "roadmapx_draft_ai_guest";
-  const GUEST_DSA_DRAFT= "roadmapx_draft_dsa_guest";
+  // ── Guest localStorage keys ─────────────────────────────
+  const GUEST_AI_KEY    = "roadmapx_notes_ai_guest";
+  const GUEST_DSA_KEY   = "roadmapx_notes_dsa_guest";
+  const GUEST_AI_DRAFT  = "roadmapx_draft_ai_guest";
+  const GUEST_DSA_DRAFT = "roadmapx_draft_dsa_guest";
 
   function loadLocal(key) {
     try { return JSON.parse(localStorage.getItem(key) || "[]"); }
     catch (e) { return []; }
   }
-
   function saveLocal(key, arr) {
-    localStorage.setItem(key, JSON.stringify(arr));
+    try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
   }
 
   function todayStr() {
@@ -51,51 +39,23 @@
       day: "2-digit", month: "short", year: "numeric"
     });
   }
-
-  function wordCount(text) {
-    return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+  function wordCount(t) {
+    return t.trim() === "" ? 0 : t.trim().split(/\s+/).length;
   }
-
   function showToast(msg) {
-    const t = document.getElementById("toast");
-    if (!t) return;
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 2500);
+    const el = document.getElementById("toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 2500);
+  }
+  function esc(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  /* ──────────────────────── auth check ────────────────────────────────── */
-
-  function checkAuth(callback) {
-    fetch(API + "/me", { credentials: "include" })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data && data.success) {
-          _isLoggedIn = true;
-          _username   = data.username;
-        } else {
-          _isLoggedIn = false;
-          _username   = null;
-        }
-        callback();
-      })
-      .catch(function () {
-        _isLoggedIn = false;
-        _username   = null;
-        callback();
-      });
-  }
-
-  /* ──────────────────────── login prompt modal ────────────────────────── */
-
+  // ── Login prompt ────────────────────────────────────────
   function showLoginPrompt() {
     const overlay = document.getElementById("modal-confirm");
     if (overlay) {
@@ -103,42 +63,37 @@
       const text  = document.getElementById("confirm-text");
       const okBtn = document.getElementById("confirm-ok");
       if (title) title.textContent = "🔒 Login Required";
-      if (text)  text.textContent  =
-        "Your notes are saved locally. Log in to sync them across devices and keep them safe.";
+      if (text)  text.textContent  = "Your notes are saved locally. Log in to sync them across devices.";
       if (okBtn) {
-        okBtn.textContent = "Go to Login";
-        okBtn.style.background = "linear-gradient(135deg, #7b2fff, #00f5d4)";
-        okBtn.onclick = function () { window.location.href = "login.html"; };
+        okBtn.textContent  = "Go to Login";
+        okBtn.style.background = "linear-gradient(135deg,#7b2fff,#00f5d4)";
+        okBtn.onclick = () => { window.location.href = "login.html"; };
       }
       overlay.classList.add("active");
       overlay.style.display = "flex";
     } else {
-      if (confirm("Log in to save notes to the cloud and sync across devices.\n\nGo to Login?")) {
+      if (confirm("Log in to save notes to the cloud.\n\nGo to Login?"))
         window.location.href = "login.html";
-      }
     }
   }
 
-  /* ──────────────────────── backend helpers ────────────────────────────── */
-
+  // ── Backend helpers ─────────────────────────────────────
   function fetchBackendNotes(section) {
     return fetch(API + "/get-text", { credentials: "include" })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(data => {
         if (!data.success) return [];
         return (data.data || [])
-          .filter(function (n) { return n.title === section; })
-          .map(function (n) {
-            return {
-              id:   n._id || n.id || Date.now(),
-              date: n.createdAt
-                ? new Date(n.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-                : todayStr(),
-              text: n.content
-            };
-          });
+          .filter(n => n.title === section)
+          .map(n => ({
+            id:   n._id || n.id || String(Date.now()),
+            date: n.createdAt
+              ? new Date(n.createdAt).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" })
+              : todayStr(),
+            text: n.content,
+          }));
       })
-      .catch(function () { return []; });
+      .catch(() => []);
   }
 
   function postBackendNote(section, text) {
@@ -146,51 +101,44 @@
       method:      "POST",
       credentials: "include",
       headers:     { "Content-Type": "application/json" },
-      body:        JSON.stringify({ title: section, content: text })
+      body:        JSON.stringify({ title: section, content: text }),
     })
-      .then(function (r) { return r.json(); })
-      .catch(function () { return { success: false }; });
+      .then(r => r.json())
+      .catch(() => ({ success: false }));
   }
 
-  /* ───────────────────── auto-save debounce timers ────────────────────── */
+  // ── Debounce timers ─────────────────────────────────────
+  let aiTimer = null, dsaTimer = null;
 
-  let aiTimer  = null;
-  let dsaTimer = null;
-
-  /* ═══════════════════════════ AI NOTES ══════════════════════════════════ */
+  // ════════════════════ AI NOTES ══════════════════════════
 
   function aiAutoSaveNotes() {
-    const ta = document.getElementById("ai-notes-ta");
-    if (!ta) return;
+    const ta = document.getElementById("ai-notes-ta"); if (!ta) return;
     const wc = document.getElementById("ai-notes-wc");
     if (wc) wc.textContent = wordCount(ta.value) + " words";
     clearTimeout(aiTimer);
-    aiTimer = setTimeout(function () {
-      localStorage.setItem(GUEST_AI_DRAFT, ta.value);
+    aiTimer = setTimeout(() => {
+      try { localStorage.setItem(GUEST_AI_DRAFT, ta.value); } catch (e) {}
     }, 800);
   }
 
   function aiSaveNotes() {
     const ta = document.getElementById("ai-notes-ta");
-    if (!ta || ta.value.trim() === "") {
-      showToast("⚠️ Write something before saving!");
-      return;
-    }
+    if (!ta || !ta.value.trim()) { showToast("⚠️ Write something first!"); return; }
 
-    if (!_isLoggedIn) {
+    if (!isLoggedIn()) {
       const notes = loadLocal(GUEST_AI_KEY);
       notes.unshift({ id: Date.now(), date: todayStr(), text: ta.value.trim() });
       saveLocal(GUEST_AI_KEY, notes);
-      localStorage.setItem(GUEST_AI_DRAFT, ta.value);
+      try { localStorage.setItem(GUEST_AI_DRAFT, ta.value); } catch (e) {}
+      renderAINotesList(notes);
       showLoginPrompt();
       return;
     }
 
-    const text = ta.value.trim();
-    postBackendNote("ai", text).then(function (data) {
+    postBackendNote("ai", ta.value.trim()).then(data => {
       if (data.success) {
-        localStorage.removeItem(GUEST_AI_DRAFT);
-        localStorage.removeItem(GUEST_AI_KEY);
+        try { localStorage.removeItem(GUEST_AI_DRAFT); localStorage.removeItem(GUEST_AI_KEY); } catch (e) {}
         ta.value = "";
         const wc = document.getElementById("ai-notes-wc");
         if (wc) wc.textContent = "0 words";
@@ -198,92 +146,85 @@
         loadAndRenderAINotes();
         syncProfileNotesCount();
       } else {
-        showToast("❌ Failed to save. Try again.");
+        showToast("❌ Save failed. Try again.");
       }
     });
   }
 
   function loadAndRenderAINotes() {
-    if (_isLoggedIn) {
-      fetchBackendNotes("ai").then(function (notes) {
+    if (isLoggedIn()) {
+      fetchBackendNotes("ai").then(notes => {
         renderAINotesList(notes);
         syncProfileNotesCount(notes.length);
       });
     } else {
-      const notes = loadLocal(GUEST_AI_KEY);
-      renderAINotesList(notes);
+      renderAINotesList(loadLocal(GUEST_AI_KEY));
     }
   }
 
   function renderAINotesList(notes) {
-    const container = document.getElementById("ai-notes-list");
-    if (!container) return;
+    const container = document.getElementById("ai-notes-list"); if (!container) return;
     if (!notes || notes.length === 0) {
-      container.innerHTML =
-        '<p style="color:var(--t2);font-size:13px;padding:8px 0;">No saved AI notes yet. Write and save your first note above!</p>';
+      container.innerHTML = '<p style="color:var(--t2);font-size:13px;padding:8px 0;">No saved AI notes yet.</p>';
       return;
     }
-    container.innerHTML = notes.map(function (n) {
+    container.innerHTML = notes.map(n => {
       const preview = n.text.length > 120 ? n.text.slice(0, 120) + "…" : n.text;
-      return (
-        '<div class="card" style="margin-bottom:10px;">' +
-          '<div class="card-header">' +
-            '<span class="card-title" style="font-size:12px;color:var(--t2);">📅 ' + n.date + '</span>' +
-            '<button onclick="APP.deleteAINote(\'' + n.id + '\')" ' +
-              'style="background:none;border:none;color:var(--t2);font-size:16px;cursor:pointer;padding:2px 6px;" ' +
-              'title="Delete note">🗑</button>' +
-          '</div>' +
-          '<div style="font-size:13px;color:var(--t1);white-space:pre-wrap;line-height:1.6;margin-top:6px;">' +
-            escapeHtml(preview) +
-          '</div>' +
-        '</div>'
-      );
+      return `<div class="card" style="margin-bottom:10px;">
+        <div class="card-header">
+          <span class="card-title" style="font-size:12px;color:var(--t2);">📅 ${esc(n.date)}</span>
+          <button onclick="APP.deleteAINote('${esc(String(n.id))}')"
+            style="background:none;border:none;color:var(--t2);font-size:16px;cursor:pointer;padding:2px 6px;"
+            title="Delete">🗑</button>
+        </div>
+        <div style="font-size:13px;color:var(--t1);white-space:pre-wrap;line-height:1.6;margin-top:6px;">${esc(preview)}</div>
+      </div>`;
     }).join("");
   }
 
   function deleteAINote(id) {
-    if (_isLoggedIn) {
-      showToast("🗑 Note deleted (local view)");
-    }
-    const notes = loadLocal(GUEST_AI_KEY).filter(function (n) { return String(n.id) !== String(id); });
+    // Remove from local guest cache (used for display)
+    const notes = loadLocal(GUEST_AI_KEY).filter(n => String(n.id) !== String(id));
     saveLocal(GUEST_AI_KEY, notes);
-    loadAndRenderAINotes();
+    if (isLoggedIn()) {
+      // Re-fetch from backend to get accurate list
+      showToast("🗑 Note removed");
+      loadAndRenderAINotes();
+    } else {
+      renderAINotesList(notes);
+      showToast("🗑 Note deleted");
+    }
   }
 
-  /* ═══════════════════════════ DSA NOTES ══════════════════════════════════ */
+  // ════════════════════ DSA NOTES ═════════════════════════
 
   function dsaAutoSaveNotes() {
-    const ta = document.getElementById("dsa-notes-ta");
-    if (!ta) return;
+    const ta = document.getElementById("dsa-notes-ta"); if (!ta) return;
     const wc = document.getElementById("dsa-notes-wc");
     if (wc) wc.textContent = wordCount(ta.value) + " words";
     clearTimeout(dsaTimer);
-    dsaTimer = setTimeout(function () {
-      localStorage.setItem(GUEST_DSA_DRAFT, ta.value);
+    dsaTimer = setTimeout(() => {
+      try { localStorage.setItem(GUEST_DSA_DRAFT, ta.value); } catch (e) {}
     }, 800);
   }
 
   function dsaSaveNotes() {
     const ta = document.getElementById("dsa-notes-ta");
-    if (!ta || ta.value.trim() === "") {
-      showToast("⚠️ Write something before saving!");
-      return;
-    }
+    if (!ta || !ta.value.trim()) { showToast("⚠️ Write something first!"); return; }
 
-    if (!_isLoggedIn) {
+    if (!isLoggedIn()) {
       const notes = loadLocal(GUEST_DSA_KEY);
       notes.unshift({ id: Date.now(), date: todayStr(), text: ta.value.trim() });
       saveLocal(GUEST_DSA_KEY, notes);
-      localStorage.setItem(GUEST_DSA_DRAFT, ta.value);
+      try { localStorage.setItem(GUEST_DSA_DRAFT, ta.value); } catch (e) {}
+      renderDSANotesList(notes);
       showLoginPrompt();
       return;
     }
 
-    const text = ta.value.trim();
-    postBackendNote("dsa", text).then(function (data) {
+    postBackendNote("dsa", ta.value.trim()).then(data => {
       if (data.success) {
-        localStorage.removeItem(GUEST_DSA_DRAFT);
-        localStorage.removeItem(GUEST_DSA_KEY);
+        try { localStorage.removeItem(GUEST_DSA_DRAFT); localStorage.removeItem(GUEST_DSA_KEY); } catch (e) {}
         ta.value = "";
         const wc = document.getElementById("dsa-notes-wc");
         if (wc) wc.textContent = "0 words";
@@ -291,173 +232,155 @@
         loadAndRenderDSANotes();
         syncProfileNotesCount();
       } else {
-        showToast("❌ Failed to save. Try again.");
+        showToast("❌ Save failed. Try again.");
       }
     });
   }
 
   function loadAndRenderDSANotes() {
-    if (_isLoggedIn) {
-      fetchBackendNotes("dsa").then(function (notes) {
-        renderDSANotesList(notes);
-      });
+    if (isLoggedIn()) {
+      fetchBackendNotes("dsa").then(notes => renderDSANotesList(notes));
     } else {
-      const notes = loadLocal(GUEST_DSA_KEY);
-      renderDSANotesList(notes);
+      renderDSANotesList(loadLocal(GUEST_DSA_KEY));
     }
   }
 
   function renderDSANotesList(notes) {
-    const container = document.getElementById("dsa-notes-list");
-    if (!container) return;
+    const container = document.getElementById("dsa-notes-list"); if (!container) return;
     if (!notes || notes.length === 0) {
-      container.innerHTML =
-        '<p style="color:var(--t2);font-size:13px;padding:8px 0;">No saved DSA notes yet. Write and save your first note above!</p>';
+      container.innerHTML = '<p style="color:var(--t2);font-size:13px;padding:8px 0;">No saved DSA notes yet.</p>';
       return;
     }
-    container.innerHTML = notes.map(function (n) {
+    container.innerHTML = notes.map(n => {
       const preview = n.text.length > 120 ? n.text.slice(0, 120) + "…" : n.text;
-      return (
-        '<div class="card" style="margin-bottom:10px;">' +
-          '<div class="card-header">' +
-            '<span class="card-title" style="font-size:12px;color:var(--t2);">📅 ' + n.date + '</span>' +
-            '<button onclick="APP.deleteDSANote(\'' + n.id + '\')" ' +
-              'style="background:none;border:none;color:var(--t2);font-size:16px;cursor:pointer;padding:2px 6px;" ' +
-              'title="Delete note">🗑</button>' +
-          '</div>' +
-          '<div style="font-size:13px;color:var(--t1);white-space:pre-wrap;line-height:1.6;margin-top:6px;">' +
-            escapeHtml(preview) +
-          '</div>' +
-        '</div>'
-      );
+      return `<div class="card" style="margin-bottom:10px;">
+        <div class="card-header">
+          <span class="card-title" style="font-size:12px;color:var(--t2);">📅 ${esc(n.date)}</span>
+          <button onclick="APP.deleteDSANote('${esc(String(n.id))}')"
+            style="background:none;border:none;color:var(--t2);font-size:16px;cursor:pointer;padding:2px 6px;"
+            title="Delete">🗑</button>
+        </div>
+        <div style="font-size:13px;color:var(--t1);white-space:pre-wrap;line-height:1.6;margin-top:6px;">${esc(preview)}</div>
+      </div>`;
     }).join("");
   }
 
   function deleteDSANote(id) {
-    const notes = loadLocal(GUEST_DSA_KEY).filter(function (n) { return String(n.id) !== String(id); });
+    const notes = loadLocal(GUEST_DSA_KEY).filter(n => String(n.id) !== String(id));
     saveLocal(GUEST_DSA_KEY, notes);
-    loadAndRenderDSANotes();
-    showToast("🗑 Note deleted");
+    if (isLoggedIn()) {
+      showToast("🗑 Note removed");
+      loadAndRenderDSANotes();
+    } else {
+      renderDSANotesList(notes);
+      showToast("🗑 Note deleted");
+    }
   }
 
-  /* ─────────────────── profile notes count sync ───────────────────────── */
-
+  // ── Profile notes count ─────────────────────────────────
   function syncProfileNotesCount(aiCount) {
-    const el = document.getElementById("p-notes-count");
-    if (!el) return;
+    const el = document.getElementById("p-notes-count"); if (!el) return;
     if (aiCount !== undefined) { el.textContent = aiCount; return; }
-    if (_isLoggedIn) {
-      Promise.all([
-        fetchBackendNotes("ai"),
-        fetchBackendNotes("dsa")
-      ]).then(function (results) {
-        el.textContent = results[0].length + results[1].length;
-      });
+    if (isLoggedIn()) {
+      Promise.all([fetchBackendNotes("ai"), fetchBackendNotes("dsa")])
+        .then(([a, d]) => { el.textContent = (a||[]).length + (d||[]).length; })
+        .catch(() => { el.textContent = "—"; });
     } else {
       el.textContent = loadLocal(GUEST_AI_KEY).length + loadLocal(GUEST_DSA_KEY).length;
     }
   }
 
-  /* ──────────────────────── post-login sync ───────────────────────────── */
+  // ── Post-login sync ─────────────────────────────────────
+  let _syncDone = false;
 
   function syncAfterLogin(username) {
-    _isLoggedIn = true;
-    _username   = username;
+    if (_syncDone) return;
+    _syncDone = true;
 
     const aiNotes  = loadLocal(GUEST_AI_KEY);
     const dsaNotes = loadLocal(GUEST_DSA_KEY);
     const aiDraft  = localStorage.getItem(GUEST_AI_DRAFT);
     const dsaDraft = localStorage.getItem(GUEST_DSA_DRAFT);
-
     const promises = [];
 
-    aiNotes.forEach(function (n) {
-      promises.push(postBackendNote("ai", n.text));
-    });
-    dsaNotes.forEach(function (n) {
-      promises.push(postBackendNote("dsa", n.text));
-    });
-    if (aiDraft && aiDraft.trim()) {
-      promises.push(postBackendNote("ai", aiDraft.trim()));
-    }
-    if (dsaDraft && dsaDraft.trim()) {
-      promises.push(postBackendNote("dsa", dsaDraft.trim()));
-    }
+    aiNotes.forEach(n  => promises.push(postBackendNote("ai",  n.text)));
+    dsaNotes.forEach(n => promises.push(postBackendNote("dsa", n.text)));
+    if (aiDraft  && aiDraft.trim())  promises.push(postBackendNote("ai",  aiDraft.trim()));
+    if (dsaDraft && dsaDraft.trim()) promises.push(postBackendNote("dsa", dsaDraft.trim()));
 
-    Promise.all(promises).then(function () {
-      localStorage.removeItem(GUEST_AI_KEY);
-      localStorage.removeItem(GUEST_DSA_KEY);
-      localStorage.removeItem(GUEST_AI_DRAFT);
-      localStorage.removeItem(GUEST_DSA_DRAFT);
+    const cleanup = () => {
+      try {
+        localStorage.removeItem(GUEST_AI_KEY);   localStorage.removeItem(GUEST_DSA_KEY);
+        localStorage.removeItem(GUEST_AI_DRAFT); localStorage.removeItem(GUEST_DSA_DRAFT);
+      } catch (e) {}
       loadAndRenderAINotes();
       loadAndRenderDSANotes();
-      if (promises.length > 0) {
-        showToast("☁️ Notes synced to your account!");
-      }
-    });
+    };
+
+    if (promises.length === 0) { cleanup(); return; }
+
+    Promise.all(promises)
+      .then(() => { showToast("☁️ Notes synced to your account!"); cleanup(); })
+      .catch(() => { cleanup(); });
   }
 
-  /* ────────────────────────── page init ──────────────────────────────── */
-
+  // ── Init ────────────────────────────────────────────────
   function initNotes() {
-    checkAuth(function () {
-      const pendingSync = sessionStorage.getItem("rx_pending_sync");
-      if (pendingSync && _isLoggedIn) {
-        sessionStorage.removeItem("rx_pending_sync");
-        syncAfterLogin(pendingSync);
-        return;
-      }
+    const pendingSync = sessionStorage.getItem("rx_pending_sync");
+    if (pendingSync && isLoggedIn()) {
+      sessionStorage.removeItem("rx_pending_sync");
+      syncAfterLogin(pendingSync);
+      return;
+    }
 
-      // Restore draft for guests
+    // Restore drafts for guests
+    if (!isLoggedIn()) {
       const aiDraft = localStorage.getItem(GUEST_AI_DRAFT);
       const aiTa    = document.getElementById("ai-notes-ta");
-      if (aiTa && aiDraft && !_isLoggedIn) {
+      if (aiTa && aiDraft) {
         aiTa.value = aiDraft;
         const wc = document.getElementById("ai-notes-wc");
         if (wc) wc.textContent = wordCount(aiDraft) + " words";
       }
-
       const dsaDraft = localStorage.getItem(GUEST_DSA_DRAFT);
       const dsaTa    = document.getElementById("dsa-notes-ta");
-      if (dsaTa && dsaDraft && !_isLoggedIn) {
+      if (dsaTa && dsaDraft) {
         dsaTa.value = dsaDraft;
         const wc = document.getElementById("dsa-notes-wc");
         if (wc) wc.textContent = wordCount(dsaDraft) + " words";
       }
-
-      loadAndRenderAINotes();
-      loadAndRenderDSANotes();
-      syncProfileNotesCount();
-    });
-  }
-
-  /* ──────────────────────── attach to APP ──────────────────────────────── */
-
-  function attachToApp() {
-    if (typeof window.APP === "undefined") {
-      setTimeout(attachToApp, 50);
-      return;
     }
 
-    window.APP.aiAutoSaveNotes   = aiAutoSaveNotes;
-    window.APP.aiSaveNotes       = aiSaveNotes;
-    window.APP.renderAINotesList = function () { loadAndRenderAINotes(); };
-    window.APP.deleteAINote      = deleteAINote;
+    loadAndRenderAINotes();
+    loadAndRenderDSANotes();
+    syncProfileNotesCount();
+  }
+
+  // ── Attach to APP ───────────────────────────────────────
+  function attachToApp() {
+    if (typeof window.APP === "undefined") { setTimeout(attachToApp, 50); return; }
+
+    window.APP.aiAutoSaveNotes    = aiAutoSaveNotes;
+    window.APP.aiSaveNotes        = aiSaveNotes;
+    window.APP.renderAINotesList  = () => loadAndRenderAINotes();
+    window.APP.deleteAINote       = deleteAINote;
 
     window.APP.dsaAutoSaveNotes   = dsaAutoSaveNotes;
     window.APP.dsaSaveNotes       = dsaSaveNotes;
-    window.APP.renderDSANotesList = function () { loadAndRenderDSANotes(); };
+    window.APP.renderDSANotesList = () => loadAndRenderDSANotes();
     window.APP.deleteDSANote      = deleteDSANote;
 
-    // Expose bridge for post-login sync
-    // Call window.NotesBridge.syncAfterLogin(username) from login_script.js after success
-    window.NotesBridge = { syncAfterLogin: syncAfterLogin };
+    window.NotesBridge = { syncAfterLogin };
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initNotes);
-    } else {
-      initNotes();
-    }
+    // FIX: Wait for HybridData auth check to complete before initialising,
+    // so isLoggedIn() is accurate on the very first call.
+    window.addEventListener("rx:authReady", () => initNotes(), { once: true });
+
+    // Safety fallback: if rx:authReady never fires (HybridData absent), init anyway
+    setTimeout(() => {
+      const aiList = document.getElementById("ai-notes-list");
+      if (aiList && aiList.innerHTML === "") initNotes();
+    }, 2000);
   }
 
   attachToApp();

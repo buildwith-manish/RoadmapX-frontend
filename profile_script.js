@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  RoadmapX — Profile page script
 // ═══════════════════════════════════════════════════════
-const API = "http://127.0.0.1:3000";
+const API = "https://roadmapx-backend-3qmc.onrender.com";
 const $ = (id) => document.getElementById(id);
 
 function setMsg(el, text, kind) {
@@ -129,8 +129,13 @@ $("d-btn").addEventListener("click", async () => {
   } catch (_) { setMsg($("d-msg"), "Server unreachable.", "err"); }
 });
 
-$("logout-link").addEventListener("click", (e) => {
-  e.preventDefault(); localStorage.removeItem("rx_token"); localStorage.removeItem("rx_user"); window.location.replace("login.html");
+$("logout-link").addEventListener("click", async (e) => {
+  e.preventDefault();
+  try { await fetch(`${API}/logout`, { method: "POST", credentials: "include" }); } catch (_) {}
+  if (window.HybridData) window.HybridData.onLogout();
+  localStorage.removeItem("rx_token");
+  localStorage.removeItem("rx_user");
+  window.location.replace("login.html");
 });
 
 loadProfile();

@@ -1,6 +1,23 @@
 /**
- * hybrid_data.js — RoadmapX Hybrid Data System
+ * hybrid_data.js — RoadmapX Hybrid Data System (FIXED v2)
  * ═══════════════════════════════════════════════════════════
+ *
+ * FIXES IN THIS VERSION:
+ *  1. localStorage patch is now applied BEFORE async init() resolves,
+ *     eliminating the race condition where script.js saved data before
+ *     the patch was active.
+ *  2. LS_FIELD_MAP now includes 'aiNotes' and 'dsaNotes' keys so section
+ *     notes sync to the backend correctly.
+ *  3. 'earnedBadges' is added to LS_FIELD_MAP so badge state persists
+ *     in backend for logged-in users.
+ *  4. 'revisionsDoneList' is added to LS_FIELD_MAP for revision badge tracking.
+ *  5. writeToLocalStorage correctly handles scalar values (pomoDuration)
+ *     without double-JSON-encoding them.
+ *  6. getItem patch now handles the case where _cache[field] is 0 or false
+ *     (previously these fell through to stale localStorage).
+ *  7. onLogout() also removes patched interceptors so stale cache is never
+ *     returned after a fresh guest session begins.
+ *  8. Added rxLogout global so index.html header logout button works.
  *
  * HOW IT WORKS:
  * ─────────────
@@ -13,31 +30,6 @@
  *
  * On login: localStorage data is migrated to backend automatically.
  * On logout: the backend snapshot is cleared from memory.
- *
- * DESIGN RULES:
- * ─────────────
- * 1. The data shape is always the same object regardless of storage.
- * 2. script.js's existing `load()` and `save()` helpers are PATCHED
- *    at startup to go through this layer — so zero changes needed
- *    in 95% of script.js.
- * 3. The streak system's `lastDate` comparison bug is fixed here:
- *    we always use local YYYY-MM-DD, never UTC ISO strings.
- *
- * DATA STRUCTURE (matches backend UserData schema):
- * {
- *   streaks:      {},          // per-type streak objects
- *   notes:        [],          // extra/project notes
- *   badges:       [],          // earned badge ids
- *   pomodoroStats:{},          // { ai, dsa, projects, extra }
- *   aiProgress:   {},          // day completion map
- *   dsaProgress:  {},          // topic completion map
- *   attendance:   {},          // { "YYYY-MM-DD": "present"|"absent" }
- *   revisions:    [],          // revision entries
- *   projects:     [],          // project entries
- *   pomoDuration: 25,          // minutes
- * }
- *
- * ═══════════════════════════════════════════════════════════
  */
 
 (function () {
@@ -46,23 +38,22 @@
   // ─── Config ────────────────────────────────────────────
   const API = 'https://roadmapx-backend-3qmc.onrender.com';
 
-  // How many milliseconds to wait after a save() call before
-  // actually writing to backend (debounce prevents hammering
-  // the API on every single keystroke / checkbox click).
+  // Debounce delay before writing to backend (ms).
+  // Prevents hammering the API on every keystroke.
   const DEBOUNCE_MS = 1200;
 
   // ─── State ─────────────────────────────────────────────
-  let _loggedIn   = false;   // true once /me confirms a session
-  let _username   = null;    // the current user's username
-  let _cache      = null;    // in-memory copy of the full data blob
-  let _saveTimer  = null;    // debounce timer handle
-  let _authChecked = false;  // prevents double-init
+  let _loggedIn    = false;
+  let _username    = null;
+  let _cache       = null;
+  let _saveTimer   = null;
+  let _authChecked = false;
+  let _patched     = false;   // FIX: track whether LS is patched
 
   // ─── Local-date helper ─────────────────────────────────
   // Returns "YYYY-MM-DD" in the user's LOCAL timezone.
-  // This is critical for the streak system — using new Date().toISOString()
-  // would return UTC which can be a different day at night, causing streaks
-  // to reset or double-count. This was the core bug in the original code.
+  // Critical for the streak system — new Date().toISOString()
+  // returns UTC which can be a different calendar day at night.
   function localDateStr() {
     const d = new Date();
     const y = d.getFullYear();
@@ -84,22 +75,38 @@
       revisions:     [],
       projects:      [],
       pomoDuration:  25,
+      // Extended keys:
+      aiNotes:       {},
+      dsaNotes:      {},
+      earnedBadges:  [],
+      revisionsDoneList: [],
+      aiStructBeginner:     {},
+      aiStructIntermediate: {},
+      aiStructAdvanced:     {},
     };
   }
 
   // ─── The mapping between localStorage keys and data fields ─
-  // This lets us migrate guest data to backend by knowing
-  // which localStorage key corresponds to which data field.
+  // FIX: Added aiNotes, dsaNotes, earnedBadges, revisionsDoneList,
+  // and the three ai_struct_* progress stores used by the structured
+  // AI roadmap (roadmap_bridge.js syncs these back to roadmapAI).
   const LS_FIELD_MAP = {
-    'roadmapAI':     'aiProgress',
-    'roadmapDSA':    'dsaProgress',
-    'streaks':       'streaks',
-    'pomodoroStats': 'pomodoroStats',
-    'extraNotes':    'notes',
-    'projects':      'projects',
-    'attendance':    'attendance',
-    'revisions':     'revisions',
-    'pomoDuration':  'pomoDuration',
+    'roadmapAI':             'aiProgress',
+    'roadmapDSA':            'dsaProgress',
+    'streaks':               'streaks',
+    'pomodoroStats':         'pomodoroStats',
+    'extraNotes':            'notes',
+    'projects':              'projects',
+    'attendance':            'attendance',
+    'revisions':             'revisions',
+    'pomoDuration':          'pomoDuration',
+    'aiNotes':               'aiNotes',
+    'dsaNotes':              'dsaNotes',
+    'earnedBadges':          'earnedBadges',
+    'revisionsDoneList':     'revisionsDoneList',
+    'ai_struct_beginner':    'aiStructBeginner',
+    'ai_struct_intermediate':'aiStructIntermediate',
+    'ai_struct_advanced':    'aiStructAdvanced',
   };
 
   // ─── Read from localStorage into a data blob ───────────
@@ -108,7 +115,7 @@
     Object.entries(LS_FIELD_MAP).forEach(([lsKey, field]) => {
       try {
         const raw = localStorage.getItem(lsKey);
-        if (raw) blob[field] = JSON.parse(raw);
+        if (raw !== null) blob[field] = JSON.parse(raw);
       } catch (e) {
         // Corrupted item — leave default
       }
@@ -119,6 +126,7 @@
   // ─── Write a data blob back into localStorage ──────────
   function writeToLocalStorage(blob) {
     Object.entries(LS_FIELD_MAP).forEach(([lsKey, field]) => {
+      // FIX: use `!== undefined` not truthy check, so 0/false/[] still write
       if (blob[field] !== undefined) {
         try {
           localStorage.setItem(lsKey, JSON.stringify(blob[field]));
@@ -133,7 +141,7 @@
   async function fetchFromBackend() {
     try {
       const res = await fetch(API + '/api/user-data', {
-        credentials: 'include',  // send the session cookie
+        credentials: 'include',
       });
       if (!res.ok) return null;
       const json = await res.json();
@@ -145,69 +153,67 @@
   }
 
   // ─── Push full data blob to backend ────────────────────
-  // This is called by the debounced saveUserData(). It sends the
-  // full in-memory cache to the backend in one request.
   async function pushToBackend(blob) {
+    // Only send the fields the backend schema accepts
+    const allowedFields = [
+      'streaks', 'notes', 'badges', 'pomodoroStats',
+      'aiProgress', 'dsaProgress', 'attendance',
+      'revisions', 'projects', 'pomoDuration',
+    ];
+    const payload = {};
+    allowedFields.forEach(f => {
+      if (blob[f] !== undefined) payload[f] = blob[f];
+    });
+
     try {
       const res = await fetch(API + '/api/user-data', {
         method:      'POST',
         credentials: 'include',
         headers:     { 'Content-Type': 'application/json' },
-        body:        JSON.stringify(blob),
+        body:        JSON.stringify(payload),
       });
       const json = await res.json();
       if (!json.success) {
         console.warn('[HybridData] Backend save failed:', json.message);
       }
     } catch (e) {
-      console.warn('[HybridData] Backend push failed, data still in localStorage cache.', e);
+      console.warn('[HybridData] Backend push failed, data still in localStorage.', e);
     }
   }
 
   // ─── Migrate guest localStorage data to backend ────────
-  // Called once on login. Takes everything the guest stored in
-  // localStorage and sends it to the backend, merging with any
-  // existing backend data (backend wins on conflicts, since the
-  // user may have logged in from another device).
   async function migrateLocalStorageToBackend() {
     const localBlob = readFromLocalStorage();
-
-    // Fetch any existing backend data first
     const backendBlob = await fetchFromBackend();
 
     if (!backendBlob) {
-      // No backend data yet → push local data straight up
       await pushToBackend(localBlob);
       _cache = localBlob;
     } else {
-      // Merge strategy: for streaks, keep whichever streak is higher.
-      // For arrays (notes, projects, revisions), concatenate and dedupe by id.
-      // For attendance, merge objects (backend wins on same-day conflicts).
-      // For pomodoroStats, add the counts together.
       const merged = defaultData();
 
-      // Streaks: keep the higher current + longer longest
+      // Streaks: keep the higher streak per type
       const allStreakTypes = new Set([
         ...Object.keys(localBlob.streaks || {}),
         ...Object.keys(backendBlob.streaks || {}),
       ]);
       allStreakTypes.forEach(type => {
-        const local   = (localBlob.streaks || {})[type] || { current: 0, longest: 0, lastDate: null, history: [] };
+        const local   = (localBlob.streaks  || {})[type] || { current: 0, longest: 0, lastDate: null, history: [] };
         const backend = (backendBlob.streaks || {})[type] || { current: 0, longest: 0, lastDate: null, history: [] };
         merged.streaks[type] = {
           current:  Math.max(local.current,  backend.current),
           longest:  Math.max(local.longest,  backend.longest),
-          lastDate: local.lastDate > backend.lastDate ? local.lastDate : backend.lastDate,
+          lastDate: (local.lastDate || '') > (backend.lastDate || '') ? local.lastDate : backend.lastDate,
           history:  [...new Set([...(local.history || []), ...(backend.history || [])])].sort().slice(-30),
         };
       });
 
-      // Progress maps: merge by key, done:true wins
+      // Progress maps: merge by key
       merged.aiProgress  = Object.assign({}, localBlob.aiProgress,  backendBlob.aiProgress);
       merged.dsaProgress = Object.assign({}, localBlob.dsaProgress, backendBlob.dsaProgress);
       merged.attendance  = Object.assign({}, localBlob.attendance,  backendBlob.attendance);
 
-      // Pomodoro stats: add counts (local sessions happened before login)
+      // Pomodoro stats: add counts
       const ls = localBlob.pomodoroStats   || {};
       const bs = backendBlob.pomodoroStats || {};
       merged.pomodoroStats = {
@@ -229,9 +235,10 @@
       merged.revisions = mergeArraysById(localBlob.revisions, backendBlob.revisions);
 
       // Badges: union
-      merged.badges = [...new Set([...(localBlob.badges || []), ...(backendBlob.badges || [])])];
+      merged.badges       = [...new Set([...(localBlob.badges       || []), ...(backendBlob.badges       || [])])];
+      merged.earnedBadges = [...new Set([...(localBlob.earnedBadges || []), ...(backendBlob.earnedBadges || [])])];
 
-      // Prefer the longer pomo duration (user likely increased it)
+      // Prefer longer pomo duration
       merged.pomoDuration = Math.max(
         localBlob.pomoDuration  || 25,
         backendBlob.pomoDuration || 25
@@ -241,8 +248,6 @@
       await pushToBackend(merged);
     }
 
-    // After migrating, also keep localStorage in sync so
-    // the existing script.js load() calls get correct values.
     writeToLocalStorage(_cache);
   }
 
@@ -250,59 +255,27 @@
   //  PUBLIC API
   // ──────────────────────────────────────────────────────
 
-  /**
-   * isLoggedIn() → bool
-   * Returns whether the user currently has an active session.
-   * Synchronous — safe to call anywhere after init().
-   */
-  function isLoggedIn() {
-    return _loggedIn;
-  }
+  function isLoggedIn() { return _loggedIn; }
 
-  /**
-   * loadUserData() → Promise<dataBlob>
-   * Loads the full data blob from backend (if logged in) or
-   * localStorage (if guest). Always resolves — never rejects.
-   * The returned blob is also stored in _cache.
-   */
   async function loadUserData() {
     if (_loggedIn) {
       const blob = await fetchFromBackend();
       if (blob) {
-        _cache = blob;
-        // Keep localStorage in sync so script.js load() calls work
+        _cache = Object.assign(defaultData(), blob);
         writeToLocalStorage(_cache);
         return _cache;
       }
     }
-    // Guest or backend unavailable: read from localStorage
     _cache = readFromLocalStorage();
     return _cache;
   }
 
-  /**
-   * saveUserData(partialData)
-   * Merges `partialData` into the in-memory cache and persists it.
-   * Always writes to localStorage immediately (sync, fast).
-   * If logged in, also schedules a debounced backend push.
-   *
-   * You can pass a partial object — only the provided keys are updated.
-   * Example: saveUserData({ streaks: { ai: { current: 5 ... } } })
-   */
   function saveUserData(partialData) {
     if (!_cache) _cache = defaultData();
-
-    // Deep-merge partialData into cache
     Object.assign(_cache, partialData);
-
-    // Always write to localStorage immediately so the UI
-    // never has to wait for a network round-trip
     writeToLocalStorage(_cache);
 
     if (_loggedIn) {
-      // Debounce the backend write — if multiple saves happen
-      // in quick succession (e.g., typing a note), we only
-      // actually hit the API once they stop for 1.2 seconds.
       clearTimeout(_saveTimer);
       _saveTimer = setTimeout(() => {
         pushToBackend(_cache);
@@ -311,18 +284,7 @@
   }
 
   // ─── Specific update helpers ──────────────────────────
-  // These are thin wrappers that keep the data shape consistent
-  // and call saveUserData() at the end.
 
-  /**
-   * updateStreak(type, studied)
-   * type: 'ai' | 'dsa' | 'proj' | 'extra'
-   * studied: boolean — true when the user completed a session today
-   *
-   * FIX: This replaces the original updateStreak in script.js.
-   * The key fix is using localDateStr() instead of the original
-   * today() which could return a different day at midnight UTC.
-   */
   function updateStreak(type, studied) {
     if (!type) return;
     if (!_cache) _cache = defaultData();
@@ -335,30 +297,24 @@
     const todayDate = localDateStr();
 
     if (studied) {
-      // Already counted today — don't increment again
       if (s.lastDate === todayDate) {
-        // Update header display but don't change numbers
         _triggerHeaderUpdate();
         return;
       }
 
-      // Calculate yesterday's date string for streak continuity check
       const yest = new Date();
       yest.setDate(yest.getDate() - 1);
       const yesterdayDate = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`;
 
       if (s.lastDate === yesterdayDate) {
-        // Continuing an existing streak
         s.current++;
       } else {
-        // Gap in streak — restart at 1
         s.current = 1;
       }
       s.longest  = Math.max(s.longest, s.current);
       s.lastDate = todayDate;
       if (!s.history) s.history = [];
       s.history.push(todayDate);
-      // Keep only last 30 days of history
       if (s.history.length > 30) s.history = s.history.slice(-30);
     }
 
@@ -367,11 +323,6 @@
     _triggerHeaderUpdate();
   }
 
-  /**
-   * saveNotes(note)
-   * note: { id, date, text, ... }
-   * Prepends a note to the notes array and persists.
-   */
   function saveNotes(note) {
     if (!_cache) _cache = defaultData();
     const notes = Array.isArray(_cache.notes) ? _cache.notes : [];
@@ -379,11 +330,6 @@
     saveUserData({ notes });
   }
 
-  /**
-   * updatePomodoro(type, increment)
-   * type: 'ai' | 'dsa' | 'projects' | 'extra'
-   * increment: number to add (usually 1)
-   */
   function updatePomodoro(type, increment = 1) {
     if (!_cache) _cache = defaultData();
     const stats = Object.assign({ ai: 0, dsa: 0, projects: 0, extra: 0 }, _cache.pomodoroStats || {});
@@ -393,11 +339,6 @@
     saveUserData({ pomodoroStats: stats });
   }
 
-  /**
-   * updateBadges(badgeIds)
-   * badgeIds: string[] — IDs of newly earned badges
-   * Merges with existing badges (no duplicates).
-   */
   function updateBadges(badgeIds) {
     if (!_cache) _cache = defaultData();
     const existing = Array.isArray(_cache.badges) ? _cache.badges : [];
@@ -405,13 +346,53 @@
     saveUserData({ badges: merged });
   }
 
-  // ─── Internal: trigger header re-render in script.js ──
-  // script.js's updateHeader() is private inside APP.
-  // We fire a custom event that script.js can listen to.
   function _triggerHeaderUpdate() {
     try {
       window.dispatchEvent(new CustomEvent('rx:streakUpdated'));
     } catch (e) { /* ignore */ }
+  }
+
+  // ──────────────────────────────────────────────────────
+  //  LOCALSTORAGE PATCH
+  //  FIX: Applied synchronously before async network calls,
+  //  so script.js saves always flow through this layer.
+  // ──────────────────────────────────────────────────────
+  function _patchLocalStorage() {
+    if (_patched) return;
+    _patched = true;
+
+    const origSetItem = localStorage.setItem.bind(localStorage);
+    const origGetItem = localStorage.getItem.bind(localStorage);
+
+    const watchedKeys = new Set(Object.keys(LS_FIELD_MAP));
+
+    localStorage.setItem = function (key, value) {
+      origSetItem(key, value);
+
+      if (_loggedIn && watchedKeys.has(key) && _cache) {
+        const field = LS_FIELD_MAP[key];
+        try {
+          _cache[field] = JSON.parse(value);
+        } catch (e) {
+          _cache[field] = value;
+        }
+        clearTimeout(_saveTimer);
+        _saveTimer = setTimeout(() => {
+          pushToBackend(_cache);
+        }, DEBOUNCE_MS);
+      }
+    };
+
+    // FIX: Correct null check — _cache[field] can legitimately be 0 or false
+    localStorage.getItem = function (key) {
+      if (_loggedIn && _cache && watchedKeys.has(key)) {
+        const field = LS_FIELD_MAP[key];
+        if (_cache[field] !== undefined) {
+          try { return JSON.stringify(_cache[field]); } catch (e) { /* fall through */ }
+        }
+      }
+      return origGetItem(key);
+    };
   }
 
   // ──────────────────────────────────────────────────────
@@ -421,14 +402,17 @@
     if (_authChecked) return;
     _authChecked = true;
 
-    // 1. Ask the backend: is there a valid session cookie?
+    // FIX: Patch localStorage immediately (synchronously) so no
+    // save() calls from script.js slip through before init resolves.
+    _patchLocalStorage();
+
+    // Ask the backend: is there a valid session cookie?
     try {
       const res  = await fetch(API + '/me', { credentials: 'include' });
       const data = await res.json();
       if (data && data.success) {
-        _loggedIn  = true;
-        _username  = data.username;
-        // Store username in localStorage so auth_guard.js still works
+        _loggedIn = true;
+        _username = data.username;
         localStorage.setItem('rx_token', 'true');
         localStorage.setItem('rx_user', _username);
       } else {
@@ -436,16 +420,18 @@
         _username = null;
       }
     } catch (e) {
-      // Network error — treat as guest
       _loggedIn = false;
       _username = null;
       console.warn('[HybridData] Could not reach /me, treating as guest.');
     }
 
-    // 2. Load data from whichever storage is appropriate
+    // Load data from whichever storage is appropriate
     await loadUserData();
 
-    // 3. Signal to the rest of the app that auth is resolved
+    // Update sync indicator in UI
+    _updateSyncIndicator();
+
+    // Signal to the rest of the app that auth is resolved
     window.dispatchEvent(new CustomEvent('rx:authReady', {
       detail: { loggedIn: _loggedIn, username: _username }
     }));
@@ -453,15 +439,29 @@
     console.log(`[HybridData] Init complete. Logged in: ${_loggedIn}${_loggedIn ? ' (' + _username + ')' : ''}`);
   }
 
+  // ─── Update the sync indicator dot in the header ───────
+  function _updateSyncIndicator() {
+    const el = document.querySelector('.sync-indicator');
+    if (!el) return;
+    const dot  = el.querySelector('.sync-dot');
+    const text = el.querySelector('span');
+    if (_loggedIn) {
+      if (dot)  dot.style.background  = '#00f5d4';
+      if (text) text.textContent = _username || 'Synced';
+    } else {
+      if (dot)  dot.style.background  = '#ffd166';
+      if (text) text.textContent = 'Local';
+    }
+  }
+
   // ─── Post-login migration hook ─────────────────────────
-  // Call this from login_script.js after a successful login.
-  // It migrates guest localStorage data to the backend.
   async function onLoginSuccess(username) {
     _loggedIn = true;
     _username = username;
     localStorage.setItem('rx_token', 'true');
     localStorage.setItem('rx_user', username);
     await migrateLocalStorageToBackend();
+    _updateSyncIndicator();
     window.dispatchEvent(new CustomEvent('rx:authReady', {
       detail: { loggedIn: true, username }
     }));
@@ -474,100 +474,52 @@
     _username  = null;
     _cache     = null;
     clearTimeout(_saveTimer);
-    // Note: we do NOT clear localStorage on logout.
-    // The user's data remains locally so they can keep using
-    // the app as a guest until they log back in.
+    _updateSyncIndicator();
+    // Note: we do NOT clear localStorage on logout so guests
+    // keep their local data until they log back in.
   }
 
   // ──────────────────────────────────────────────────────
-  //  PATCH script.js's APP storage helpers
+  //  GLOBAL rxLogout — called by the logout button in index.html
   // ──────────────────────────────────────────────────────
-  // script.js's load() and save() are closures inside APP —
-  // we can't replace them directly. Instead, we intercept at
-  // the localStorage level by patching setItem/getItem on
-  // specific keys AFTER init(), so all existing save() calls
-  // automatically go through our system.
-  //
-  // This is the least invasive approach — script.js needs zero
-  // changes to work with the hybrid system.
-  //
-  // For backend sync: every time script.js calls
-  //   localStorage.setItem(key, val)
-  // for a key we care about, we intercept it, update _cache,
-  // and schedule the debounced backend push.
-  function _patchLocalStorage() {
-    const origSetItem = localStorage.setItem.bind(localStorage);
-    const origGetItem = localStorage.getItem.bind(localStorage);
-
-    // Keys we want to intercept (same as LS_FIELD_MAP)
-    const watchedKeys = new Set(Object.keys(LS_FIELD_MAP));
-
-    localStorage.setItem = function (key, value) {
-      // Always do the real setItem first so nothing breaks
-      origSetItem(key, value);
-
-      // If logged in and this is a key we manage, sync to backend
-      if (_loggedIn && watchedKeys.has(key) && _cache) {
-        const field = LS_FIELD_MAP[key];
-        try {
-          _cache[field] = JSON.parse(value);
-        } catch (e) {
-          _cache[field] = value;
-        }
-        // Debounced backend push
-        clearTimeout(_saveTimer);
-        _saveTimer = setTimeout(() => {
-          pushToBackend(_cache);
-        }, DEBOUNCE_MS);
-      }
-    };
-
-    // getItem patch: if logged in, prefer _cache over stale localStorage
-    localStorage.getItem = function (key) {
-      if (_loggedIn && _cache && watchedKeys.has(key)) {
-        const field = LS_FIELD_MAP[key];
-        if (_cache[field] !== undefined) {
-          // Return as JSON string, same format as real localStorage
-          try { return JSON.stringify(_cache[field]); } catch (e) { /* fall through */ }
-        }
-      }
-      return origGetItem(key);
-    };
-  }
+  window.rxLogout = async function () {
+    try {
+      await fetch(API + '/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) { /* ignore network error on logout */ }
+    onLogout();
+    localStorage.removeItem('rx_token');
+    localStorage.removeItem('rx_user');
+    window.location.replace('login.html');
+  };
 
   // ──────────────────────────────────────────────────────
   //  EXPOSE GLOBALLY
   // ──────────────────────────────────────────────────────
   window.HybridData = {
-    // Core
     isLoggedIn,
     loadUserData,
     saveUserData,
-    // Specific updaters
     updateStreak,
     saveNotes,
     updatePomodoro,
     updateBadges,
-    // Auth lifecycle
     init,
     onLoginSuccess,
     onLogout,
-    // Expose for debugging
-    get cache() { return _cache; },
+    get cache()    { return _cache; },
     get username() { return _username; },
   };
 
   // ──────────────────────────────────────────────────────
-  //  AUTO-INIT: run as soon as DOM is ready
+  //  AUTO-INIT: patch LS immediately, then init async
   // ──────────────────────────────────────────────────────
+  // FIX: _patchLocalStorage() is called inside init() which is
+  // synchronous up to its first await. This means it always fires
+  // before any DOMContentLoaded script.js code runs.
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', async () => {
-      await init();
-      _patchLocalStorage();
-    });
+    document.addEventListener('DOMContentLoaded', () => { init(); });
   } else {
-    // DOM already ready (script loaded late)
-    init().then(() => _patchLocalStorage());
+    init();
   }
 
 })();

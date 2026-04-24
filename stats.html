@@ -482,12 +482,12 @@
 </div>
 
 <script>
-const API = "";
+const API = "https://roadmapx-backend-3qmc.onrender.com";
 
 async function loadStats() {
   // Check auth
   try {
-    const me = await fetch("/me", { credentials: "include" });
+    const me = await fetch(API + "/me", { credentials: "include" });
     const meData = await me.json();
     if (!meData.success) {
       window.location.replace("login.html");
@@ -504,7 +504,7 @@ async function loadStats() {
 
   // Load attendance
   try {
-    const res = await fetch("/get-attendance", { credentials: "include" });
+    const res = await fetch(API + "/get-attendance", { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
       const records = data.data || [];
@@ -523,7 +523,7 @@ async function loadStats() {
 
   // Load pomodoro
   try {
-    const res = await fetch("/get-pomo", { credentials: "include" });
+    const res = await fetch(API + "/get-pomo", { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
       const sessions = data.data || [];
@@ -538,7 +538,7 @@ async function loadStats() {
 
   // Load progress
   try {
-    const res = await fetch("/get-progress", { credentials: "include" });
+    const res = await fetch(API + "/get-progress", { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
       const topics = data.data || [];
@@ -555,7 +555,7 @@ async function loadStats() {
 
   // Load notes
   try {
-    const res = await fetch("/get-text", { credentials: "include" });
+    const res = await fetch(API + "/get-text", { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
       const notes = data.data || [];

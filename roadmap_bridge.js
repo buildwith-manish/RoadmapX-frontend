@@ -94,9 +94,17 @@
   // ── Revisions due ─────────────────────────────────────
   function updateRevisionsDue() {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const revisions = lsGet('revisions', []);
-      const due = revisions.filter(r => !r.done && r.date <= today).length;
+      // revisions can be either a flat array or an object of arrays (spaced-rep format)
+      let items = [];
+      if (Array.isArray(revisions)) {
+        items = revisions;
+      } else {
+        Object.values(revisions).forEach(v => { if (Array.isArray(v)) items = items.concat(v); });
+      }
+      const due = items.filter(r => r && !r.done && r.date <= today).length;
       const el = document.getElementById('home-stat-rev');
       if (el) el.textContent = due;
     } catch (_) {}
@@ -105,11 +113,17 @@
   // ── Streak display ────────────────────────────────────
   function updateStreakDisplay() {
     try {
-      const streak = parseInt(localStorage.getItem('streak') || '0');
+      const streaks = lsGet('streaks', {});
+      const maxStreak = Math.max(
+        streaks.ai?.current  || 0,
+        streaks.dsa?.current || 0,
+        streaks.ai?.longest  || 0,
+        streaks.dsa?.longest || 0
+      );
       const statEl = document.getElementById('home-stat-streak');
-      if (statEl) statEl.textContent = '🔥 ' + streak;
+      if (statEl) statEl.textContent = maxStreak;
       const hdrEl = document.getElementById('hdr-streak');
-      if (hdrEl) hdrEl.textContent = '🔥 ' + streak;
+      if (hdrEl) hdrEl.textContent = '🔥 ' + maxStreak;
     } catch (_) {}
   }
 
