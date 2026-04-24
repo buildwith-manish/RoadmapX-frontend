@@ -2078,24 +2078,25 @@ const APP = (function() {
     if (prog[key].done) {
       prog[key].completedDate = prog[key].completedDate || today();
     }
-    save(progKey, prog);
-    selectAIWeek(weekNum);
-    updateHeader();
-    if (prog[key].done) {
-      const levelData = STRUCTURED_AI_ROADMAP[aiCurrentLevel];
-      const weekData = levelData ? levelData.weeks.find(function(w){ return w.week === weekNum; }) : null;
-      const dayData = weekData ? weekData.days.find(function(d){ return d.day === dayNum; }) : null;
-      const title = dayData ? dayData.title : ('Day ' + dayNum);
-      scheduleRevisions('ai', dayNum, prog[key].completedDate, title);
-      updateStreak('ai', true);
-      renderInlineRevisions('ai-inline-rev-days', 'ai');
-      // Refresh AI section revision sub-tab if it's loaded
-      const aiRevEl = document.getElementById('ai-revision-list');
-      if (aiRevEl) renderSectionRevisions('ai');
-      toast('✅ Day ' + dayNum + ' completed! Revisions scheduled 🔁', 'success');
-    } else {
-      toast('↩️ Day ' + dayNum + ' marked incomplete', 'info');
-    }
+  save(progKey, prog);
+if (prog[key].done) {
+  const levelData = STRUCTURED_AI_ROADMAP[aiCurrentLevel];
+  const weekData = levelData ? levelData.weeks.find(function(w){ return w.week === weekNum;}) : null;
+  const dayData = weekData ? weekData.days.find(function(d){ return d.day === dayNum; }) : null;
+  const title = dayData ? dayData.title : ('Day ' + dayNum);
+  scheduleRevisions('ai', dayNum, prog[key].completedDate, title);
+  updateStreak('ai', true);
+  updateHeader();
+  selectAIWeek(weekNum);
+  renderInlineRevisions('ai-inline-rev-days', 'ai');
+  const aiRevEl = document.getElementById('ai-revision-list');
+  if (aiRevEl) renderSectionRevisions('ai');
+  toast('✅ Day ' + dayNum + ' completed! Revisions scheduled 🔁', 'success');
+} else {
+  selectAIWeek(weekNum);
+  updateHeader();
+  toast('↩️ Day ' + dayNum + ' marked incomplete', 'info');
+}
   }
 
   function backToLevels() {
@@ -3047,7 +3048,9 @@ const APP = (function() {
     if (!streaks[type]) streaks[type] = {current:0, longest:0, lastDate:null, history:[]};
     const s = streaks[type];
     const todayStr = today();
-    if (s.lastDate === todayStr) { save(KEYS.STREAKS, streaks); return; }
+    // If already studied today, don't increment again — just update header
+    if (s.lastDate === todayStr && studied) { updateHeader(); return; }
+    if (!studied && s.lastDate === todayStr) { save(KEYS.STREAKS, streaks); return; }
     if (studied) {
       const yesterday = addDays(todayStr, -1);
       if (s.lastDate === yesterday) s.current++;
@@ -5597,39 +5600,15 @@ window.APP.switchTab = function(name) {
 
   // Update streaks display when streaks tab is opened
   if (name === 'streaks') {
-    const streak = parseInt(localStorage.getItem("streak") || "0");
-    const el = document.getElementById("streaks-current");
-    if (el) el.innerText = "🔥 " + streak;
+    try {
+      const streaks = JSON.parse(localStorage.getItem('streaks') || '{}');
+      const maxStreak = Math.max(streaks.ai?.current || 0, streaks.dsa?.current || 0);
+      const el = document.getElementById("streaks-current");
+      if (el) el.innerText = "🔥 " + maxStreak;
+    } catch(e) {}
   }
 };
 
-// 🔥 STREAK
-function updateStreak() {
-  const today = new Date().toDateString();
-  const lastDay = localStorage.getItem("lastDay");
-  let streak = parseInt(localStorage.getItem("streak") || "0");
-
-  if (lastDay !== today) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (lastDay === yesterday.toDateString()) {
-      streak++;
-    } else {
-      streak = 1;
-    }
-
-    localStorage.setItem("lastDay", today);
-    localStorage.setItem("streak", streak);
-  }
-
-  // Update all streak display elements
-  const el = document.getElementById("home-stat-streak");
-  if (el) el.innerText = "🔥 " + streak;
-
-  const hdrEl = document.getElementById("hdr-streak");
-  if (hdrEl) hdrEl.innerText = "🔥 " + streak;
-}
 
 // 📁 FILES — renderFiles defined at top level (was incorrectly nested inside DOMContentLoaded)
 function renderFiles() {
@@ -5681,7 +5660,6 @@ window.deleteFile = function(i) {
 
 // Single DOMContentLoaded — streak + file input wiring
 document.addEventListener("DOMContentLoaded", () => {
-  updateStreak();
   renderFiles();
 
   const input = document.getElementById("file-input");
