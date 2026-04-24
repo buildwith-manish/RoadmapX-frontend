@@ -55,6 +55,7 @@ async function doLogin() {
     if (data.success) {
       localStorage.setItem("rx_token", "true");
       localStorage.setItem("rx_user", data.username);
+      if (window.NotesBridge) window.NotesBridge.syncAfterLogin(username);
       showMsg("login", "Access granted. Redirecting...", "success");
       setTimeout(() => { window.location.href = HOME; }, 700);
     } else {
