@@ -3047,7 +3047,7 @@ const APP = (function() {
     if (!streaks[type]) streaks[type] = {current:0, longest:0, lastDate:null, history:[]};
     const s = streaks[type];
     const todayStr = today();
-    if (s.lastDate === todayStr) { save(KEYS.STREAKS, streaks); return; }
+    if (s.lastDate === todayStr && !studied) { save(KEYS.STREAKS, streaks); return; }
     if (studied) {
       const yesterday = addDays(todayStr, -1);
       if (s.lastDate === yesterday) s.current++;
