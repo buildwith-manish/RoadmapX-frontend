@@ -25,8 +25,8 @@ RoadmapX is a productivity and learning platform designed to help students and d
 
 🛠️ Tech Stack
 
-- Frontend: HTML, CSS, JavaScript / React
-- Backend: Node.js, Express
+- Frontend: HTML, CSS, JavaScript
+- Backend: Node.js
 - Deployment:
   - Frontend: Cloudflare Pages
   - Backend: Render
