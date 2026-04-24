@@ -2078,24 +2078,25 @@ const APP = (function() {
     if (prog[key].done) {
       prog[key].completedDate = prog[key].completedDate || today();
     }
-    save(progKey, prog);
-    selectAIWeek(weekNum);
-    updateHeader();
-    if (prog[key].done) {
-      const levelData = STRUCTURED_AI_ROADMAP[aiCurrentLevel];
-      const weekData = levelData ? levelData.weeks.find(function(w){ return w.week === weekNum; }) : null;
-      const dayData = weekData ? weekData.days.find(function(d){ return d.day === dayNum; }) : null;
-      const title = dayData ? dayData.title : ('Day ' + dayNum);
-      scheduleRevisions('ai', dayNum, prog[key].completedDate, title);
-      updateStreak('ai', true);
-      renderInlineRevisions('ai-inline-rev-days', 'ai');
-      // Refresh AI section revision sub-tab if it's loaded
-      const aiRevEl = document.getElementById('ai-revision-list');
-      if (aiRevEl) renderSectionRevisions('ai');
-      toast('✅ Day ' + dayNum + ' completed! Revisions scheduled 🔁', 'success');
-    } else {
-      toast('↩️ Day ' + dayNum + ' marked incomplete', 'info');
-    }
+  save(progKey, prog);
+if (prog[key].done) {
+  const levelData = STRUCTURED_AI_ROADMAP[aiCurrentLevel];
+  const weekData = levelData ? levelData.weeks.find(function(w){ return w.week === weekNum;}) : null;
+  const dayData = weekData ? weekData.days.find(function(d){ return d.day === dayNum; }) : null;
+  const title = dayData ? dayData.title : ('Day ' + dayNum);
+  scheduleRevisions('ai', dayNum, prog[key].completedDate, title);
+  updateStreak('ai', true);
+  updateHeader();
+  selectAIWeek(weekNum);
+  renderInlineRevisions('ai-inline-rev-days', 'ai');
+  const aiRevEl = document.getElementById('ai-revision-list');
+  if (aiRevEl) renderSectionRevisions('ai');
+  toast('✅ Day ' + dayNum + ' completed! Revisions scheduled 🔁', 'success');
+} else {
+  selectAIWeek(weekNum);
+  updateHeader();
+  toast('↩️ Day ' + dayNum + ' marked incomplete', 'info');
+}
   }
 
   function backToLevels() {
