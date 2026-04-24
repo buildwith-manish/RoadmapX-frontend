@@ -5603,33 +5603,6 @@ window.APP.switchTab = function(name) {
   }
 };
 
-// 🔥 STREAK
-function updateStreak() {
-  const today = new Date().toDateString();
-  const lastDay = localStorage.getItem("lastDay");
-  let streak = parseInt(localStorage.getItem("streak") || "0");
-
-  if (lastDay !== today) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (lastDay === yesterday.toDateString()) {
-      streak++;
-    } else {
-      streak = 1;
-    }
-
-    localStorage.setItem("lastDay", today);
-    localStorage.setItem("streak", streak);
-  }
-
-  // Update all streak display elements
-  const el = document.getElementById("home-stat-streak");
-  if (el) el.innerText = "🔥 " + streak;
-
-  const hdrEl = document.getElementById("hdr-streak");
-  if (hdrEl) hdrEl.innerText = "🔥 " + streak;
-}
 
 // 📁 FILES — renderFiles defined at top level (was incorrectly nested inside DOMContentLoaded)
 function renderFiles() {
