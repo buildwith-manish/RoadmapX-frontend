@@ -4,26 +4,7 @@
 
   if (!token || !user) {
     window.location.replace("login.html");
-    return;
   }
-
-  try {
-    const res  = await fetch("https://roadmapx-backend-3qmc.onrender.com/me", {
-      credentials: "include"
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      localStorage.setItem("rx_token", "true");
-      localStorage.setItem("rx_user",  data.username);
-    } else {
-      localStorage.removeItem("rx_token");
-      localStorage.removeItem("rx_user");
-      window.location.replace("login.html");
-    }
-  } catch (e) {
-    if (!localStorage.getItem("rx_token")) {
-      window.location.replace("login.html");
-    }
-  }
+  // No server check — localStorage is the source of truth
+  // since cross-domain cookies are blocked by the browser
 })();
