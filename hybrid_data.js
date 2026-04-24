@@ -159,6 +159,9 @@
       'streaks', 'notes', 'badges', 'pomodoroStats',
       'aiProgress', 'dsaProgress', 'attendance',
       'revisions', 'projects', 'pomoDuration',
+      // FIX: 7 fields previously missing from backend sync
+      'aiNotes', 'dsaNotes', 'earnedBadges', 'revisionsDoneList',
+      'aiStructBeginner', 'aiStructIntermediate', 'aiStructAdvanced',
     ];
     const payload = {};
     allowedFields.forEach(f => {

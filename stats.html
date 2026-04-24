@@ -485,20 +485,56 @@
 const API = "https://roadmapx-backend-3qmc.onrender.com";
 
 async function loadStats() {
-  // Check auth
+  // Check auth — guests get a friendly empty state instead of a hard redirect
+  let isGuest = false;
   try {
     const me = await fetch(API + "/me", { credentials: "include" });
     const meData = await me.json();
     if (!meData.success) {
-      window.location.replace("login.html");
-      return;
+      isGuest = true;
+    } else {
+      const username = meData.username;
+      document.getElementById("username-badge").textContent = "@" + username;
+      document.getElementById("hero-name").textContent = username;
+      document.getElementById("hero-sub").textContent = "// your learning analytics";
     }
-    const username = meData.username;
-    document.getElementById("username-badge").textContent = "@" + username;
-    document.getElementById("hero-name").textContent = username;
-    document.getElementById("hero-sub").textContent = "// your learning analytics";
   } catch {
-    window.location.replace("login.html");
+    isGuest = true;
+  }
+
+  if (isGuest) {
+    // Show a guest-friendly message instead of redirecting
+    document.getElementById("username-badge").textContent = "@guest";
+    document.getElementById("hero-name").textContent = "Guest";
+    document.getElementById("hero-sub").textContent = "// sign in to track your stats";
+
+    // Inject a sign-in prompt banner below the hero
+    const heroEl = document.querySelector(".stats-hero") || document.querySelector("header");
+    if (heroEl) {
+      const banner = document.createElement("div");
+      banner.style.cssText = `
+        margin: 18px auto 0;
+        max-width: 560px;
+        padding: 14px 20px;
+        background: linear-gradient(135deg, rgba(0,229,200,0.08), rgba(124,58,237,0.08));
+        border: 1px solid rgba(0,229,200,0.25);
+        border-radius: 10px;
+        text-align: center;
+        font-family: monospace;
+        font-size: 13px;
+        color: #aaa;
+      `;
+      banner.innerHTML = `
+        Stats are saved to the cloud when you're signed in. &nbsp;
+        <a href="login.html" style="color:#00e5c8;font-weight:700;text-decoration:none;">Sign in →</a>
+        &nbsp; or &nbsp;
+        <a href="index.html" style="color:#7c3aed;font-weight:700;text-decoration:none;">Keep exploring as guest</a>
+      `;
+      heroEl.insertAdjacentElement("afterend", banner);
+    }
+
+    // Populate stats from localStorage so local data is still visible
+    _loadStatsFromLocalStorage();
     return;
   }
 
@@ -579,6 +615,60 @@ async function loadStats() {
     document.getElementById("notes-container").innerHTML =
       '<div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);text-align:center;padding:16px">Could not load notes</div>';
   }
+}
+
+// ── Guest fallback: read stats directly from localStorage ──────────────
+function _loadStatsFromLocalStorage() {
+  try {
+    // Attendance
+    const attendance = JSON.parse(localStorage.getItem("attendance") || "{}");
+    const days = Object.values(attendance);
+    const present = days.filter(v => v === "present").length;
+    const absent  = days.filter(v => v === "absent").length;
+    const total   = days.length;
+    const rate    = total > 0 ? Math.round((present / total) * 100) : 0;
+    const attPresent = document.getElementById("att-present");
+    const attAbsent  = document.getElementById("att-absent");
+    const attRate    = document.getElementById("att-rate");
+    const attBar     = document.getElementById("att-bar");
+    const totalDays  = document.getElementById("total-days");
+    if (attPresent) attPresent.textContent = present;
+    if (attAbsent)  attAbsent.textContent  = absent;
+    if (attRate)    attRate.textContent    = rate + "%";
+    if (attBar)     attBar.style.width     = rate + "%";
+    if (totalDays)  totalDays.textContent  = total;
+  } catch (_) {}
+
+  try {
+    // Pomodoro stats
+    const pomo = JSON.parse(localStorage.getItem("pomodoroStats") || "{}");
+    const pomoAI  = document.getElementById("pomo-ai");
+    const pomoDSA = document.getElementById("pomo-dsa");
+    const pomoProj = document.getElementById("pomo-proj");
+    const pomoExtra = document.getElementById("pomo-extra");
+    const pomoTotal = document.getElementById("pomo-total");
+    const aiVal   = pomo.ai       || 0;
+    const dsaVal  = pomo.dsa      || 0;
+    const projVal = pomo.projects || 0;
+    const extVal  = pomo.extra    || 0;
+    if (pomoAI)    pomoAI.textContent    = aiVal;
+    if (pomoDSA)   pomoDSA.textContent   = dsaVal;
+    if (pomoProj)  pomoProj.textContent  = projVal;
+    if (pomoExtra) pomoExtra.textContent = extVal;
+    if (pomoTotal) pomoTotal.textContent = aiVal + dsaVal + projVal + extVal;
+  } catch (_) {}
+
+  try {
+    // Streaks
+    const streaks = JSON.parse(localStorage.getItem("streaks") || "{}");
+    ["ai","dsa","projects","extra"].forEach(type => {
+      const s = streaks[type] || {};
+      const curEl = document.getElementById("streak-" + type + "-cur");
+      const lngEl = document.getElementById("streak-" + type + "-lng");
+      if (curEl) curEl.textContent = s.current || 0;
+      if (lngEl) lngEl.textContent = s.longest || 0;
+    });
+  } catch (_) {}
 }
 
 loadStats();

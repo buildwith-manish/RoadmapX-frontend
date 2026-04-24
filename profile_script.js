@@ -4,6 +4,58 @@
 const API = "https://roadmapx-backend-3qmc.onrender.com";
 const $ = (id) => document.getElementById(id);
 
+// ── Guest check — hide edit forms if not logged in ──────
+// Determined synchronously from localStorage before any network calls.
+const _isGuest = !localStorage.getItem("rx_token");
+
+if (_isGuest) {
+  // Wait for DOM then hide all edit/action sections
+  const _hideForGuest = () => {
+    // Hide the editable forms section (username / email / password / delete)
+    [
+      "section-username", "section-email", "section-password",
+      "section-delete",   "section-alerts",
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+
+    // Hide logout link — guests aren't "logged in" to log out of
+    const logoutLink = document.getElementById("logout-link");
+    if (logoutLink) logoutLink.style.display = "none";
+
+    // Show a sign-in prompt instead
+    const infoSection = document.querySelector(".profile-info") || document.querySelector("main") || document.body;
+    const banner = document.createElement("div");
+    banner.style.cssText = `
+      margin: 20px auto;
+      max-width: 480px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(0,229,200,0.08), rgba(124,58,237,0.08));
+      border: 1px solid rgba(0,229,200,0.25);
+      border-radius: 10px;
+      text-align: center;
+      font-family: monospace;
+      font-size: 13px;
+      color: #aaa;
+    `;
+    banner.innerHTML = `
+      You're browsing as a guest. &nbsp;
+      <a href="login.html" style="color:#00e5c8;font-weight:700;text-decoration:none;">Sign in</a>
+      &nbsp;or&nbsp;
+      <a href="login.html#register" style="color:#7c3aed;font-weight:700;text-decoration:none;">Create an account</a>
+      &nbsp;to manage your profile.
+    `;
+    if (infoSection) infoSection.prepend(banner);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", _hideForGuest);
+  } else {
+    _hideForGuest();
+  }
+}
+
 function setMsg(el, text, kind) {
   el.textContent = text || "";
   el.className   = "msg" + (kind ? " " + kind : "");
@@ -111,6 +163,7 @@ $("p-btn").addEventListener("click", async () => {
 });
 
 $("d-btn").addEventListener("click", async () => {
+  if (_isGuest) { alert("Sign in to manage your account."); return; }
   if (!confirm("This permanently deletes your account. Continue?")) return;
   if (!confirm("Last chance — really delete everything?")) return;
   const password = $("d-pw").value;
