@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RoadmapX — Auth</title>
+  <title>RoadmapX — Sign In</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg:         #070711;
-      --surface:    rgba(10, 10, 26, 0.88);
-      --border:     rgba(123, 47, 255, 0.25);
+      --surface:    rgba(10, 10, 26, 0.92);
+      --border:     rgba(123, 47, 255, 0.22);
       --cyan:       #00f5d4;
       --purple:     #7b2fff;
       --red:        #ff2d6e;
       --text:       #c9d1e0;
       --text-dim:   #5a6480;
-      --radius:     14px;
+      --radius:     16px;
       --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -25,8 +25,8 @@
     body {
       background-color: var(--bg);
       background-image:
-        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(123,47,255,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 60% 40% at 90% 110%, rgba(0,245,212,0.10) 0%, transparent 60%);
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(123,47,255,0.20) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 90% 110%, rgba(0,245,212,0.12) 0%, transparent 60%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -39,62 +39,175 @@
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 4px);
+      background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 4px);
       pointer-events: none; z-index: 0;
     }
 
     .card {
       position: relative; z-index: 1;
-      width: 100%; max-width: 420px;
+      width: 100%; max-width: 400px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 40px 40px 36px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      padding: 40px 36px 36px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       box-shadow:
-        0 0 0 1px rgba(123,47,255,0.08),
-        0 4px 24px rgba(0,0,0,0.6),
-        0 0 80px rgba(123,47,255,0.08);
-      animation: cardIn 0.55s cubic-bezier(0.22,1,0.36,1) both;
+        0 0 0 1px rgba(123,47,255,0.07),
+        0 4px 32px rgba(0,0,0,0.65),
+        0 0 80px rgba(123,47,255,0.10);
+      animation: cardIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
     }
 
     @keyframes cardIn {
-      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .logo-area { text-align: center; margin-bottom: 24px; }
+    /* ── LOGO ── */
+    .logo-area { text-align: center; margin-bottom: 28px; }
 
     .logo-icon {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 52px; height: 52px; border-radius: 13px;
-      background: linear-gradient(135deg, rgba(0,245,212,0.15), rgba(123,47,255,0.25));
-      border: 1px solid rgba(0,245,212,0.25);
+      width: 54px; height: 54px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0,245,212,0.14), rgba(123,47,255,0.22));
+      border: 1px solid rgba(0,245,212,0.22);
       margin-bottom: 14px;
-      box-shadow: 0 0 24px rgba(0,245,212,0.12);
+      box-shadow: 0 0 28px rgba(0,245,212,0.14);
     }
     .logo-icon svg { width: 26px; height: 26px; }
 
     .app-title {
-      font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em;
-      background: linear-gradient(90deg, var(--cyan) 0%, #a78bfa 60%, var(--purple) 100%);
+      font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em;
+      background: linear-gradient(90deg, var(--cyan) 0%, #a78bfa 55%, var(--purple) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; line-height: 1.2;
     }
 
     .app-subtitle {
-      margin-top: 5px; font-size: 0.8rem; color: var(--text-dim);
+      margin-top: 6px; font-size: 0.78rem; color: var(--text-dim);
       font-family: 'Courier New', monospace; letter-spacing: 0.06em;
     }
 
+    /* ── GUEST FIRST VIEW ── */
+    #guest-first-view { display: flex; flex-direction: column; gap: 12px; }
+
+    .guest-notice {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+      padding: 4px 0 8px;
+    }
+
+    .guest-notice .notice-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0,245,212,0.12), rgba(123,47,255,0.12));
+      border: 1px solid rgba(0,245,212,0.2);
+      margin-bottom: 10px;
+    }
+    .guest-notice .notice-icon svg { width: 16px; height: 16px; color: var(--cyan); }
+
+    .guest-notice strong {
+      display: block; font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 4px;
+    }
+
+    .local-save-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(0,245,212,0.07);
+      border: 1px solid rgba(0,245,212,0.18);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.72rem; font-family: 'Courier New', monospace;
+      color: rgba(0,245,212,0.75); letter-spacing: 0.04em;
+      margin-top: 6px;
+    }
+    .local-save-badge svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+    /* ── PRIMARY GUEST BUTTON ── */
+    .btn-guest {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, rgba(0,245,212,0.10), rgba(123,47,255,0.14));
+      border: 1.5px solid rgba(0,245,212,0.30);
+      border-radius: 12px;
+      color: var(--cyan);
+      font-size: 0.97rem; font-weight: 700;
+      font-family: inherit; letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all var(--transition);
+      position: relative; overflow: hidden;
+    }
+    .btn-guest::before {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(0,245,212,0); transition: background var(--transition);
+    }
+    .btn-guest:hover::before { background: rgba(0,245,212,0.06); }
+    .btn-guest:hover { border-color: rgba(0,245,212,0.50); box-shadow: 0 0 20px rgba(0,245,212,0.12); }
+    .btn-guest:active { transform: scale(0.985); }
+    .btn-guest svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── DIVIDER ── */
+    .or-divider {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.74rem; color: var(--text-dim);
+      font-family: 'Courier New', monospace; letter-spacing: 0.08em;
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(123,47,255,0.2), transparent);
+    }
+
+    /* ── SIGN IN BUTTON (secondary) ── */
+    .btn-signin-secondary {
+      width: 100%; padding: 13px;
+      background: rgba(123,47,255,0.08);
+      border: 1px solid rgba(123,47,255,0.25);
+      border-radius: 12px;
+      color: #a78bfa;
+      font-size: 0.93rem; font-weight: 600;
+      font-family: inherit; letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all var(--transition);
+    }
+    .btn-signin-secondary:hover {
+      background: rgba(123,47,255,0.14);
+      border-color: rgba(123,47,255,0.40);
+      box-shadow: 0 0 16px rgba(123,47,255,0.12);
+    }
+    .btn-signin-secondary:active { transform: scale(0.985); }
+    .btn-signin-secondary svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── AUTH FORM VIEW (hidden by default) ── */
+    #auth-form-view { display: none; flex-direction: column; gap: 0; }
+    #auth-form-view.visible { display: flex; animation: slideUp 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .back-to-guest {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none;
+      color: var(--text-dim); font-size: 0.78rem;
+      font-family: 'Courier New', monospace; letter-spacing: 0.04em;
+      cursor: pointer; padding: 0 0 16px;
+      transition: color var(--transition);
+    }
+    .back-to-guest:hover { color: var(--cyan); }
+    .back-to-guest svg { width: 13px; height: 13px; }
+
+    /* ── TABS ── */
     .tabs {
       display: flex;
       background: rgba(255,255,255,0.03);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 4px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       gap: 4px;
     }
 
@@ -109,9 +222,9 @@
     }
 
     .tab-btn.active {
-      background: linear-gradient(90deg, rgba(0,245,212,0.12), rgba(123,47,255,0.15));
+      background: linear-gradient(90deg, rgba(0,245,212,0.10), rgba(123,47,255,0.13));
       color: var(--text);
-      box-shadow: 0 0 12px rgba(0,245,212,0.08);
+      box-shadow: 0 0 12px rgba(0,245,212,0.07);
     }
 
     .panels { position: relative; }
@@ -122,8 +235,8 @@
     .field { display: flex; flex-direction: column; gap: 6px; }
 
     label {
-      font-size: 0.78rem; font-family: 'Courier New', monospace;
-      color: #a0aec8; letter-spacing: 0.08em;
+      font-size: 0.77rem; font-family: 'Courier New', monospace;
+      color: #8090b0; letter-spacing: 0.08em;
       text-transform: uppercase; font-weight: 600;
     }
 
@@ -135,21 +248,21 @@
       width: 100%;
       padding: 12px 42px 12px 14px;
       background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(123,47,255,0.22);
-      border-radius: 8px; color: var(--text);
+      border: 1px solid rgba(123,47,255,0.20);
+      border-radius: 9px; color: var(--text);
       font-size: 0.94rem; font-family: inherit;
       outline: none;
       transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
     }
 
     input[type="text"]::placeholder,
-    input[type="password"]::placeholder { color: var(--text-dim); opacity: 0.6; }
+    input[type="password"]::placeholder { color: var(--text-dim); opacity: 0.55; }
 
     input[type="text"]:focus,
     input[type="password"]:focus {
       border-color: var(--cyan);
-      background: rgba(0,245,212,0.04);
-      box-shadow: 0 0 0 3px rgba(0,245,212,0.10), 0 0 14px rgba(0,245,212,0.07);
+      background: rgba(0,245,212,0.03);
+      box-shadow: 0 0 0 3px rgba(0,245,212,0.09), 0 0 12px rgba(0,245,212,0.06);
     }
 
     .eye-btn {
@@ -179,7 +292,7 @@
     .remember input[type="checkbox"]:checked {
       background: linear-gradient(135deg, var(--cyan), var(--purple));
       border-color: transparent;
-      box-shadow: 0 0 10px rgba(0,245,212,0.3);
+      box-shadow: 0 0 10px rgba(0,245,212,0.28);
     }
     .remember input[type="checkbox"]:checked::after {
       content: ''; position: absolute;
@@ -191,7 +304,7 @@
 
     .btn-submit {
       position: relative; width: 100%; padding: 13px; border: none;
-      border-radius: 9px; color: #fff;
+      border-radius: 10px; color: #fff;
       font-size: 0.95rem; font-weight: 600; font-family: inherit;
       letter-spacing: 0.04em; cursor: pointer; overflow: hidden;
       transition: box-shadow var(--transition), transform var(--transition), opacity var(--transition);
@@ -204,6 +317,7 @@
       background: rgba(255,255,255,0); transition: background var(--transition);
     }
     .btn-submit:hover:not(:disabled)::before { background: rgba(255,255,255,0.07); }
+    .btn-submit:hover:not(:disabled) { box-shadow: 0 0 24px rgba(0,245,212,0.22); }
     .btn-submit:active:not(:disabled) { transform: scale(0.98); }
     .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -230,7 +344,7 @@
 
     .divider {
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      background: linear-gradient(90deg, transparent, rgba(123,47,255,0.18), transparent);
     }
 
     .msg-box {
@@ -250,34 +364,24 @@
     }
     .msg-icon { font-size: 1rem; flex-shrink: 0; }
 
+    /* ── SIGNUP PROGRESS (no step numbers in primary view, only in step 2) ── */
     .signup-progress {
       display: flex; align-items: center; justify-content: center;
       gap: 0; margin-bottom: 4px;
     }
     .sdot {
-      width: 28px; height: 28px; border-radius: 50%;
+      width: 26px; height: 26px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.72rem; font-weight: 700;
+      font-size: 0.70rem; font-weight: 700;
       font-family: 'Courier New', monospace;
-      border: 1.5px solid rgba(123,47,255,0.3);
+      border: 1.5px solid rgba(123,47,255,0.28);
       color: var(--text-dim);
       background: rgba(123,47,255,0.05);
       transition: all var(--transition);
     }
-    .sdot.active {
-      border-color: var(--cyan); color: var(--cyan);
-      background: rgba(0,245,212,0.10);
-      box-shadow: 0 0 10px rgba(0,245,212,0.15);
-    }
-    .sdot.done {
-      border-color: var(--purple); color: #fff;
-      background: linear-gradient(135deg, var(--cyan), var(--purple));
-    }
-    .sline {
-      width: 40px; height: 1.5px;
-      background: rgba(123,47,255,0.2);
-      transition: background var(--transition);
-    }
+    .sdot.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,212,0.09); box-shadow: 0 0 10px rgba(0,245,212,0.13); }
+    .sdot.done   { border-color: var(--purple); color: #fff; background: linear-gradient(135deg, var(--cyan), var(--purple)); }
+    .sline { width: 36px; height: 1.5px; background: rgba(123,47,255,0.18); transition: background var(--transition); }
     .sline.done { background: linear-gradient(90deg, var(--cyan), var(--purple)); }
 
     .s-step { display: none; flex-direction: column; gap: 16px; }
@@ -288,6 +392,7 @@
 
   <div class="card">
 
+    <!-- ── LOGO ── -->
     <div class="logo-area">
       <div class="logo-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -304,155 +409,217 @@
       <div class="app-subtitle" id="subtitle">// Track your AI journey</div>
     </div>
 
-    <div class="tabs" role="tablist">
-      <button class="tab-btn active" id="tab-login"
-        role="tab" aria-selected="true" aria-controls="login-panel"
-        onclick="switchTab('login')">Login</button>
-      <button class="tab-btn" id="tab-signup"
-        role="tab" aria-selected="false" aria-controls="signup-panel"
-        onclick="switchTab('signup')">Sign Up</button>
+    <!-- ══ GUEST-FIRST VIEW ══ -->
+    <div id="guest-first-view">
+
+      <div class="guest-notice">
+        <div class="notice-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:#00f5d4">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <strong>Start learning instantly</strong>
+        No account needed — jump in and track your progress locally.
+        <br/>
+        <div style="display:flex;justify-content:center;margin-top:8px;">
+          <span class="local-save-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Your progress is saved locally. Sign in anytime to sync.
+          </span>
+        </div>
+      </div>
+
+      <!-- Primary action: Continue as Guest -->
+      <a href="index.html" style="text-decoration:none;">
+        <button class="btn-guest" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          Continue as Guest
+        </button>
+      </a>
+
+      <div class="or-divider">or</div>
+
+      <!-- Secondary action: Sign In -->
+      <button class="btn-signin-secondary" type="button" onclick="showAuthForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Sign In / Create Account
+      </button>
+
     </div>
+    <!-- /guest-first-view -->
 
-    <div class="panels">
+    <!-- ══ AUTH FORM VIEW (shown after clicking Sign In) ══ -->
+    <div id="auth-form-view">
 
-      <!-- LOGIN PANEL -->
-      <div class="panel" id="login-panel" role="tabpanel">
+      <button class="back-to-guest" type="button" onclick="showGuestFirst()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back
+      </button>
 
-        <div class="msg-box" id="login-msg">
-          <span class="msg-icon">⚠</span>
-          <span id="login-msg-text"></span>
-        </div>
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" id="tab-login"
+          role="tab" aria-selected="true" aria-controls="login-panel"
+          onclick="switchTab('login')">Login</button>
+        <button class="tab-btn" id="tab-signup"
+          role="tab" aria-selected="false" aria-controls="signup-panel"
+          onclick="switchTab('signup')">Sign Up</button>
+      </div>
 
-        <div class="field">
-          <label for="l-username">Username</label>
-          <div class="input-wrap">
-            <input type="text" id="l-username" placeholder="your_username" autocomplete="username" />
+      <div class="panels">
+
+        <!-- LOGIN PANEL -->
+        <div class="panel" id="login-panel" role="tabpanel">
+
+          <div class="msg-box" id="login-msg">
+            <span class="msg-icon">⚠</span>
+            <span id="login-msg-text"></span>
           </div>
+
+          <div class="field">
+            <label for="l-username">Username</label>
+            <div class="input-wrap">
+              <input type="text" id="l-username" placeholder="your_username" autocomplete="username" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="l-password">Password</label>
+            <div class="input-wrap">
+              <input type="password" id="l-password" placeholder="••••••••••••" autocomplete="current-password" />
+              <button type="button" class="eye-btn" data-target="l-password" aria-label="Toggle password visibility">
+                <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <label class="remember">
+            <input type="checkbox" id="l-remember" />
+            <span>Remember me</span>
+          </label>
+
+          <div class="divider"></div>
+
+          <button class="btn-submit" id="login-btn" type="button" onclick="doLogin()">
+            <span class="btn-text">Login</span>
+            <span class="spinner"></span>
+          </button>
+
         </div>
 
-        <div class="field">
-          <label for="l-password">Password</label>
-          <div class="input-wrap">
-            <input type="password" id="l-password" placeholder="••••••••••••" autocomplete="current-password" />
-            <button type="button" class="eye-btn" data-target="l-password" aria-label="Toggle password visibility">
-              <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-              </svg>
-              <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
+        <!-- SIGNUP PANEL -->
+        <div class="panel hidden" id="signup-panel" role="tabpanel">
+
+          <div class="msg-box" id="signup-msg">
+            <span class="msg-icon">⚠</span>
+            <span id="signup-msg-text"></span>
+          </div>
+
+          <div class="signup-progress">
+            <div class="sdot active" id="sdot-1">1</div>
+            <div class="sline" id="sline-1"></div>
+            <div class="sdot" id="sdot-2">2</div>
+          </div>
+
+          <!-- Step 1: Username -->
+          <div class="s-step active" id="s-step-1">
+            <div class="field">
+              <label for="s-username">Choose a Username</label>
+              <div class="input-wrap">
+                <input type="text" id="s-username" placeholder="your_username" autocomplete="username" />
+              </div>
+            </div>
+            <div class="divider"></div>
+            <button class="btn-submit" type="button" onclick="signupStep1()">
+              <span class="btn-text">Continue →</span>
+              <span class="spinner"></span>
             </button>
           </div>
-        </div>
 
-        <label class="remember">
-          <input type="checkbox" id="l-remember" />
-          <span>Remember me</span>
-        </label>
-
-        <div class="divider"></div>
-
-        <button class="btn-submit" id="login-btn" type="button" onclick="doLogin()">
-          <span class="btn-text">Login</span>
-          <span class="spinner"></span>
-        </button>
-
-      </div>
-
-      <!-- SIGNUP PANEL -->
-      <div class="panel hidden" id="signup-panel" role="tabpanel">
-
-        <div class="msg-box" id="signup-msg">
-          <span class="msg-icon">⚠</span>
-          <span id="signup-msg-text"></span>
-        </div>
-
-        <div class="signup-progress">
-          <div class="sdot active" id="sdot-1">1</div>
-          <div class="sline" id="sline-1"></div>
-          <div class="sdot" id="sdot-2">2</div>
-        </div>
-
-        <!-- Step 1: Username -->
-        <div class="s-step active" id="s-step-1">
-          <div class="field">
-            <label for="s-username">Choose a Username</label>
-            <div class="input-wrap">
-              <input type="text" id="s-username" placeholder="your_username" autocomplete="username" />
+          <!-- Step 2: Password -->
+          <div class="s-step" id="s-step-2">
+            <div class="field">
+              <label for="s-password">Password</label>
+              <div class="input-wrap">
+                <input type="password" id="s-password" placeholder="••••••••••••" autocomplete="new-password" />
+                <button type="button" class="eye-btn" data-target="s-password" aria-label="Toggle password visibility">
+                  <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
             </div>
+            <div class="field">
+              <label for="s-confirm">Confirm Password</label>
+              <div class="input-wrap">
+                <input type="password" id="s-confirm" placeholder="••••••••••••" autocomplete="new-password" />
+                <button type="button" class="eye-btn" data-target="s-confirm" aria-label="Toggle confirm password visibility">
+                  <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <button class="btn-submit" id="signup-btn" type="button" onclick="signupStep2()">
+              <span class="btn-text">Create Account</span>
+              <span class="spinner"></span>
+            </button>
+            <button class="btn-back" type="button" onclick="goStep(1)">&larr; Back</button>
           </div>
-          <div class="divider"></div>
-          <button class="btn-submit" type="button" onclick="signupStep1()">
-            <span class="btn-text">Continue →</span>
-            <span class="spinner"></span>
-          </button>
-        </div>
 
-        <!-- Step 2: Password -->
-        <div class="s-step" id="s-step-2">
-          <div class="field">
-            <label for="s-password">Password</label>
-            <div class="input-wrap">
-              <input type="password" id="s-password" placeholder="••••••••••••" autocomplete="new-password" />
-              <button type="button" class="eye-btn" data-target="s-password" aria-label="Toggle password visibility">
-                <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-                <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="field">
-            <label for="s-confirm">Confirm Password</label>
-            <div class="input-wrap">
-              <input type="password" id="s-confirm" placeholder="••••••••••••" autocomplete="new-password" />
-              <button type="button" class="eye-btn" data-target="s-confirm" aria-label="Toggle confirm password visibility">
-                <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-                <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="divider"></div>
-          <button class="btn-submit" id="signup-btn" type="button" onclick="signupStep2()">
-            <span class="btn-text">Create Account</span>
-            <span class="spinner"></span>
-          </button>
-          <button class="btn-back" type="button" onclick="goStep(1)">&larr; Back</button>
         </div>
 
       </div>
-
     </div>
+    <!-- /auth-form-view -->
+
   </div>
 
+  <script>
+    // ── View switching ──
+    function showAuthForm() {
+      document.getElementById('guest-first-view').style.display = 'none';
+      const authView = document.getElementById('auth-form-view');
+      authView.style.display = 'flex';
+      authView.classList.add('visible');
+    }
 
-  <!-- Continue as Guest link -->
-  <div style="text-align:center; margin-top:0; padding: 16px 0 8px;">
-    <a href="index.html"
-      style="font-size:11px; color:rgba(255,255,255,0.4); text-decoration:none;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace; letter-spacing:0.3px;
-      transition: color 0.2s;"
-      onmouseover="this.style.color='rgba(0,229,200,0.8)'"
-      onmouseout="this.style.color='rgba(255,255,255,0.4)'">
-      Continue without signing in →
-    </a>
-  </div>
+    function showGuestFirst() {
+      document.getElementById('auth-form-view').style.display = 'none';
+      document.getElementById('auth-form-view').classList.remove('visible');
+      document.getElementById('guest-first-view').style.display = 'flex';
+    }
 
-  <!-- External script — loaded once, after DOM, outside any other <script> block -->
+    // If arriving from header "Sign In" button directly, show form immediately
+    if (window.location.hash === '#signin') {
+      document.addEventListener('DOMContentLoaded', showAuthForm);
+    }
+  </script>
+
   <script src="login_script.js" defer></script>
 
 </body>
 </html>
-

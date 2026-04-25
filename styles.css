@@ -3078,3 +3078,126 @@ canvas.mini-chart  { width:100% !important; height:80px !important; display:bloc
   .dsa-proj-status-btn { min-width: unset; width: 100%; }
 }
 
+
+/* ══════════════════════════════════════════════════════════
+   ROADMAPX — GUEST-FIRST AUTH UX ADDITIONS
+   Header sign-in button, guest banner, auth state pills.
+   Zero changes to existing layout classes.
+══════════════════════════════════════════════════════════ */
+
+/* ── HEADER: Sign In button (guest) ── */
+.hdr-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: var(--rfull);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  font-family: var(--font-mono);
+  background: linear-gradient(135deg, rgba(0,229,200,0.13), rgba(124,58,237,0.13));
+  border: 1px solid rgba(0,229,200,0.32);
+  color: var(--c1);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s var(--ease);
+}
+.hdr-signin-btn:hover {
+  background: linear-gradient(135deg, rgba(0,229,200,0.20), rgba(124,58,237,0.20));
+  border-color: rgba(0,229,200,0.55);
+  box-shadow: 0 0 14px rgba(0,229,200,0.18);
+}
+.hdr-signin-btn:active { transform: scale(0.93); }
+.hdr-signin-btn svg { width: 13px; height: 13px; }
+
+/* ── HEADER: User pill (logged in) ── */
+.hdr-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--rfull);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  font-family: var(--font-mono);
+  background: linear-gradient(135deg, rgba(0,229,200,0.10), rgba(124,58,237,0.10));
+  border: 1px solid rgba(0,229,200,0.22);
+  color: var(--t1);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── GUEST BANNER (bottom-floating soft upsell) ── */
+#guest-banner {
+  display: none;
+  position: fixed;
+  bottom: calc(var(--nav) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(10,10,25,0.97), rgba(20,10,40,0.97));
+  border: 1px solid rgba(0,229,200,0.28);
+  border-radius: var(--r16);
+  padding: 14px 16px;
+  max-width: 340px;
+  width: calc(100% - 32px);
+  z-index: 9999;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: guestBannerIn 0.4s var(--spring) both;
+}
+@keyframes guestBannerIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.guest-banner-close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.35); font-size: 15px;
+  cursor: pointer; line-height: 1; padding: 2px;
+  transition: color 0.2s;
+}
+.guest-banner-close:hover { color: rgba(255,255,255,0.7); }
+.guest-banner-body { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.guest-banner-ico {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0,229,200,0.18), rgba(124,58,237,0.18));
+  border: 1px solid rgba(0,229,200,0.28);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.guest-banner-ico svg { width: 15px; height: 15px; color: var(--c1); }
+.guest-banner-text {}
+.guest-banner-title { font-size: 12px; font-weight: 800; color: var(--t1); font-family: var(--font-mono); }
+.guest-banner-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.guest-banner-local {
+  font-size: 10px;
+  color: rgba(0,229,200,0.65);
+  font-family: var(--font-mono);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 5px;
+}
+.guest-banner-local svg { width: 11px; height: 11px; flex-shrink: 0; }
+.guest-banner-actions { display: flex; gap: 8px; }
+.guest-banner-signin {
+  flex: 1; padding: 9px 0; border-radius: var(--r8);
+  font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border: none; color: #000; cursor: pointer;
+  transition: all 0.2s;
+}
+.guest-banner-signin:active { transform: scale(0.96); }
+.guest-banner-dismiss {
+  padding: 9px 14px; border-radius: var(--r8);
+  font-size: 11px; font-weight: 700;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: rgba(255,255,255,0.55); cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.2s;
+}
+.guest-banner-dismiss:hover { background: rgba(255,255,255,0.09); }

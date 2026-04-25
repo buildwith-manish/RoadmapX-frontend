@@ -1,57 +1,49 @@
 /**
- * auth_guard.js — RoadmapX Soft Auth Guard (Guest-First Mode)
+ * auth_guard.js — RoadmapX Auth Guard (Guest-First, Bug-Fixed)
  *
- * CHANGE: No longer forces a redirect to login.html.
- * Instead, we silently check if a session exists and:
- *   - If logged in  → set rx_token + rx_user in localStorage, update header UI
- *   - If guest      → clear stale tokens, render guest header UI
+ * ROOT CAUSE FIXES:
  *
- * This mirrors the ChatGPT / Canva "use first, sign in later" pattern.
- * The header dynamically shows either:
- *   • Guest  → "Sign In" button
- *   • Logged In → username + logout icon
+ * 1. TIMING: The async IIFE was calling whenReady() AFTER DOMContentLoaded
+ *    had already fired (because await fetch() takes time). The handler was
+ *    registered too late and never executed. Fixed by always waiting for
+ *    DOMContentLoaded first, THEN running the auth check inside it.
+ *
+ * 2. FAST-PATH BYPASS: If rx_token was missing (e.g. HybridData failed to
+ *    write it), we skipped /me entirely and showed guest UI even for a live
+ *    session. Fixed: always call /me regardless of localStorage state.
+ *    localStorage is only used as a cache hint, not a gate.
+ *
+ * 3. GUEST BANNER: The banner's setTimeout only checked localStorage, so it
+ *    could fire even for logged-in users if the token write was delayed.
+ *    Fixed: banner logic is now controlled here, after auth state is known.
+ *
+ * 4. TOKEN WRITE RELIABILITY: We now always write rx_token + rx_user on
+ *    every successful /me response, not just in the login flow.
  */
-(async function () {
+(function () {
+  'use strict';
+
   const API = 'https://roadmapx-backend-3qmc.onrender.com';
 
-  // ── Helper: update header to reflect auth state ──────────────────────
+  // ── UI: Guest header ─────────────────────────────────────────────────────
   function applyGuestHeader() {
     const hdrRight = document.querySelector('.hdr-right');
     if (!hdrRight) return;
 
-    // Remove profile/logout buttons
+    // Clean up any logged-in elements
     hdrRight.querySelectorAll('button[title="Profile"], button[title="Logout"]').forEach(b => b.remove());
+    const staleUserPill = hdrRight.querySelector('.hdr-user-pill');
+    if (staleUserPill) staleUserPill.remove();
 
-    // FIX: Remove Stats button for guests — stats page requires auth.
-    // Showing the button but hard-redirecting to login is a broken UX path.
-    hdrRight.querySelectorAll('button[title="Stats"], a[href="stats.html"]').forEach(b => b.remove());
-    // Also catch stats buttons identified by href or data attribute
-    hdrRight.querySelectorAll('[data-page="stats"], .stats-btn').forEach(b => b.remove());
+    // Remove Stats button — requires auth
+    hdrRight.querySelectorAll('button[title="Stats"], a[href="stats.html"], [data-page="stats"], .stats-btn').forEach(b => b.remove());
 
-    // Remove any existing sign-in pill to avoid duplicates
-    hdrRight.querySelector('.hdr-signin-btn') && hdrRight.querySelector('.hdr-signin-btn').remove();
+    // Avoid duplicates
+    if (hdrRight.querySelector('.hdr-signin-btn')) return;
 
-    // Insert Sign In button
     const signinBtn = document.createElement('button');
     signinBtn.className = 'hdr-btn hdr-signin-btn';
     signinBtn.title = 'Sign In';
-    signinBtn.style.cssText = `
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 11px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.4px;
-      font-family: var(--font-mono, monospace);
-      background: linear-gradient(135deg, rgba(0,229,200,0.15), rgba(124,58,237,0.15));
-      border: 1px solid rgba(0,229,200,0.35);
-      color: #00e5c8;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    `;
     signinBtn.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
@@ -59,64 +51,46 @@
         <polyline points="10 17 15 12 10 7"/>
         <line x1="15" y1="12" x2="3" y2="12"/>
       </svg>
-      Sign In
-    `;
-    signinBtn.addEventListener('click', () => { window.location.href = 'login.html'; });
+      Sign In`;
+    signinBtn.addEventListener('click', () => { window.location.href = 'login.html#signin'; });
     hdrRight.appendChild(signinBtn);
+
+    // Schedule guest banner only now that we know user is a guest
+    scheduleGuestBanner();
   }
 
+  // ── UI: Logged-in header ─────────────────────────────────────────────────
   function applyLoggedInHeader(username) {
     const hdrRight = document.querySelector('.hdr-right');
     if (!hdrRight) return;
 
-    // Remove any sign-in button
-    hdrRight.querySelector('.hdr-signin-btn') && hdrRight.querySelector('.hdr-signin-btn').remove();
-    // Remove any existing user pill to avoid duplicates
-    hdrRight.querySelector('.hdr-user-pill') && hdrRight.querySelector('.hdr-user-pill').remove();
+    // Remove guest elements
+    const signinBtn = hdrRight.querySelector('.hdr-signin-btn');
+    if (signinBtn) signinBtn.remove();
+    const stalePill = hdrRight.querySelector('.hdr-user-pill');
+    if (stalePill) stalePill.remove();
 
-    // Ensure profile + logout buttons exist
+    // Always suppress guest banner for logged-in users
+    hideGuestBanner();
+
     const hasProfile = hdrRight.querySelector('button[title="Profile"]');
     const hasLogout  = hdrRight.querySelector('button[title="Logout"]');
 
-    // Insert username pill before profile button (or at end)
+    // Username pill
     const pill = document.createElement('div');
     pill.className = 'hdr-user-pill';
-    pill.style.cssText = `
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.4px;
-      font-family: var(--font-mono, monospace);
-      background: linear-gradient(135deg, rgba(0,229,200,0.12), rgba(124,58,237,0.12));
-      border: 1px solid rgba(0,229,200,0.25);
-      color: var(--t1, #fff);
-      max-width: 90px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    `;
     pill.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round"
-        style="width:11px;height:11px;flex-shrink:0;color:#00e5c8">
+        style="width:11px;height:11px;flex-shrink:0;color:var(--c1)">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
-      <span title="${username}">${username}</span>
-    `;
+      <span title="${username}">${username}</span>`;
 
     const refBtn = hasProfile || hasLogout;
-    if (refBtn) {
-      hdrRight.insertBefore(pill, refBtn);
-    } else {
-      hdrRight.appendChild(pill);
-    }
+    refBtn ? hdrRight.insertBefore(pill, refBtn) : hdrRight.appendChild(pill);
 
-    // Make sure profile + logout are there
     if (!hasProfile) {
       const profileBtn = document.createElement('button');
       profileBtn.className = 'hdr-btn';
@@ -125,6 +99,7 @@
       profileBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
       hdrRight.appendChild(profileBtn);
     }
+
     if (!hasLogout) {
       const logoutBtn = document.createElement('button');
       logoutBtn.className = 'hdr-btn';
@@ -135,51 +110,85 @@
     }
   }
 
-  // ── Check session ─────────────────────────────────────────────────────
-  const localToken = localStorage.getItem('rx_token');
+  // ── Guest banner helpers ─────────────────────────────────────────────────
+  var _bannerTimer = null;
 
-  // Fast path: no local token → immediately show guest UI, skip network
-  if (!localToken) {
-    // Wait for DOM if needed
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', applyGuestHeader);
-    } else {
-      applyGuestHeader();
-    }
-    return;
+  function hideGuestBanner() {
+    clearTimeout(_bannerTimer);
+    _bannerTimer = null;
+    var b = document.getElementById('guest-banner');
+    if (b) b.style.display = 'none';
   }
 
-  // Slow path: verify existing session is still valid
-  try {
-    const res  = await fetch(API + '/me', { credentials: 'include' });
-    const data = await res.json();
-
-    if (data && data.success) {
-      localStorage.setItem('rx_token', 'true');
-      localStorage.setItem('rx_user', data.username);
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => applyLoggedInHeader(data.username));
-      } else {
-        applyLoggedInHeader(data.username);
+  function scheduleGuestBanner() {
+    clearTimeout(_bannerTimer);
+    _bannerTimer = setTimeout(function () {
+      // Re-check: don't show if auth state changed while timer was pending
+      if (!localStorage.getItem('rx_token')) {
+        var b = document.getElementById('guest-banner');
+        if (b) b.style.display = 'block';
       }
-    } else {
-      // Session expired — reset to guest
-      localStorage.removeItem('rx_token');
-      localStorage.removeItem('rx_user');
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyGuestHeader);
+    }, 10000);
+  }
+
+  // ── Core auth check ──────────────────────────────────────────────────────
+  // FIX: DOM must be ready BEFORE we touch any elements.
+  // FIX: Always hit /me — localStorage is a cache hint, not the truth.
+  function runAuthCheck() {
+    const cachedToken = localStorage.getItem('rx_token');
+    const cachedUser  = localStorage.getItem('rx_user');
+
+    // Optimistic render from cache while network check is in flight.
+    // Prevents flash of "Sign In" button for logged-in users on refresh.
+    if (cachedToken && cachedUser) {
+      applyLoggedInHeader(cachedUser);
+    }
+
+    // Always verify with the server — cookies are the source of truth.
+    // credentials:'include' is REQUIRED to send the session cookie cross-origin.
+    fetch(API + '/me', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function (res) {
+      if (!res.ok) throw new Error('http_' + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      if (data && data.success && data.username) {
+        // Session confirmed — refresh local cache and show logged-in UI
+        localStorage.setItem('rx_token', 'true');
+        localStorage.setItem('rx_user', data.username);
+        applyLoggedInHeader(data.username);
+      } else {
+        // Server says not authenticated — clear stale cache
+        localStorage.removeItem('rx_token');
+        localStorage.removeItem('rx_user');
+        applyGuestHeader();
+      }
+    })
+    .catch(function (err) {
+      console.warn('[auth_guard] /me check failed:', err.message);
+      // Network error (e.g. server cold-starting on free tier):
+      // Trust cached token if present, otherwise fall back to guest.
+      if (cachedToken && cachedUser) {
+        // Optimistic render already applied above — just suppress banner.
+        hideGuestBanner();
       } else {
         applyGuestHeader();
       }
-    }
-  } catch (e) {
-    // Network error — treat existing local token as valid (offline/cold start)
-    const savedUser = localStorage.getItem('rx_user') || 'User';
-    console.warn('[auth_guard] Could not verify session. Using local token.');
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => applyLoggedInHeader(savedUser));
-    } else {
-      applyLoggedInHeader(savedUser);
-    }
+    });
   }
+
+  // ── Entry point ──────────────────────────────────────────────────────────
+  // FIX: Register on DOMContentLoaded synchronously (not inside an async IIFE)
+  // so the handler is guaranteed to fire even if the script loads late.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runAuthCheck);
+  } else {
+    // Script loaded after DOM was already parsed (defer / bottom of body)
+    runAuthCheck();
+  }
+
 })();
