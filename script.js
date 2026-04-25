@@ -5206,6 +5206,8 @@ const AttModal = (function() {
     const el = document.getElementById('toast');
     if (el) { el.textContent = msg; el.className = 'show info'; setTimeout(() => el.className = '', 2800); }
   }
+
+  function open(ds) {
     _currentDate = ds;
     const att = lsGet('attendance', {});
     const existing = att[ds];
