@@ -31,7 +31,7 @@
     if (!hdrRight) return;
 
     // Clean up any logged-in elements
-    hdrRight.querySelectorAll('button[title="Profile"], button[title="Logout"]').forEach(b => b.remove());
+    hdrRight.querySelectorAll('button[title="Profile"]').forEach(b => b.remove());
     const staleUserPill = hdrRight.querySelector('.hdr-user-pill');
     if (staleUserPill) staleUserPill.remove();
 
@@ -74,7 +74,6 @@
     hideGuestBanner();
 
     const hasProfile = hdrRight.querySelector('button[title="Profile"]');
-    const hasLogout  = hdrRight.querySelector('button[title="Logout"]');
 
     // Username pill
     const pill = document.createElement('div');
@@ -88,8 +87,7 @@
       </svg>
       <span title="${username}">${username}</span>`;
 
-    const refBtn = hasProfile || hasLogout;
-    refBtn ? hdrRight.insertBefore(pill, refBtn) : hdrRight.appendChild(pill);
+    hasProfile ? hdrRight.insertBefore(pill, hasProfile) : hdrRight.appendChild(pill);
 
     if (!hasProfile) {
       const profileBtn = document.createElement('button');
@@ -99,7 +97,7 @@
       profileBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
       hdrRight.appendChild(profileBtn);
     }
-
+  }
 
   // ── Guest banner helpers ─────────────────────────────────────────────────
   var _bannerTimer = null;
