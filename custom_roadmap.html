@@ -2,18 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>RoadmapX — My Roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="custom_roadmap.css"/>
+<link rel="stylesheet" href="roadmap.css"/>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     AMBIENT BACKGROUND
-═══════════════════════════════════════════ -->
+<!-- AMBIENT BACKGROUND -->
 <div class="ambient">
   <div class="ambient-orb orb-1"></div>
   <div class="ambient-orb orb-2"></div>
@@ -21,124 +19,72 @@
   <div class="grid-overlay"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     APP SHELL
-═══════════════════════════════════════════ -->
+<!-- APP SHELL -->
 <div class="app-shell">
 
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-mark">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="var(--c1)" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M2 17l10 5 10-5" stroke="var(--c2)" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M2 12l10 5 10-5" stroke="var(--c1)" stroke-width="2" stroke-linejoin="round" opacity=".6"/>
-        </svg>
-      </div>
-      <span class="logo-text">RoadmapX</span>
-    </div>
+  <!-- SIDEBAR (hidden on mobile via CSS) -->
+  <aside class="sidebar" id="sidebar"></aside>
 
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Workspace</div>
-      <button class="nav-item active" data-panel="roadmap">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span>Dashboard</span>
-      </button>
-      <button class="nav-item" data-panel="roadmap">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span>Roadmaps</span>
-        <span class="nav-badge">3</span>
-      </button>
-      <button class="nav-item" data-panel="custom-roadmaps">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span>My Roadmaps</span>
-        <span class="nav-badge" id="nav-custom-roadmaps-count">0</span>
-      </button>
-      <button class="nav-item" data-panel="calendar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span>Calendar</span>
-      </button>
-      <button class="nav-item" data-panel="notes-panel">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span>Notes</span>
-      </button>
-
-      <div class="nav-section-label" style="margin-top:16px">System</div>
-      <button class="nav-item" data-panel="settings">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
-        <span>Settings</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="streak-widget">
-        <div class="streak-flame">🔥</div>
-        <div class="streak-info">
-          <div class="streak-count" id="sidebar-streak">0</div>
-          <div class="streak-label">Day Streak</div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── MAIN CONTENT ── -->
+  <!-- MAIN CONTENT -->
   <main class="main-content">
 
     <!-- TOP HEADER -->
     <header class="top-header">
       <div class="header-left">
-        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
         <div class="header-title-block">
-          <h1 class="header-title">My Roadmap</h1>
+          <h1 class="header-title" id="header-panel-title">My Roadmap</h1>
           <div class="header-subtitle" id="header-date-display"></div>
         </div>
       </div>
 
-      <div class="header-center">
-        <!-- Progress -->
-        <div class="header-progress">
-          <div class="progress-labels">
-            <span id="progress-label">0 / 0 tasks</span>
-            <span id="progress-pct">0%</span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <!-- View Toggle -->
+      <!-- View toggle (only visible on roadmap panel) -->
+      <div class="header-right" id="header-right-roadmap">
         <div class="view-toggle">
           <button class="toggle-btn active" id="btn-day-view" onclick="switchView('day')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Day
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Day</span>
           </button>
           <button class="toggle-btn" id="btn-week-view" onclick="switchView('week')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="4" x2="8" y2="22"/><line x1="16" y1="4" x2="16" y2="22"/></svg>
-            Week
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="4" x2="8" y2="22"/><line x1="16" y1="4" x2="16" y2="22"/></svg>
+            <span>Week</span>
           </button>
         </div>
 
-        <button class="btn-secondary" onclick="openAddTask()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Task
+        <button class="btn-secondary" onclick="openAddTask()" title="Add Task">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Add</span>
         </button>
 
-        <button class="btn-primary glow-btn" onclick="openAIModal()">
+        <button class="btn-primary glow-btn" onclick="openAIModal()" title="AI Roadmap">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 110 20 10 10 0 010-20z"/><path d="M12 6v6l4 2"/></svg>
-          AI Roadmap
+          <span>AI</span>
+        </button>
+      </div>
+
+      <!-- My Roadmaps header actions -->
+      <div class="header-right" id="header-right-roadmaps" style="display:none">
+        <button class="btn-primary glow-btn" onclick="openCreateRoadmapModal()" title="Create">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New</span>
         </button>
       </div>
     </header>
 
-    <!-- PANELS -->
+    <!-- ── PANELS ── -->
 
-    <!-- ── ROADMAP PANEL ── -->
+    <!-- ROADMAP PANEL -->
     <section class="panel active" id="panel-roadmap">
+
+      <!-- Progress bar inside panel on mobile -->
+      <div class="mobile-progress">
+        <div class="progress-labels">
+          <span id="progress-label">0 / 0 tasks</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
 
       <!-- DAY VIEW -->
       <div id="day-view" class="view-container active">
@@ -153,9 +99,7 @@
           <button class="today-btn" onclick="goToToday()">Today</button>
         </div>
 
-        <div class="task-list" id="day-task-list">
-          <!-- Tasks injected by JS -->
-        </div>
+        <div class="task-list" id="day-task-list"></div>
 
         <div class="empty-state" id="day-empty" style="display:none">
           <div class="empty-icon">
@@ -163,7 +107,7 @@
           </div>
           <div class="empty-title">No tasks for this day</div>
           <div class="empty-sub">Add a task or generate an AI roadmap to get started.</div>
-          <button class="btn-primary glow-btn" style="margin-top:16px;width:auto;padding:10px 24px" onclick="openAddTask()">+ Add Task</button>
+          <button class="btn-primary glow-btn" style="margin-top:16px;width:auto;padding:12px 24px" onclick="openAddTask()">+ Add Task</button>
         </div>
       </div>
 
@@ -179,14 +123,12 @@
           </button>
           <button class="today-btn" onclick="goToToday()">This Week</button>
         </div>
-        <div class="week-grid" id="week-grid">
-          <!-- Columns injected by JS -->
-        </div>
+        <div class="week-grid" id="week-grid"></div>
       </div>
 
     </section>
 
-    <!-- ── CALENDAR PANEL ── -->
+    <!-- CALENDAR PANEL -->
     <section class="panel" id="panel-calendar">
       <div class="panel-header">
         <h2 class="panel-title">Calendar</h2>
@@ -209,56 +151,25 @@
       </div>
     </section>
 
-    <!-- ── NOTES PANEL ── -->
+    <!-- NOTES PANEL -->
     <section class="panel" id="panel-notes-panel">
       <div class="panel-header">
         <h2 class="panel-title">Notes</h2>
-        <button class="btn-secondary" onclick="addGlobalNote()">+ New Note</button>
+        <button class="btn-secondary" onclick="addGlobalNote()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New Note</span>
+        </button>
       </div>
       <div class="notes-grid" id="global-notes-grid"></div>
     </section>
 
-    <!-- ── SETTINGS PANEL ── -->
-    <section class="panel" id="panel-settings">
-      <div class="panel-header">
-        <h2 class="panel-title">Settings</h2>
-      </div>
-      <div class="settings-body">
-        <div class="settings-group">
-          <div class="settings-label">Pomodoro Duration</div>
-          <div class="settings-row">
-            <span class="settings-desc">Focus session length (minutes)</span>
-            <input class="settings-input" type="number" id="setting-pomodoro" value="25" min="5" max="60" onchange="saveSetting('pomoDuration', this.value)"/>
-          </div>
-        </div>
-        <div class="settings-group">
-          <div class="settings-label">Short Break</div>
-          <div class="settings-row">
-            <span class="settings-desc">Short break length (minutes)</span>
-            <input class="settings-input" type="number" id="setting-short-break" value="5" min="1" max="30" onchange="saveSetting('shortBreak', this.value)"/>
-          </div>
-        </div>
-        <div class="settings-group">
-          <div class="settings-label">Reset Data</div>
-          <div class="settings-row">
-            <span class="settings-desc">Clear all tasks and roadmaps</span>
-            <button class="btn-danger" onclick="confirmReset()">Reset All Data</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── CUSTOM ROADMAPS PANEL ── -->
+    <!-- CUSTOM ROADMAPS PANEL -->
     <section class="panel" id="panel-custom-roadmaps">
 
       <!-- LIST VIEW -->
       <div id="cr-list-view">
         <div class="panel-header">
           <h2 class="panel-title">My Roadmaps</h2>
-          <button class="btn-primary glow-btn" onclick="openCreateRoadmapModal()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Create Roadmap
-          </button>
         </div>
         <div class="cr-grid" id="cr-grid"></div>
         <div class="empty-state" id="cr-empty" style="display:none">
@@ -267,7 +178,7 @@
           </div>
           <div class="empty-title">No custom roadmaps yet</div>
           <div class="empty-sub">Create your first roadmap to organize your learning with weeks and steps.</div>
-          <button class="btn-primary glow-btn" style="margin-top:16px;width:auto;padding:10px 24px" onclick="openCreateRoadmapModal()">+ Create Roadmap</button>
+          <button class="btn-primary glow-btn" style="margin-top:16px;width:auto;padding:12px 24px" onclick="openCreateRoadmapModal()">+ Create Roadmap</button>
         </div>
       </div>
 
@@ -278,15 +189,15 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
             Back
           </button>
-          <div class="cr-detail-title-block">
-            <h2 class="panel-title" id="cr-detail-title">Roadmap</h2>
-            <div class="cr-detail-desc" id="cr-detail-desc"></div>
-          </div>
           <div class="cr-detail-actions">
             <button class="btn-secondary" onclick="openEditRoadmapModal()">Edit</button>
             <button class="cr-delete-btn" onclick="deleteCurrentRoadmap()">Delete</button>
-            <button class="btn-primary glow-btn" onclick="openAddWeekModal()">+ Add Week</button>
+            <button class="btn-primary glow-btn" onclick="openAddWeekModal()">+ Week</button>
           </div>
+        </div>
+        <div class="cr-detail-title-block" style="margin-bottom:10px">
+          <h2 class="panel-title" id="cr-detail-title">Roadmap</h2>
+          <div class="cr-detail-desc" id="cr-detail-desc"></div>
         </div>
         <div class="cr-progress-wrap">
           <div class="cr-progress-labels">
@@ -310,12 +221,81 @@
 
     </section>
 
-  </main>
-</div>
+    <!-- SETTINGS PANEL -->
+    <section class="panel" id="panel-settings">
+      <div class="panel-header">
+        <h2 class="panel-title">Settings</h2>
+      </div>
+      <div class="settings-body">
+        <div class="settings-group">
+          <div class="settings-label">Pomodoro Duration</div>
+          <div class="settings-row">
+            <span class="settings-desc">Focus session length (minutes)</span>
+            <input class="settings-input" type="number" id="setting-pomodoro" value="25" min="5" max="60" onchange="saveSetting('pomoDuration', this.value)"/>
+          </div>
+        </div>
+        <div class="settings-group">
+          <div class="settings-label">Short Break</div>
+          <div class="settings-row">
+            <span class="settings-desc">Short break length (minutes)</span>
+            <input class="settings-input" type="number" id="setting-short-break" value="5" min="1" max="30" onchange="saveSetting('shortBreak', this.value)"/>
+          </div>
+        </div>
+        <div class="settings-group">
+          <div class="settings-label">Reset Data</div>
+          <div class="settings-row">
+            <span class="settings-desc">Clear all tasks and roadmaps</span>
+            <button class="btn-danger" onclick="confirmReset()">Reset All</button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <div class="settings-label">Navigation</div>
+          <div class="settings-row">
+            <span class="settings-desc">Back to main app</span>
+            <button class="btn-secondary" onclick="window.location.href='index.html'" style="min-height:40px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Home</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-<!-- ═══════════════════════════════════════════
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       BOTTOM NAV (mobile navigation)
+  ══════════════════════════════════════════ -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" id="bnav-roadmap" onclick="switchPanelMobile('roadmap')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="bnav-label">Tasks</span>
+    </button>
+    <button class="bnav-item" id="bnav-custom-roadmaps" onclick="switchPanelMobile('custom-roadmaps')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="bnav-label">Roadmaps</span>
+      <span class="bnav-badge" id="bnav-roadmaps-count" style="display:none">0</span>
+    </button>
+    <button class="bnav-item" id="bnav-calendar" onclick="switchPanelMobile('calendar')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="bnav-label">Calendar</span>
+    </button>
+    <button class="bnav-item" id="bnav-notes-panel" onclick="switchPanelMobile('notes-panel')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="bnav-label">Notes</span>
+    </button>
+    <button class="bnav-item" id="bnav-settings" onclick="switchPanelMobile('settings')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      <span class="bnav-label">Settings</span>
+    </button>
+  </nav>
+
+</div>
+<!-- /app-shell -->
+
+<!-- ══════════════════════════════════════════
      MODALS
-═══════════════════════════════════════════ -->
+══════════════════════════════════════════ -->
 
 <!-- ADD / EDIT TASK MODAL -->
 <div class="modal-overlay" id="modal-add-task" onclick="closeModalOnBackdrop(event, 'modal-add-task')">
@@ -326,7 +306,6 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-
     <div class="modal-body">
       <input type="hidden" id="task-edit-id"/>
       <div class="form-group">
@@ -364,7 +343,6 @@
         </div>
       </div>
     </div>
-
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-add-task')">Cancel</button>
       <button class="btn-primary glow-btn" onclick="saveTask()">Save Task</button>
@@ -374,21 +352,18 @@
 
 <!-- AI ROADMAP GENERATOR MODAL -->
 <div class="modal-overlay" id="modal-ai" onclick="closeModalOnBackdrop(event, 'modal-ai')">
-  <div class="modal glass-modal" style="max-width:560px">
+  <div class="modal glass-modal">
     <div class="modal-header">
-      <h3 class="modal-title">
-        <span class="ai-badge">AI</span> Roadmap Generator
-      </h3>
+      <h3 class="modal-title"><span class="ai-badge">AI</span> Roadmap Generator</h3>
       <button class="modal-close" onclick="closeModal('modal-ai')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-
     <div class="modal-body">
       <div class="ai-generator-area" id="ai-generator-area">
         <div class="form-group">
           <label class="form-label">Your Learning Goal</label>
-          <input class="form-input" type="text" id="ai-goal-input" placeholder="e.g. Learn DSA in 30 days" />
+          <input class="form-input" type="text" id="ai-goal-input" placeholder="e.g. Learn DSA in 30 days"/>
         </div>
         <div class="form-row">
           <div class="form-group flex-1">
@@ -415,23 +390,19 @@
             <button class="tag-opt" data-tag="System" onclick="toggleTag(this)">System</button>
           </div>
         </div>
-        <button class="btn-primary glow-btn" style="width:100%;padding:13px;font-size:14px;margin-top:8px" onclick="generateAIRoadmap()">
+        <button class="btn-primary glow-btn" style="width:100%;padding:14px;font-size:14px;margin-top:8px" onclick="generateAIRoadmap()">
           ✨ Generate Roadmap
         </button>
       </div>
-
-      <!-- AI Loading -->
       <div class="ai-loading" id="ai-loading" style="display:none">
         <div class="ai-spinner">
           <div class="spinner-ring"></div>
           <div class="spinner-ring r2"></div>
           <div class="spinner-ring r3"></div>
         </div>
-        <div class="ai-loading-text">Generating your personalized roadmap...</div>
+        <div class="ai-loading-text">Generating your roadmap...</div>
         <div class="ai-loading-sub" id="ai-loading-sub">Analyzing your goal</div>
       </div>
-
-      <!-- AI Preview -->
       <div class="ai-preview" id="ai-preview" style="display:none">
         <div class="ai-preview-header">
           <div class="ai-preview-title" id="ai-preview-title"></div>
@@ -439,8 +410,8 @@
         </div>
         <div class="ai-preview-list" id="ai-preview-list"></div>
         <div class="modal-footer" style="margin-top:16px;padding:0">
-          <button class="btn-ghost" onclick="resetAIGenerator()">← Regenerate</button>
-          <button class="btn-primary glow-btn" onclick="applyAIRoadmap()">Apply Roadmap</button>
+          <button class="btn-ghost" onclick="resetAIGenerator()">← Redo</button>
+          <button class="btn-primary glow-btn" onclick="applyAIRoadmap()">Apply</button>
         </div>
       </div>
     </div>
@@ -458,28 +429,23 @@
     </div>
     <div class="modal-body">
       <div class="pomo-task-name" id="pomo-task-name"></div>
-
-      <!-- SVG ring timer -->
       <div class="pomo-ring-wrap">
         <svg class="pomo-ring" viewBox="0 0 200 200">
-          <circle class="ring-track" cx="100" cy="100" r="88" />
-          <circle class="ring-fill" id="pomo-ring-fill" cx="100" cy="100" r="88"
-            stroke-dasharray="552.9" stroke-dashoffset="0"/>
+          <circle class="ring-track" cx="100" cy="100" r="88"/>
+          <circle class="ring-fill" id="pomo-ring-fill" cx="100" cy="100" r="88" stroke-dasharray="552.9" stroke-dashoffset="0"/>
           <text class="ring-time" x="100" y="95" text-anchor="middle" id="pomo-display">25:00</text>
           <text class="ring-sub" x="100" y="118" text-anchor="middle" id="pomo-status-text">Focus</text>
         </svg>
       </div>
-
       <div class="pomo-progress-bar">
         <div class="pomo-progress-fill" id="pomo-progress-fill" style="width:0%"></div>
       </div>
-
       <div class="pomo-controls">
         <button class="pomo-btn" onclick="resetPomodoro()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
         </button>
         <button class="pomo-btn pomo-start" id="pomo-start-btn" onclick="togglePomodoro()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" id="pomo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" id="pomo-icon">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
         </button>
@@ -487,14 +453,11 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
         </button>
       </div>
-
       <div class="pomo-session-count">
         Session <span id="pomo-session-num">1</span> / 4
         <span class="pomo-dots" id="pomo-dots">
-          <span class="pomo-dot"></span>
-          <span class="pomo-dot"></span>
-          <span class="pomo-dot"></span>
-          <span class="pomo-dot"></span>
+          <span class="pomo-dot"></span><span class="pomo-dot"></span>
+          <span class="pomo-dot"></span><span class="pomo-dot"></span>
         </span>
       </div>
     </div>
@@ -503,7 +466,7 @@
 
 <!-- NOTES MODAL -->
 <div class="modal-overlay" id="modal-notes" onclick="closeModalOnBackdrop(event, 'modal-notes')">
-  <div class="modal glass-modal" style="max-width:520px">
+  <div class="modal glass-modal">
     <div class="modal-header">
       <h3 class="modal-title">📝 Task Notes</h3>
       <button class="modal-close" onclick="closeModal('modal-notes')">
@@ -512,18 +475,18 @@
     </div>
     <div class="modal-body">
       <div class="notes-task-title" id="notes-task-title"></div>
-      <textarea class="form-input form-textarea notes-editor" id="notes-editor" placeholder="Write your notes, links, key points...&#10;&#10;Markdown-ish formatting works here." rows="12"></textarea>
+      <textarea class="form-input form-textarea notes-editor" id="notes-editor" placeholder="Write your notes, links, key points..." rows="10"></textarea>
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-notes')">Cancel</button>
-      <button class="btn-primary glow-btn" onclick="saveNotes()">Save Notes</button>
+      <button class="btn-primary glow-btn" onclick="saveNotes()">Save</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL: CREATE / EDIT ROADMAP -->
 <div class="modal-overlay" id="modal-cr-roadmap" onclick="closeModalOnBackdrop(event,'modal-cr-roadmap')">
-  <div class="modal glass-modal" style="max-width:480px">
+  <div class="modal glass-modal">
     <div class="modal-header">
       <h3 class="modal-title" id="cr-roadmap-modal-title">Create Roadmap</h3>
       <button class="modal-close" onclick="closeModal('modal-cr-roadmap')">
@@ -543,14 +506,14 @@
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-cr-roadmap')">Cancel</button>
-      <button class="btn-primary glow-btn" onclick="saveRoadmap()">Save Roadmap</button>
+      <button class="btn-primary glow-btn" onclick="saveRoadmap()">Save</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL: ADD / EDIT WEEK -->
 <div class="modal-overlay" id="modal-cr-week" onclick="closeModalOnBackdrop(event,'modal-cr-week')">
-  <div class="modal glass-modal" style="max-width:420px">
+  <div class="modal glass-modal">
     <div class="modal-header">
       <h3 class="modal-title" id="cr-week-modal-title">Add Week</h3>
       <button class="modal-close" onclick="closeModal('modal-cr-week')">
@@ -566,14 +529,14 @@
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-cr-week')">Cancel</button>
-      <button class="btn-primary glow-btn" onclick="saveWeek()">Save Week</button>
+      <button class="btn-primary glow-btn" onclick="saveWeek()">Save</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL: ADD / EDIT STEP -->
 <div class="modal-overlay" id="modal-cr-step" onclick="closeModalOnBackdrop(event,'modal-cr-step')">
-  <div class="modal glass-modal" style="max-width:460px">
+  <div class="modal glass-modal">
     <div class="modal-header">
       <h3 class="modal-title" id="cr-step-modal-title">Add Step</h3>
       <button class="modal-close" onclick="closeModal('modal-cr-step')">
@@ -594,7 +557,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-cr-step')">Cancel</button>
-      <button class="btn-primary glow-btn" onclick="saveStep()">Save Step</button>
+      <button class="btn-primary glow-btn" onclick="saveStep()">Save</button>
     </div>
   </div>
 </div>
@@ -602,6 +565,60 @@
 <!-- TOAST -->
 <div class="toast-container" id="toast-container"></div>
 
-<script src="custom_roadmap.js"></script>
+<script src="roadmap.js"></script>
+
+<!-- Mobile bottom nav wiring -->
+<script>
+  function switchPanelMobile(panelName) {
+    // Switch panels (uses existing switchPanel from roadmap.js)
+    switchPanel(panelName);
+
+    // Update bottom nav active state
+    document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById('bnav-' + panelName);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Update header title
+    const titles = {
+      'roadmap': 'My Roadmap',
+      'custom-roadmaps': 'My Roadmaps',
+      'calendar': 'Calendar',
+      'notes-panel': 'Notes',
+      'settings': 'Settings'
+    };
+    const titleEl = document.getElementById('header-panel-title');
+    if (titleEl) titleEl.textContent = titles[panelName] || 'RoadmapX';
+
+    // Show/hide header action buttons
+    const roadmapRight = document.getElementById('header-right-roadmap');
+    const roadmapsRight = document.getElementById('header-right-roadmaps');
+    if (roadmapRight) roadmapRight.style.display = panelName === 'roadmap' ? 'flex' : 'none';
+    if (roadmapsRight) roadmapsRight.style.display = panelName === 'custom-roadmaps' ? 'flex' : 'none';
+  }
+
+  // Update roadmaps badge count when roadmaps change
+  function updateRoadmapsBadge() {
+    const count = (STATE && STATE.roadmaps) ? STATE.roadmaps.length : 0;
+    const badge = document.getElementById('bnav-roadmaps-count');
+    if (badge) {
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'block' : 'none';
+    }
+  }
+
+  // Patch renderRoadmaps to also update badge after it runs
+  document.addEventListener('DOMContentLoaded', () => {
+    const origRender = window.renderRoadmaps;
+    if (typeof origRender === 'function') {
+      window.renderRoadmaps = function() {
+        origRender.apply(this, arguments);
+        updateRoadmapsBadge();
+      };
+    }
+    // Initial badge update
+    setTimeout(updateRoadmapsBadge, 300);
+  });
+</script>
+
 </body>
 </html>
