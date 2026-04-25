@@ -2,412 +2,373 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>My Roadmaps — RoadmapX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
-  /* ── Design tokens — matches RoadmapX styles.css ── */
-  :root {
-    --bg0: #05050f;
-    --bg1: #08081a;
-    --bg2: #0c0c20;
-    --bg3: #101028;
-    --bg4: #141432;
-    --bg5: #1a1a40;
-    --bg6: #1e1e4a;
-    --c1: #00e5c8;
-    --c2: #7c3aed;
-    --c3: #f43f5e;
-    --c4: #f59e0b;
-    --c5: #10b981;
-    --t1: #f0f0ff;
-    --t2: #8888aa;
-    --border: rgba(255,255,255,0.06);
-    --border-hi: rgba(0,229,200,0.2);
-    --font-ui: 'DM Sans', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-    --r8: 8px;
-    --r12: 12px;
-    --r16: 16px;
-  }
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS — mirrors styles.css
+═══════════════════════════════════════════════════════ */
+:root {
+  --bg0: #05050f; --bg1: #08081a; --bg2: #0c0c20;
+  --bg3: #101028; --bg4: #141432; --bg5: #1a1a40; --bg6: #1e1e4a;
+  --c1: #00e5c8; --c2: #7c3aed; --c3: #f43f5e;
+  --c4: #f59e0b; --c5: #10b981; --c6: #3b82f6;
+  --glow1: rgba(0,229,200,0.12);
+  --t1: #f0f0ff; --t2: #8080a8; --t3: #404060;
+  --border: rgba(255,255,255,0.06);
+  --border-hi: rgba(0,229,200,0.25);
+  --font-ui: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --r8: 8px; --r10: 10px; --r12: 12px; --r16: 16px; --rfull: 9999px;
+  --dur: 0.2s; --ease: cubic-bezier(0.4,0,0.2,1);
+  --spring: cubic-bezier(0.34,1.56,0.64,1);
+}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; min-height: 100%; background: var(--bg0); font-family: var(--font-ui); color: var(--t1); -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }
+button { font-family: var(--font-ui); cursor: pointer; border: none; outline: none; background: none; }
+input, textarea { font-family: var(--font-ui); outline: none; border: none; background: none; color: var(--t1); }
+a { color: var(--c1); text-decoration: none; }
 
-  body {
-    background: var(--bg0);
-    color: var(--t1);
-    font-family: var(--font-ui);
-    min-height: 100vh;
-    font-size: 14px;
-    -webkit-font-smoothing: antialiased;
-  }
+/* ── Grid texture ── */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,229,200,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,200,0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
 
-  /* ── Header ── */
-  .header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: var(--bg1);
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .header-back {
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: var(--r8);
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    color: var(--t1);
-    transition: background 0.15s, border-color 0.15s;
-    flex-shrink: 0;
-  }
-  .header-back:hover { background: var(--bg5); border-color: var(--border-hi); }
-  .header-back svg { width: 16px; height: 16px; }
-  .header-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--c1);
-    font-family: var(--font-mono);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    flex: 1;
-  }
-  .header-sub {
-    font-size: 9px;
-    color: var(--t2);
-    font-family: var(--font-mono);
-    letter-spacing: 0.5px;
-  }
+/* ═══════════════ HEADER ═══════════════ */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(5,5,15,0.94);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px; height: 52px;
+  display: flex; align-items: center; gap: 12px;
+}
+.header::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c1), var(--c2), transparent);
+  opacity: 0.28;
+}
+.header-back {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r8);
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--t1); transition: background var(--dur), border-color var(--dur);
+  flex-shrink: 0;
+}
+.header-back:hover { background: var(--bg5); border-color: var(--border-hi); }
+.header-back:active { transform: scale(0.88); }
+.header-back svg { width: 16px; height: 16px; }
+.header-title {
+  font-size: 13px; font-weight: 700; color: var(--c1);
+  font-family: var(--font-mono); letter-spacing: 1px;
+  text-transform: uppercase; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-sub { font-size: 9px; color: var(--t2); font-family: var(--font-mono); letter-spacing: 0.5px; }
+.header-action-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: var(--rfull);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
+  font-family: var(--font-mono);
+  background: linear-gradient(135deg, rgba(0,229,200,0.13), rgba(124,58,237,0.13));
+  border: 1px solid rgba(0,229,200,0.32); color: var(--c1);
+  transition: all var(--dur); white-space: nowrap;
+}
+.header-action-btn:hover { background: linear-gradient(135deg, rgba(0,229,200,0.2), rgba(124,58,237,0.2)); box-shadow: 0 0 14px rgba(0,229,200,0.15); }
+.header-action-btn:active { transform: scale(0.93); }
+.header-action-btn svg { width: 13px; height: 13px; }
 
-  /* ── Views ── */
-  .view { display: none; }
-  .view.active { display: block; }
+/* ═══════════════ VIEWS ═══════════════ */
+.view { display: none; animation: viewIn 0.25s var(--ease) both; }
+.view.active { display: block; }
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  /* ── Page container ── */
-  .page { padding: 16px; max-width: 600px; margin: 0 auto; }
+/* ═══════════════ PAGE CONTAINER ═══════════════ */
+.page { padding: 16px; max-width: 600px; margin: 0 auto; padding-bottom: 48px; }
 
-  /* ── Section label ── */
-  .section-label {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--t2);
-    font-family: var(--font-mono);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
+/* ═══════════════ SECTION LABEL ═══════════════ */
+.section-label {
+  font-size: 9px; font-weight: 700; color: var(--c1);
+  font-family: var(--font-mono); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(0,229,200,0.25), transparent);
+}
 
-  /* ── Roadmap card ── */
-  .roadmap-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--r12);
-    padding: 14px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    position: relative;
-    overflow: hidden;
-  }
-  .roadmap-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--c1), var(--c2));
-    border-radius: 3px 0 0 3px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .roadmap-card:hover { border-color: var(--border-hi); background: var(--bg3); }
-  .roadmap-card:hover::before { opacity: 1; }
+/* ═══════════════ ROADMAP CARD ═══════════════ */
+.roadmap-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r12); padding: 14px; margin-bottom: 10px;
+  cursor: pointer; transition: border-color var(--dur), background var(--dur), transform var(--dur), box-shadow var(--dur);
+  position: relative; overflow: hidden;
+}
+.roadmap-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--c1), var(--c2));
+  border-radius: 3px 0 0 3px;
+  opacity: 0; transition: opacity var(--dur);
+}
+.roadmap-card:hover { border-color: var(--border-hi); background: var(--bg3); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,229,200,0.06); }
+.roadmap-card:hover::before { opacity: 1; }
+.roadmap-card:active { transform: scale(0.99); }
 
-  .roadmap-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
-  .roadmap-card-title { font-size: 14px; font-weight: 600; color: var(--t1); line-height: 1.3; }
-  .roadmap-card-arrow { color: var(--t2); flex-shrink: 0; margin-top: 2px; }
-  .roadmap-card-desc { font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 10px; }
+.roadmap-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.roadmap-card-title { font-size: 14px; font-weight: 600; color: var(--t1); line-height: 1.3; }
+.roadmap-card-arrow { color: var(--t2); flex-shrink: 0; margin-top: 2px; transition: transform var(--dur), color var(--dur); }
+.roadmap-card:hover .roadmap-card-arrow { transform: translateX(2px); color: var(--c1); }
+.roadmap-card-desc { font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 10px; }
 
-  /* ── Progress bar ── */
-  .prog-wrap { }
-  .prog-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--t2); font-family: var(--font-mono); margin-bottom: 5px; }
-  .prog-track { height: 3px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
-  .prog-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--c1), var(--c2));
-    border-radius: 2px;
-    transition: width 0.4s cubic-bezier(.4,0,.2,1);
-  }
+/* ═══════════════ PROGRESS BAR ═══════════════ */
+.prog-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--t2); font-family: var(--font-mono); margin-bottom: 5px; }
+.prog-track { height: 3px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--c1), var(--c2));
+  border-radius: 2px;
+  transition: width 0.5s var(--ease);
+}
 
-  /* ── Empty state ── */
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--t2);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-  .empty-state-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--t1);
-    margin-bottom: 6px;
-  }
+/* ═══════════════ EMPTY STATE ═══════════════ */
+.empty-state {
+  text-align: center; padding: 48px 20px; color: var(--t2);
+  font-size: 13px; line-height: 1.6;
+}
+.empty-ico {
+  width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 14px;
+  background: linear-gradient(135deg, rgba(0,229,200,0.1), rgba(124,58,237,0.1));
+  border: 1px solid rgba(0,229,200,0.18);
+  display: flex; align-items: center; justify-content: center;
+}
+.empty-ico svg { width: 22px; height: 22px; color: var(--c1); }
+.empty-state-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 6px; font-family: var(--font-mono); }
 
-  /* ── Create button ── */
-  .btn-primary {
-    width: 100%;
-    padding: 13px;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    color: #000;
-    font-weight: 700;
-    font-size: 13px;
-    font-family: var(--font-ui);
-    border-radius: var(--r8);
-    cursor: pointer;
-    border: none;
-    letter-spacing: 0.3px;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-primary:active { transform: scale(0.98); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+/* ═══════════════ BUTTONS ═══════════════ */
+.btn-primary {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  color: #000; font-weight: 700; font-size: 13px;
+  font-family: var(--font-ui); border-radius: var(--r8);
+  cursor: pointer; border: none; letter-spacing: 0.3px;
+  transition: opacity var(--dur), transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-  .btn-secondary {
-    padding: 10px 16px;
-    background: var(--bg3);
-    color: var(--t1);
-    font-weight: 600;
-    font-size: 12px;
-    font-family: var(--font-ui);
-    border-radius: var(--r8);
-    cursor: pointer;
-    border: 1px solid var(--border);
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .btn-secondary:hover { border-color: var(--border-hi); background: var(--bg4); }
+.btn-secondary {
+  padding: 8px 14px; background: var(--bg3); color: var(--t1);
+  font-weight: 600; font-size: 12px; font-family: var(--font-ui);
+  border-radius: var(--r8); cursor: pointer; border: 1px solid var(--border);
+  transition: border-color var(--dur), background var(--dur);
+  white-space: nowrap;
+}
+.btn-secondary:hover { border-color: var(--border-hi); background: var(--bg4); }
 
-  .btn-ghost {
-    padding: 8px 12px;
-    background: transparent;
-    color: var(--t2);
-    font-size: 12px;
-    font-family: var(--font-ui);
-    border-radius: var(--r8);
-    cursor: pointer;
-    border: 1px solid var(--border);
-    transition: border-color 0.15s, color 0.15s;
-  }
-  .btn-ghost:hover { border-color: var(--border-hi); color: var(--t1); }
+.btn-ghost {
+  padding: 8px 14px; background: transparent; color: var(--t2);
+  font-size: 12px; font-family: var(--font-ui);
+  border-radius: var(--r8); cursor: pointer; border: 1px solid var(--border);
+  transition: border-color var(--dur), color var(--dur);
+}
+.btn-ghost:hover { border-color: var(--border-hi); color: var(--t1); }
 
-  /* ── Modal / slide-up panel ── */
-  .modal-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    display: none;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    border-radius: var(--r16) var(--r16) 0 0;
-    padding: 20px 16px 32px;
-    width: 100%;
-    max-width: 600px;
-    animation: slideUp 0.22s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(100%); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-  .modal-handle {
-    width: 36px; height: 4px;
-    background: var(--bg5);
-    border-radius: 2px;
-    margin: 0 auto 18px;
-  }
-  .modal-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--t1);
-    margin-bottom: 16px;
-  }
+/* ═══════════════ MODAL ═══════════════ */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 200; display: none;
+  align-items: flex-end; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border-hi);
+  border-bottom: none;
+  border-radius: var(--r16) var(--r16) 0 0;
+  padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  width: 100%; max-width: 600px;
+  animation: slideUp 0.25s var(--ease);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.modal-handle {
+  width: 36px; height: 4px; background: var(--bg5);
+  border-radius: 2px; margin: 0 auto 18px;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: var(--t1); margin-bottom: 16px; font-family: var(--font-mono); }
 
-  /* ── Form inputs ── */
-  .field { margin-bottom: 12px; }
-  .field-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--t2);
-    font-family: var(--font-mono);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .field input, .field textarea {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: var(--r8);
-    padding: 10px 12px;
-    font-size: 13px;
-    color: var(--t1);
-    font-family: var(--font-ui);
-    transition: border-color 0.15s;
-    resize: none;
-  }
-  .field input:focus, .field textarea:focus {
-    border-color: var(--border-hi);
-    outline: none;
-  }
-  .field input::placeholder, .field textarea::placeholder { color: var(--t2); }
+/* ═══════════════ FORM FIELDS ═══════════════ */
+.field { margin-bottom: 12px; }
+.field-label {
+  font-size: 10px; font-weight: 700; color: var(--t2);
+  font-family: var(--font-mono); letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 6px; display: block;
+}
+.field input, .field textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r8); padding: 10px 12px; font-size: 13px;
+  color: var(--t1); font-family: var(--font-ui); transition: border-color var(--dur); resize: none;
+}
+.field input:focus, .field textarea:focus { border-color: var(--border-hi); }
+.field input::placeholder, .field textarea::placeholder { color: var(--t3); }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-actions .btn-primary { flex: 1; }
 
-  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
-  .modal-actions .btn-primary { flex: 1; }
+/* ═══════════════ DETAIL META CARD ═══════════════ */
+.detail-meta {
+  background: var(--bg2); border: 1px solid var(--border-hi);
+  border-radius: var(--r12); padding: 16px; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.detail-meta::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--c1), var(--c2));
+}
+.detail-meta-inner { padding-left: 4px; }
+.detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+.detail-title { font-size: 16px; font-weight: 700; color: var(--t1); line-height: 1.3; }
+.detail-desc { font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 12px; }
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: var(--rfull);
+  font-size: 9px; font-weight: 700; font-family: var(--font-mono);
+  letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;
+  flex-shrink: 0; margin-top: 3px;
+}
+.tag-cyan { background: rgba(0,229,200,0.1); color: var(--c1); border: 1px solid rgba(0,229,200,0.22); }
+.tag-green { background: rgba(16,185,129,0.12); color: var(--c5); border: 1px solid rgba(16,185,129,0.2); }
 
-  /* ── Detail view header ── */
-  .detail-meta {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--r12);
-    padding: 14px;
-    margin-bottom: 16px;
-  }
-  .detail-title { font-size: 16px; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
-  .detail-desc { font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 12px; }
+/* ═══════════════ STEPS LIST ═══════════════ */
+.steps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.steps-header .section-label { margin-bottom: 0; flex: 1; }
 
-  /* ── Step item ── */
-  .steps-list { margin-bottom: 14px; }
-  .step-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--r8);
-    padding: 12px;
-    margin-bottom: 8px;
-    transition: border-color 0.15s, opacity 0.2s;
-  }
-  .step-item.done { opacity: 0.55; }
-  .step-item.done .step-title { text-decoration: line-through; color: var(--t2); }
+.step-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r10); padding: 12px; margin-bottom: 8px;
+  transition: border-color var(--dur), opacity 0.3s, background var(--dur);
+  animation: stepIn 0.2s var(--ease) both;
+}
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.step-item.done { opacity: 0.5; background: rgba(16,185,129,0.02); border-color: rgba(16,185,129,0.08); }
+.step-item.done .step-title { text-decoration: line-through; color: var(--t2); }
+.step-item:not(.done):hover { border-color: var(--border-hi); }
 
-  /* Custom checkbox */
-  .step-check {
-    width: 18px; height: 18px;
-    border-radius: 5px;
-    border: 1.5px solid var(--border);
-    background: var(--bg3);
-    flex-shrink: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, border-color 0.15s;
-    margin-top: 1px;
-  }
-  .step-check.checked {
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    border-color: transparent;
-  }
-  .step-check svg { width: 11px; height: 11px; color: #000; display: none; }
-  .step-check.checked svg { display: block; }
+/* Custom checkbox */
+.step-check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1.5px solid var(--border); background: var(--bg3);
+  flex-shrink: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--dur), border-color var(--dur), transform 0.15s var(--spring);
+  margin-top: 1px;
+}
+.step-check:hover:not(.checked) { border-color: var(--c1); background: rgba(0,229,200,0.06); }
+.step-check:active { transform: scale(0.85); }
+.step-check.checked {
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border-color: transparent;
+}
+.step-check svg { width: 11px; height: 11px; color: #000; display: none; }
+.step-check.checked svg { display: block; }
 
-  .step-body { flex: 1; min-width: 0; }
-  .step-title { font-size: 13px; font-weight: 600; color: var(--t1); line-height: 1.3; }
-  .step-desc { font-size: 11px; color: var(--t2); margin-top: 3px; line-height: 1.5; }
+.step-body { flex: 1; min-width: 0; }
+.step-title { font-size: 13px; font-weight: 600; color: var(--t1); line-height: 1.35; }
+.step-desc { font-size: 11px; color: var(--t2); margin-top: 3px; line-height: 1.5; }
 
-  /* ── Add step inline form ── */
-  .add-step-form {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--r12);
-    padding: 14px;
-    margin-bottom: 10px;
-    display: none;
-  }
-  .add-step-form.open { display: block; }
-  .add-step-form .field { margin-bottom: 10px; }
-  .add-step-form .field:last-child { margin-bottom: 0; }
-  .add-step-actions { display: flex; gap: 8px; margin-top: 12px; }
-  .add-step-actions .btn-primary { flex: 1; padding: 10px; font-size: 12px; }
+/* ═══════════════ ADD STEP FORM ═══════════════ */
+.add-step-form {
+  background: var(--bg2); border: 1px solid var(--border-hi);
+  border-radius: var(--r12); padding: 14px; margin-bottom: 12px;
+  display: none; animation: formIn 0.2s var(--ease) both;
+}
+.add-step-form.open { display: block; }
+@keyframes formIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.add-step-form .field { margin-bottom: 10px; }
+.add-step-actions { display: flex; gap: 8px; margin-top: 12px; }
+.add-step-actions .btn-primary { flex: 1; padding: 10px; font-size: 12px; }
 
-  /* ── Status tag ── */
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 99px;
-    font-size: 9px;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  .tag-green { background: rgba(16,185,129,0.12); color: var(--c5); border: 1px solid rgba(16,185,129,0.2); }
-  .tag-cyan  { background: rgba(0,229,200,0.10);  color: var(--c1); border: 1px solid rgba(0,229,200,0.2);  }
+/* ═══════════════ LOADER ═══════════════ */
+.loader { display: flex; justify-content: center; align-items: center; padding: 40px; gap: 5px; }
+.loader-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c1); animation: dotPulse 1.1s ease-in-out infinite;
+}
+.loader-dot:nth-child(2) { animation-delay: 0.18s; background: var(--c2); }
+.loader-dot:nth-child(3) { animation-delay: 0.36s; background: var(--c3); }
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.45); opacity: 0.35; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
 
-  /* ── Toast ── */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--bg5);
-    border: 1px solid var(--border-hi);
-    color: var(--t1);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 99px;
-    z-index: 500;
-    opacity: 0;
-    transition: opacity 0.2s, transform 0.2s;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* ═══════════════ TOAST ═══════════════ */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--bg5); border: 1px solid var(--border-hi);
+  color: var(--t1); font-size: 12px; font-weight: 600;
+  padding: 10px 20px; border-radius: var(--rfull);
+  z-index: 600; opacity: 0;
+  transition: opacity 0.22s, transform 0.22s;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ── Loader ── */
-  .loader {
-    display: flex;
-    justify-content: center;
-    padding: 32px;
-  }
-  .loader-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--c1);
-    animation: pulse 1s ease-in-out infinite;
-    margin: 0 3px;
-  }
-  .loader-dot:nth-child(2) { animation-delay: 0.15s; background: var(--c2); }
-  .loader-dot:nth-child(3) { animation-delay: 0.3s;  background: var(--c3); }
-  @keyframes pulse {
-    0%, 80%, 100% { transform: scale(0.5); opacity: 0.4; }
-    40%            { transform: scale(1);   opacity: 1;   }
-  }
+/* ═══════════════ UTILITY ═══════════════ */
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.flex-row { display: flex; align-items: center; gap: 8px; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
 
-  /* ── Divider ── */
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+/* ── Stat chips ── */
+.stat-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--rfull);
+  background: var(--bg3); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; color: var(--t2);
+  font-family: var(--font-mono);
+}
+.stat-chip svg { width: 12px; height: 12px; }
+.stat-chip.active { color: var(--c1); background: rgba(0,229,200,0.06); border-color: rgba(0,229,200,0.2); }
 
-  /* ── Utility ── */
-  .mt8 { margin-top: 8px; }
-  .mt12 { margin-top: 12px; }
-  .mt16 { margin-top: 16px; }
-  .flex-row { display: flex; align-items: center; gap: 8px; }
-  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+/* ── Header info ── */
+.header-info { flex: 1; overflow: hidden; }
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media (max-width: 380px) {
+  .modal-actions { flex-direction: column; }
+  .btn-secondary { font-size: 11px; padding: 7px 10px; }
+}
 </style>
 </head>
 <body>
@@ -421,10 +382,16 @@
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
-  <div>
+  <div class="header-info">
     <div class="header-title" id="hdr-title">My Roadmaps</div>
     <div class="header-sub" id="hdr-sub">ROADMAPX</div>
   </div>
+  <button class="header-action-btn" id="hdr-action-btn" onclick="openCreateModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    New
+  </button>
 </header>
 
 <!-- ══════════════════════════════════════════
@@ -432,6 +399,8 @@
 ═══════════════════════════════════════════ -->
 <div class="view active" id="view-list">
   <div class="page">
+
+    <!-- Loader -->
     <div id="list-loader" class="loader">
       <div class="loader-dot"></div>
       <div class="loader-dot"></div>
@@ -439,18 +408,54 @@
     </div>
 
     <div id="list-content" style="display:none">
-      <div class="section-label" id="list-count-label">— roadmaps</div>
+      <!-- Stat chips row -->
+      <div class="stat-row" id="stat-row" style="display:none">
+        <div class="stat-chip active" id="stat-total">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          0 roadmaps
+        </div>
+        <div class="stat-chip" id="stat-steps">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          0 steps
+        </div>
+        <div class="stat-chip" id="stat-done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          — done
+        </div>
+      </div>
+
+      <div class="section-label" id="list-count-label">0 roadmaps</div>
       <div id="roadmap-list"></div>
 
       <div id="empty-state" class="empty-state" style="display:none">
+        <div class="empty-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+        </div>
         <div class="empty-state-title">No roadmaps yet</div>
-        Create your first roadmap to start tracking your progress.
+        Create your first custom roadmap to start tracking your learning journey.
+        <div class="mt16">
+          <button class="btn-primary" style="max-width:220px;margin:0 auto;display:block" onclick="openCreateModal()">
+            Create First Roadmap
+          </button>
+        </div>
       </div>
 
-      <div class="mt12">
-        <button class="btn-primary" onclick="openCreateModal()">Create Roadmap</button>
+      <div class="mt12" id="bottom-create-btn" style="display:none">
+        <button class="btn-primary" onclick="openCreateModal()">+ Create Roadmap</button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -460,34 +465,36 @@
 <div class="view" id="view-detail">
   <div class="page">
 
-    <!-- Roadmap meta card -->
+    <!-- Meta card -->
     <div class="detail-meta">
-      <div class="flex-between" style="margin-bottom:6px">
-        <div class="detail-title" id="detail-title"></div>
-        <span class="tag tag-cyan" id="detail-progress-tag">0%</span>
-      </div>
-      <div class="detail-desc" id="detail-desc"></div>
-      <div class="prog-wrap">
-        <div class="prog-labels">
-          <span id="detail-steps-label">0 / 0 steps</span>
-          <span id="detail-pct-label">0%</span>
+      <div class="detail-meta-inner">
+        <div class="detail-top">
+          <div class="detail-title" id="detail-title"></div>
+          <span class="tag tag-cyan" id="detail-progress-tag">0%</span>
         </div>
-        <div class="prog-track">
-          <div class="prog-fill" id="detail-prog-fill" style="width:0%"></div>
+        <div class="detail-desc" id="detail-desc"></div>
+        <div>
+          <div class="prog-labels">
+            <span id="detail-steps-label">0 / 0 steps</span>
+            <span id="detail-pct-label">0%</span>
+          </div>
+          <div class="prog-track">
+            <div class="prog-fill" id="detail-prog-fill" style="width:0%"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Add step toggle -->
-    <div class="flex-between mt12" style="margin-bottom:10px">
-      <div class="section-label" style="margin-bottom:0" id="steps-count-label">— steps</div>
+    <!-- Steps header + toggle -->
+    <div class="steps-header">
+      <div class="section-label" id="steps-count-label">0 steps</div>
       <button class="btn-secondary" id="btn-toggle-add-step" onclick="toggleAddStep()">+ Add Step</button>
     </div>
 
     <!-- Inline add-step form -->
     <div class="add-step-form" id="add-step-form">
       <div class="field">
-        <label class="field-label">Step title</label>
+        <label class="field-label">Step Title</label>
         <input type="text" id="step-title-input" placeholder="e.g. Complete module 1" maxlength="120" />
       </div>
       <div class="field">
@@ -500,17 +507,28 @@
       </div>
     </div>
 
-    <!-- Steps list -->
+    <!-- Steps loader -->
     <div id="steps-loader" class="loader" style="display:none">
       <div class="loader-dot"></div>
       <div class="loader-dot"></div>
       <div class="loader-dot"></div>
     </div>
-    <div class="steps-list" id="steps-list"></div>
 
+    <!-- Steps list -->
+    <div id="steps-list"></div>
+
+    <!-- Steps empty -->
     <div id="steps-empty" class="empty-state" style="display:none">
+      <div class="empty-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </div>
       <div class="empty-state-title">No steps yet</div>
-      Add your first step to start tracking progress.
+      Tap "+ Add Step" to start building your roadmap.
     </div>
 
   </div>
@@ -522,7 +540,7 @@
 <div class="modal-backdrop" id="create-modal" onclick="handleBackdropClick(event)">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">New Roadmap</div>
+    <div class="modal-title">⚡ New Roadmap</div>
 
     <div class="field">
       <label class="field-label">Title</label>
@@ -535,7 +553,7 @@
 
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeCreateModal()">Cancel</button>
-      <button class="btn-primary" id="btn-create-rm" onclick="createRoadmap()">Create</button>
+      <button class="btn-primary" id="btn-create-rm" onclick="createRoadmap()">Create Roadmap</button>
     </div>
   </div>
 </div>
@@ -547,17 +565,23 @@
      JAVASCRIPT
 ═══════════════════════════════════════════ -->
 <script>
-// ─── CONFIG ──────────────────────────────────────────────
+'use strict';
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
 const API = 'https://roadmapx-backend-3qmc.onrender.com';
 
-// ─── STATE ───────────────────────────────────────────────
-let currentRoadmap = null;  // { _id, title, description }
-let steps          = [];    // array of step objects for current roadmap
-let roadmaps       = [];    // all roadmaps for user
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentRoadmap = null;
+let steps          = [];
+let roadmaps       = [];
 
-// ─── UTILS ───────────────────────────────────────────────
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function getUserId() {
-  // Pulls username from session via /me endpoint cache, or sessionStorage
   return sessionStorage.getItem('rx_user') || '';
 }
 
@@ -566,72 +590,81 @@ async function initUser() {
   try {
     const r = await fetch(`${API}/me`, { credentials: 'include' });
     const d = await r.json();
-    if (d.success) sessionStorage.setItem('rx_user', d.username);
+    if (d.success && d.username) sessionStorage.setItem('rx_user', d.username);
   } catch (e) {
-    console.warn('Could not fetch user session:', e);
+    console.warn('initUser:', e);
   }
 }
 
-function showToast(msg, duration = 2000) {
+let _toastTimer = null;
+function showToast(msg, duration = 2500) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), duration);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
 
-function setLoading(btnId, loading, label = 'Save') {
+function setLoading(btnId, isLoading, label) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
-  btn.disabled = loading;
-  btn.textContent = loading ? 'Saving...' : label;
+  btn.disabled  = isLoading;
+  btn.textContent = isLoading ? 'Saving...' : label;
 }
 
-// ─── VIEWS ───────────────────────────────────────────────
+// ─── VIEWS ───────────────────────────────────────────────────────────────────
 function showList() {
-  document.getElementById('view-list').classList.add('active');
   document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-list').classList.add('active');
   document.getElementById('btn-back').style.display = 'none';
+  document.getElementById('hdr-action-btn').style.display = '';
   document.getElementById('hdr-title').textContent = 'My Roadmaps';
-  document.getElementById('hdr-sub').textContent = 'ROADMAPX';
+  document.getElementById('hdr-sub').textContent   = 'ROADMAPX';
   currentRoadmap = null;
+  // Update window title
+  document.title = 'My Roadmaps — RoadmapX';
 }
 
 function showDetailById(id) {
   const roadmap = roadmaps.find(r => r._id === id);
-  if (!roadmap) return;
-  showDetail(roadmap);
+  if (roadmap) showDetail(roadmap);
 }
 
 function showDetail(roadmap) {
   currentRoadmap = roadmap;
   document.getElementById('view-list').classList.remove('active');
   document.getElementById('view-detail').classList.add('active');
-  document.getElementById('btn-back').style.display = 'flex';
-  document.getElementById('hdr-title').textContent = roadmap.title;
-  document.getElementById('hdr-sub').textContent = 'ROADMAP';
+  document.getElementById('btn-back').style.display   = 'flex';
+  document.getElementById('hdr-action-btn').style.display = 'none';
+  document.getElementById('hdr-title').textContent    = roadmap.title;
+  document.getElementById('hdr-sub').textContent      = 'ROADMAP';
 
   document.getElementById('detail-title').textContent = roadmap.title;
-  document.getElementById('detail-desc').textContent  = roadmap.description || 'No description.';
+  document.getElementById('detail-desc').textContent  = roadmap.description || '';
+  if (!roadmap.description) {
+    document.getElementById('detail-desc').style.display = 'none';
+  } else {
+    document.getElementById('detail-desc').style.display = '';
+  }
 
-  // Reset add-step form
   closeAddStep();
   document.getElementById('step-title-input').value = '';
   document.getElementById('step-desc-input').value  = '';
 
+  document.title = `${roadmap.title} — RoadmapX`;
   loadSteps(roadmap._id);
 }
 
-// ─── ROADMAPS LIST ────────────────────────────────────────
+// ─── ROADMAPS LIST ────────────────────────────────────────────────────────────
 async function loadRoadmaps() {
-  const userId = getUserId();
-  document.getElementById('list-loader').style.display = 'flex';
+  document.getElementById('list-loader').style.display  = 'flex';
   document.getElementById('list-content').style.display = 'none';
 
   try {
+    const userId = getUserId();
     const url = `${API}/api/roadmaps${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`;
-    const r = await fetch(url, { credentials: 'include' });
-    const d = await r.json();
-
+    const r   = await fetch(url, { credentials: 'include' });
+    const d   = await r.json();
     if (!d.success) throw new Error(d.message);
     roadmaps = d.data || [];
     renderRoadmaps();
@@ -641,29 +674,64 @@ async function loadRoadmaps() {
     roadmaps = [];
     renderRoadmaps();
   } finally {
-    document.getElementById('list-loader').style.display = 'none';
+    document.getElementById('list-loader').style.display  = 'none';
     document.getElementById('list-content').style.display = 'block';
   }
 }
 
 function renderRoadmaps() {
-  const container = document.getElementById('roadmap-list');
-  const emptyEl   = document.getElementById('empty-state');
-  const countEl   = document.getElementById('list-count-label');
+  const container  = document.getElementById('roadmap-list');
+  const emptyEl    = document.getElementById('empty-state');
+  const countEl    = document.getElementById('list-count-label');
+  const createBtn  = document.getElementById('bottom-create-btn');
+  const statRow    = document.getElementById('stat-row');
 
-  countEl.textContent = `${roadmaps.length} roadmap${roadmaps.length !== 1 ? 's' : ''}`;
+  const count = roadmaps.length;
+  countEl.textContent = `${count} roadmap${count !== 1 ? 's' : ''}`;
 
-  if (roadmaps.length === 0) {
+  // Update stat chips
+  if (count > 0) {
+    const totalSteps    = roadmaps.reduce((a, r) => a + (r._stepCount ?? 0), 0);
+    const doneSteps     = roadmaps.reduce((a, r) => a + (r._completedCount ?? 0), 0);
+    const donePct       = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
+    document.getElementById('stat-total').innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+      ${count} roadmap${count !== 1 ? 's' : ''}`;
+    document.getElementById('stat-steps').innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 11 12 14 22 4"/>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+      ${totalSteps} steps`;
+    document.getElementById('stat-done').innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      ${donePct}% done`;
+    statRow.style.display = 'flex';
+  } else {
+    statRow.style.display = 'none';
+  }
+
+  if (count === 0) {
     container.innerHTML = '';
-    emptyEl.style.display = 'block';
+    emptyEl.style.display   = 'block';
+    createBtn.style.display = 'none';
     return;
   }
 
-  emptyEl.style.display = 'none';
+  emptyEl.style.display   = 'none';
+  createBtn.style.display = 'block';
+
   container.innerHTML = roadmaps.map(rm => {
-    const total     = rm._stepCount     ?? 0;
+    const total     = rm._stepCount ?? 0;
     const completed = rm._completedCount ?? 0;
     const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const isComplete = pct === 100 && total > 0;
     return `
       <div class="roadmap-card" onclick="showDetailById('${rm._id}')">
         <div class="roadmap-card-header">
@@ -678,17 +746,17 @@ function renderRoadmaps() {
         <div class="prog-wrap">
           <div class="prog-labels">
             <span>${completed} / ${total} steps</span>
-            <span>${pct}%</span>
+            <span style="color:${isComplete ? 'var(--c5)' : 'var(--t2)'}">${pct}%${isComplete ? ' ✓' : ''}</span>
           </div>
           <div class="prog-track">
-            <div class="prog-fill" style="width:${pct}%"></div>
+            <div class="prog-fill" style="width:${pct}%;${isComplete ? 'background:linear-gradient(90deg,var(--c5),var(--c1))' : ''}"></div>
           </div>
         </div>
       </div>`;
   }).join('');
 }
 
-// ─── CREATE ROADMAP ───────────────────────────────────────
+// ─── CREATE ROADMAP ───────────────────────────────────────────────────────────
 function openCreateModal() {
   document.getElementById('rm-title-input').value = '';
   document.getElementById('rm-desc-input').value  = '';
@@ -701,50 +769,52 @@ function closeCreateModal() {
 }
 
 function handleBackdropClick(e) {
-  if (e.target === document.getElementById('create-modal')) closeCreateModal();
+  if (e.target.classList.contains('modal-backdrop')) closeCreateModal();
 }
 
 async function createRoadmap() {
-  const title = document.getElementById('rm-title-input').value.trim();
-  const desc  = document.getElementById('rm-desc-input').value.trim();
+  const title  = document.getElementById('rm-title-input').value.trim();
+  const desc   = document.getElementById('rm-desc-input').value.trim();
   const userId = getUserId();
 
-  if (!title) { showToast('Title is required.'); return; }
-  if (!userId) { showToast('Please log in first.'); return; }
+  if (!title) { showToast('⚠️ Title is required.'); return; }
 
-  setLoading('btn-create-rm', true, 'Create');
+  setLoading('btn-create-rm', true, 'Create Roadmap');
   try {
+    const body = { title };
+    if (desc)   body.description = desc;
+    if (userId) body.userId = userId;
+
     const r = await fetch(`${API}/api/roadmaps`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, title, description: desc }),
+      body: JSON.stringify(body),
     });
     const d = await r.json();
-    if (!d.success) throw new Error(d.message);
+    if (!d.success) throw new Error(d.message || 'Failed');
 
     closeCreateModal();
-    showToast('Roadmap created.');
+    showToast('✅ Roadmap created!');
     await loadRoadmaps();
   } catch (e) {
     console.error('createRoadmap:', e);
-    showToast('Could not create roadmap.');
+    showToast('❌ Could not create roadmap.');
   } finally {
-    setLoading('btn-create-rm', false, 'Create');
+    setLoading('btn-create-rm', false, 'Create Roadmap');
   }
 }
 
-// ─── STEPS ───────────────────────────────────────────────
+// ─── STEPS ────────────────────────────────────────────────────────────────────
 async function loadSteps(roadmapId) {
   document.getElementById('steps-loader').style.display = 'flex';
-  document.getElementById('steps-list').innerHTML = '';
-  document.getElementById('steps-empty').style.display = 'none';
+  document.getElementById('steps-list').innerHTML       = '';
+  document.getElementById('steps-empty').style.display  = 'none';
 
   try {
     const r = await fetch(`${API}/api/steps/${roadmapId}`, { credentials: 'include' });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
-
     steps = d.data || [];
     renderSteps();
   } catch (e) {
@@ -758,31 +828,42 @@ async function loadSteps(roadmapId) {
 }
 
 function renderSteps() {
-  const container  = document.getElementById('steps-list');
-  const emptyEl    = document.getElementById('steps-empty');
-  const countEl    = document.getElementById('steps-count-label');
-  const completed  = steps.filter(s => s.completed).length;
-  const total      = steps.length;
-  const pct        = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const container = document.getElementById('steps-list');
+  const emptyEl   = document.getElementById('steps-empty');
+  const countEl   = document.getElementById('steps-count-label');
+
+  const total     = steps.length;
+  const completed = steps.filter(s => s.completed).length;
+  const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   countEl.textContent = `${total} step${total !== 1 ? 's' : ''}`;
 
-  // Update detail header progress
-  document.getElementById('detail-steps-label').textContent  = `${completed} / ${total} steps`;
-  document.getElementById('detail-pct-label').textContent    = `${pct}%`;
-  document.getElementById('detail-prog-fill').style.width    = `${pct}%`;
-  document.getElementById('detail-progress-tag').textContent = `${pct}%`;
+  // Update detail header
+  document.getElementById('detail-steps-label').textContent = `${completed} / ${total} steps`;
+  document.getElementById('detail-pct-label').textContent   = `${pct}%`;
+  document.getElementById('detail-prog-fill').style.width   = `${pct}%`;
+  document.getElementById('detail-progress-tag').textContent= `${pct}%`;
 
-  if (total === 0) {
-    container.innerHTML = '';
-    emptyEl.style.display = 'block';
-    return;
+  // Update tag color on completion
+  const tag = document.getElementById('detail-progress-tag');
+  if (pct === 100 && total > 0) {
+    tag.className = 'tag tag-green';
+    tag.textContent = '✓ Done';
+  } else {
+    tag.className = 'tag tag-cyan';
+    tag.textContent = `${pct}%`;
   }
 
+  if (total === 0) {
+    container.innerHTML        = '';
+    emptyEl.style.display      = 'block';
+    return;
+  }
   emptyEl.style.display = 'none';
-  container.innerHTML = steps.map(s => `
-    <div class="step-item${s.completed ? ' done' : ''}" id="step-${s._id}">
-      <div class="step-check${s.completed ? ' checked' : ''}" onclick="toggleStep('${s._id}', ${s.completed})">
+
+  container.innerHTML = steps.map((s, i) => `
+    <div class="step-item${s.completed ? ' done' : ''}" id="step-${s._id}" style="animation-delay:${i * 0.04}s">
+      <div class="step-check${s.completed ? ' checked' : ''}" onclick="toggleStep('${s._id}', ${!!s.completed})">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
@@ -796,7 +877,10 @@ function renderSteps() {
 }
 
 async function toggleStep(stepId, currentlyCompleted) {
-  if (currentlyCompleted) return; // only mark complete, not undo
+  if (currentlyCompleted) {
+    showToast('Step already completed.');
+    return;
+  }
 
   // Optimistic update
   const idx = steps.findIndex(s => s._id === stepId);
@@ -813,26 +897,32 @@ async function toggleStep(stepId, currentlyCompleted) {
     });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
-    showToast('Step completed.');
+    showToast('✅ Step completed!');
+
+    // Also update the roadmap card progress in list
+    const rmIdx = roadmaps.findIndex(rm => rm._id === currentRoadmap?._id);
+    if (rmIdx !== -1) {
+      roadmaps[rmIdx]._completedCount = (roadmaps[rmIdx]._completedCount ?? 0) + 1;
+    }
   } catch (e) {
     console.error('toggleStep:', e);
     // Revert
     steps[idx].completed   = false;
     steps[idx].completedAt = null;
     renderSteps();
-    showToast('Could not update step.');
+    showToast('❌ Could not update step.');
   }
 }
 
 function toggleAddStep() {
-  const form = document.getElementById('add-step-form');
+  const form   = document.getElementById('add-step-form');
   const isOpen = form.classList.contains('open');
   if (isOpen) {
     closeAddStep();
   } else {
     form.classList.add('open');
-    document.getElementById('btn-toggle-add-step').textContent = '- Cancel';
-    setTimeout(() => document.getElementById('step-title-input').focus(), 100);
+    document.getElementById('btn-toggle-add-step').textContent = '✕ Cancel';
+    setTimeout(() => document.getElementById('step-title-input').focus(), 80);
   }
 }
 
@@ -845,52 +935,58 @@ async function saveStep() {
   const title = document.getElementById('step-title-input').value.trim();
   const desc  = document.getElementById('step-desc-input').value.trim();
 
-  if (!title) { showToast('Step title is required.'); return; }
+  if (!title) { showToast('⚠️ Step title is required.'); return; }
   if (!currentRoadmap) return;
 
   setLoading('btn-save-step', true, 'Save Step');
   try {
+    const body = { roadmapId: currentRoadmap._id, title };
+    if (desc) body.description = desc;
+
     const r = await fetch(`${API}/api/steps`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roadmapId: currentRoadmap._id, title, description: desc }),
+      body: JSON.stringify(body),
     });
     const d = await r.json();
-    if (!d.success) throw new Error(d.message);
+    if (!d.success) throw new Error(d.message || 'Failed');
 
     steps.push(d.data);
     document.getElementById('step-title-input').value = '';
     document.getElementById('step-desc-input').value  = '';
     closeAddStep();
     renderSteps();
-    showToast('Step added.');
+    showToast('✅ Step added!');
+
+    // Update roadmap step count in list
+    const rmIdx = roadmaps.findIndex(rm => rm._id === currentRoadmap._id);
+    if (rmIdx !== -1) {
+      roadmaps[rmIdx]._stepCount = (roadmaps[rmIdx]._stepCount ?? 0) + 1;
+    }
   } catch (e) {
     console.error('saveStep:', e);
-    showToast('Could not add step.');
+    showToast('❌ Could not add step.');
   } finally {
     setLoading('btn-save-step', false, 'Save Step');
   }
 }
 
-// ─── HELPERS ─────────────────────────────────────────────
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
-
-// Enter key support on modal inputs
+// ─── KEYBOARD SHORTCUTS ───────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeCreateModal();
+    closeAddStep();
+  }
+});
 document.getElementById('rm-title-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') createRoadmap();
 });
 document.getElementById('step-title-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) saveStep();
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveStep(); }
 });
 
-// ─── INIT ────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
   await initUser();
   await loadRoadmaps();
