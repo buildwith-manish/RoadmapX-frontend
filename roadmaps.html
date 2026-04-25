@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Roadmaps — RoadmapX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Design tokens — matches RoadmapX styles.css ── */
+  :root {
+    --bg0: #05050f;
+    --bg1: #08081a;
+    --bg2: #0c0c20;
+    --bg3: #101028;
+    --bg4: #141432;
+    --bg5: #1a1a40;
+    --bg6: #1e1e4a;
+    --c1: #00e5c8;
+    --c2: #7c3aed;
+    --c3: #f43f5e;
+    --c4: #f59e0b;
+    --c5: #10b981;
+    --t1: #f0f0ff;
+    --t2: #8888aa;
+    --border: rgba(255,255,255,0.06);
+    --border-hi: rgba(0,229,200,0.2);
+    --font-ui: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    --r8: 8px;
+    --r12: 12px;
+    --r16: 16px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg0);
+    color: var(--t1);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg1);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-back {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--r8);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--t1);
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .header-back:hover { background: var(--bg5); border-color: var(--border-hi); }
+  .header-back svg { width: 16px; height: 16px; }
+  .header-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--c1);
+    font-family: var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .header-sub {
+    font-size: 9px;
+    color: var(--t2);
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Views ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Page container ── */
+  .page { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--t2);
+    font-family: var(--font-mono);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── Roadmap card ── */
+  .roadmap-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r12);
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .roadmap-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--c1), var(--c2));
+    border-radius: 3px 0 0 3px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .roadmap-card:hover { border-color: var(--border-hi); background: var(--bg3); }
+  .roadmap-card:hover::before { opacity: 1; }
+
+  .roadmap-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .roadmap-card-title { font-size: 14px; font-weight: 600; color: var(--t1); line-height: 1.3; }
+  .roadmap-card-arrow { color: var(--t2); flex-shrink: 0; margin-top: 2px; }
+  .roadmap-card-desc { font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 10px; }
+
+  /* ── Progress bar ── */
+  .prog-wrap { }
+  .prog-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--t2); font-family: var(--font-mono); margin-bottom: 5px; }
+  .prog-track { height: 3px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--c1), var(--c2));
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--t2);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .empty-state-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--t1);
+    margin-bottom: 6px;
+  }
+
+  /* ── Create button ── */
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: var(--font-ui);
+    border-radius: var(--r8);
+    cursor: pointer;
+    border: none;
+    letter-spacing: 0.3px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    padding: 10px 16px;
+    background: var(--bg3);
+    color: var(--t1);
+    font-weight: 600;
+    font-size: 12px;
+    font-family: var(--font-ui);
+    border-radius: var(--r8);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--border-hi); background: var(--bg4); }
+
+  .btn-ghost {
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--t2);
+    font-size: 12px;
+    font-family: var(--font-ui);
+    border-radius: var(--r8);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--border-hi); color: var(--t1); }
+
+  /* ── Modal / slide-up panel ── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--r16) var(--r16) 0 0;
+    padding: 20px 16px 32px;
+    width: 100%;
+    max-width: 600px;
+    animation: slideUp 0.22s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--bg5);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+  .modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--t1);
+    margin-bottom: 16px;
+  }
+
+  /* ── Form inputs ── */
+  .field { margin-bottom: 12px; }
+  .field-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--t2);
+    font-family: var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--r8);
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--t1);
+    font-family: var(--font-ui);
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--border-hi);
+    outline: none;
+  }
+  .field input::placeholder, .field textarea::placeholder { color: var(--t2); }
+
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-actions .btn-primary { flex: 1; }
+
+  /* ── Detail view header ── */
+  .detail-meta {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r12);
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .detail-title { font-size: 16px; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
+  .detail-desc { font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 12px; }
+
+  /* ── Step item ── */
+  .steps-list { margin-bottom: 14px; }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r8);
+    padding: 12px;
+    margin-bottom: 8px;
+    transition: border-color 0.15s, opacity 0.2s;
+  }
+  .step-item.done { opacity: 0.55; }
+  .step-item.done .step-title { text-decoration: line-through; color: var(--t2); }
+
+  /* Custom checkbox */
+  .step-check {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: var(--bg3);
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    margin-top: 1px;
+  }
+  .step-check.checked {
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    border-color: transparent;
+  }
+  .step-check svg { width: 11px; height: 11px; color: #000; display: none; }
+  .step-check.checked svg { display: block; }
+
+  .step-body { flex: 1; min-width: 0; }
+  .step-title { font-size: 13px; font-weight: 600; color: var(--t1); line-height: 1.3; }
+  .step-desc { font-size: 11px; color: var(--t2); margin-top: 3px; line-height: 1.5; }
+
+  /* ── Add step inline form ── */
+  .add-step-form {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r12);
+    padding: 14px;
+    margin-bottom: 10px;
+    display: none;
+  }
+  .add-step-form.open { display: block; }
+  .add-step-form .field { margin-bottom: 10px; }
+  .add-step-form .field:last-child { margin-bottom: 0; }
+  .add-step-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .add-step-actions .btn-primary { flex: 1; padding: 10px; font-size: 12px; }
+
+  /* ── Status tag ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .tag-green { background: rgba(16,185,129,0.12); color: var(--c5); border: 1px solid rgba(16,185,129,0.2); }
+  .tag-cyan  { background: rgba(0,229,200,0.10);  color: var(--c1); border: 1px solid rgba(0,229,200,0.2);  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg5);
+    border: 1px solid var(--border-hi);
+    color: var(--t1);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 99px;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Loader ── */
+  .loader {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+  }
+  .loader-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--c1);
+    animation: pulse 1s ease-in-out infinite;
+    margin: 0 3px;
+  }
+  .loader-dot:nth-child(2) { animation-delay: 0.15s; background: var(--c2); }
+  .loader-dot:nth-child(3) { animation-delay: 0.3s;  background: var(--c3); }
+  @keyframes pulse {
+    0%, 80%, 100% { transform: scale(0.5); opacity: 0.4; }
+    40%            { transform: scale(1);   opacity: 1;   }
+  }
+
+  /* ── Divider ── */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ── Utility ── */
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mt16 { margin-top: 16px; }
+  .flex-row { display: flex; align-items: center; gap: 8px; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════ -->
+<header class="header">
+  <button class="header-back" id="btn-back" style="display:none" onclick="showList()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+  <div>
+    <div class="header-title" id="hdr-title">My Roadmaps</div>
+    <div class="header-sub" id="hdr-sub">ROADMAPX</div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     VIEW: ROADMAP LIST
+═══════════════════════════════════════════ -->
+<div class="view active" id="view-list">
+  <div class="page">
+    <div id="list-loader" class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+
+    <div id="list-content" style="display:none">
+      <div class="section-label" id="list-count-label">— roadmaps</div>
+      <div id="roadmap-list"></div>
+
+      <div id="empty-state" class="empty-state" style="display:none">
+        <div class="empty-state-title">No roadmaps yet</div>
+        Create your first roadmap to start tracking your progress.
+      </div>
+
+      <div class="mt12">
+        <button class="btn-primary" onclick="openCreateModal()">Create Roadmap</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VIEW: ROADMAP DETAIL
+═══════════════════════════════════════════ -->
+<div class="view" id="view-detail">
+  <div class="page">
+
+    <!-- Roadmap meta card -->
+    <div class="detail-meta">
+      <div class="flex-between" style="margin-bottom:6px">
+        <div class="detail-title" id="detail-title"></div>
+        <span class="tag tag-cyan" id="detail-progress-tag">0%</span>
+      </div>
+      <div class="detail-desc" id="detail-desc"></div>
+      <div class="prog-wrap">
+        <div class="prog-labels">
+          <span id="detail-steps-label">0 / 0 steps</span>
+          <span id="detail-pct-label">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" id="detail-prog-fill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add step toggle -->
+    <div class="flex-between mt12" style="margin-bottom:10px">
+      <div class="section-label" style="margin-bottom:0" id="steps-count-label">— steps</div>
+      <button class="btn-secondary" id="btn-toggle-add-step" onclick="toggleAddStep()">+ Add Step</button>
+    </div>
+
+    <!-- Inline add-step form -->
+    <div class="add-step-form" id="add-step-form">
+      <div class="field">
+        <label class="field-label">Step title</label>
+        <input type="text" id="step-title-input" placeholder="e.g. Complete module 1" maxlength="120" />
+      </div>
+      <div class="field">
+        <label class="field-label">Description (optional)</label>
+        <textarea id="step-desc-input" rows="2" placeholder="Brief note about this step..."></textarea>
+      </div>
+      <div class="add-step-actions">
+        <button class="btn-ghost" onclick="toggleAddStep()">Cancel</button>
+        <button class="btn-primary" id="btn-save-step" onclick="saveStep()">Save Step</button>
+      </div>
+    </div>
+
+    <!-- Steps list -->
+    <div id="steps-loader" class="loader" style="display:none">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+    <div class="steps-list" id="steps-list"></div>
+
+    <div id="steps-empty" class="empty-state" style="display:none">
+      <div class="empty-state-title">No steps yet</div>
+      Add your first step to start tracking progress.
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: CREATE ROADMAP
+═══════════════════════════════════════════ -->
+<div class="modal-backdrop" id="create-modal" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Roadmap</div>
+
+    <div class="field">
+      <label class="field-label">Title</label>
+      <input type="text" id="rm-title-input" placeholder="e.g. Learn Machine Learning" maxlength="100" />
+    </div>
+    <div class="field">
+      <label class="field-label">Description (optional)</label>
+      <textarea id="rm-desc-input" rows="3" placeholder="What is this roadmap about?"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn-primary" id="btn-create-rm" onclick="createRoadmap()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+// ─── CONFIG ──────────────────────────────────────────────
+// Replace with your actual Render backend URL
+const API = 'https://roadmapx-backend-3qmc.onrender.com';
+
+// ─── STATE ───────────────────────────────────────────────
+let currentRoadmap = null;  // { _id, title, description }
+let steps          = [];    // array of step objects for current roadmap
+let roadmaps       = [];    // all roadmaps for user
+
+// ─── UTILS ───────────────────────────────────────────────
+function getUserId() {
+  // Pulls username from session via /me endpoint cache, or sessionStorage
+  return sessionStorage.getItem('rx_user') || '';
+}
+
+async function initUser() {
+  if (getUserId()) return;
+  try {
+    const r = await fetch(`${API}/me`, { credentials: 'include' });
+    const d = await r.json();
+    if (d.success) sessionStorage.setItem('rx_user', d.username);
+  } catch (e) {
+    console.warn('Could not fetch user session:', e);
+  }
+}
+
+function showToast(msg, duration = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function setLoading(btnId, loading, label = 'Save') {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Saving...' : label;
+}
+
+// ─── VIEWS ───────────────────────────────────────────────
+function showList() {
+  document.getElementById('view-list').classList.add('active');
+  document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('btn-back').style.display = 'none';
+  document.getElementById('hdr-title').textContent = 'My Roadmaps';
+  document.getElementById('hdr-sub').textContent = 'ROADMAPX';
+  currentRoadmap = null;
+}
+
+function showDetail(roadmap) {
+  currentRoadmap = roadmap;
+  document.getElementById('view-list').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+  document.getElementById('btn-back').style.display = 'flex';
+  document.getElementById('hdr-title').textContent = roadmap.title;
+  document.getElementById('hdr-sub').textContent = 'ROADMAP';
+
+  document.getElementById('detail-title').textContent = roadmap.title;
+  document.getElementById('detail-desc').textContent  = roadmap.description || 'No description.';
+
+  // Reset add-step form
+  closeAddStep();
+  document.getElementById('step-title-input').value = '';
+  document.getElementById('step-desc-input').value  = '';
+
+  loadSteps(roadmap._id);
+}
+
+// ─── ROADMAPS LIST ────────────────────────────────────────
+async function loadRoadmaps() {
+  const userId = getUserId();
+  document.getElementById('list-loader').style.display = 'flex';
+  document.getElementById('list-content').style.display = 'none';
+
+  try {
+    const url = `${API}/api/roadmaps${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`;
+    const r = await fetch(url, { credentials: 'include' });
+    const d = await r.json();
+
+    if (!d.success) throw new Error(d.message);
+    roadmaps = d.data || [];
+    renderRoadmaps();
+  } catch (e) {
+    console.error('loadRoadmaps:', e);
+    showToast('Could not load roadmaps.');
+    roadmaps = [];
+    renderRoadmaps();
+  } finally {
+    document.getElementById('list-loader').style.display = 'none';
+    document.getElementById('list-content').style.display = 'block';
+  }
+}
+
+function renderRoadmaps() {
+  const container = document.getElementById('roadmap-list');
+  const emptyEl   = document.getElementById('empty-state');
+  const countEl   = document.getElementById('list-count-label');
+
+  countEl.textContent = `${roadmaps.length} roadmap${roadmaps.length !== 1 ? 's' : ''}`;
+
+  if (roadmaps.length === 0) {
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  container.innerHTML = roadmaps.map(rm => {
+    const total     = rm._stepCount     ?? 0;
+    const completed = rm._completedCount ?? 0;
+    const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return `
+      <div class="roadmap-card" onclick="showDetail(${JSON.stringify(rm).replace(/"/g, '&quot;')})">
+        <div class="roadmap-card-header">
+          <div class="roadmap-card-title">${escHtml(rm.title)}</div>
+          <div class="roadmap-card-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </div>
+        ${rm.description ? `<div class="roadmap-card-desc">${escHtml(rm.description)}</div>` : ''}
+        <div class="prog-wrap">
+          <div class="prog-labels">
+            <span>${completed} / ${total} steps</span>
+            <span>${pct}%</span>
+          </div>
+          <div class="prog-track">
+            <div class="prog-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── CREATE ROADMAP ───────────────────────────────────────
+function openCreateModal() {
+  document.getElementById('rm-title-input').value = '';
+  document.getElementById('rm-desc-input').value  = '';
+  document.getElementById('create-modal').classList.add('open');
+  setTimeout(() => document.getElementById('rm-title-input').focus(), 100);
+}
+
+function closeCreateModal() {
+  document.getElementById('create-modal').classList.remove('open');
+}
+
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('create-modal')) closeCreateModal();
+}
+
+async function createRoadmap() {
+  const title = document.getElementById('rm-title-input').value.trim();
+  const desc  = document.getElementById('rm-desc-input').value.trim();
+  const userId = getUserId();
+
+  if (!title) { showToast('Title is required.'); return; }
+  if (!userId) { showToast('Please log in first.'); return; }
+
+  setLoading('btn-create-rm', true, 'Create');
+  try {
+    const r = await fetch(`${API}/api/roadmaps`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, title, description: desc }),
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.message);
+
+    closeCreateModal();
+    showToast('Roadmap created.');
+    await loadRoadmaps();
+  } catch (e) {
+    console.error('createRoadmap:', e);
+    showToast('Could not create roadmap.');
+  } finally {
+    setLoading('btn-create-rm', false, 'Create');
+  }
+}
+
+// ─── STEPS ───────────────────────────────────────────────
+async function loadSteps(roadmapId) {
+  document.getElementById('steps-loader').style.display = 'flex';
+  document.getElementById('steps-list').innerHTML = '';
+  document.getElementById('steps-empty').style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/api/steps/${roadmapId}`, { credentials: 'include' });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.message);
+
+    steps = d.data || [];
+    renderSteps();
+  } catch (e) {
+    console.error('loadSteps:', e);
+    showToast('Could not load steps.');
+    steps = [];
+    renderSteps();
+  } finally {
+    document.getElementById('steps-loader').style.display = 'none';
+  }
+}
+
+function renderSteps() {
+  const container  = document.getElementById('steps-list');
+  const emptyEl    = document.getElementById('steps-empty');
+  const countEl    = document.getElementById('steps-count-label');
+  const completed  = steps.filter(s => s.completed).length;
+  const total      = steps.length;
+  const pct        = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  countEl.textContent = `${total} step${total !== 1 ? 's' : ''}`;
+
+  // Update detail header progress
+  document.getElementById('detail-steps-label').textContent  = `${completed} / ${total} steps`;
+  document.getElementById('detail-pct-label').textContent    = `${pct}%`;
+  document.getElementById('detail-prog-fill').style.width    = `${pct}%`;
+  document.getElementById('detail-progress-tag').textContent = `${pct}%`;
+
+  if (total === 0) {
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  container.innerHTML = steps.map(s => `
+    <div class="step-item${s.completed ? ' done' : ''}" id="step-${s._id}">
+      <div class="step-check${s.completed ? ' checked' : ''}" onclick="toggleStep('${s._id}', ${s.completed})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="step-body">
+        <div class="step-title">${escHtml(s.title)}</div>
+        ${s.description ? `<div class="step-desc">${escHtml(s.description)}</div>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+async function toggleStep(stepId, currentlyCompleted) {
+  if (currentlyCompleted) return; // only mark complete, not undo
+
+  // Optimistic update
+  const idx = steps.findIndex(s => s._id === stepId);
+  if (idx === -1) return;
+  steps[idx].completed   = true;
+  steps[idx].completedAt = new Date().toISOString();
+  renderSteps();
+
+  try {
+    const r = await fetch(`${API}/api/steps/${stepId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.message);
+    showToast('Step completed.');
+  } catch (e) {
+    console.error('toggleStep:', e);
+    // Revert
+    steps[idx].completed   = false;
+    steps[idx].completedAt = null;
+    renderSteps();
+    showToast('Could not update step.');
+  }
+}
+
+function toggleAddStep() {
+  const form = document.getElementById('add-step-form');
+  const isOpen = form.classList.contains('open');
+  if (isOpen) {
+    closeAddStep();
+  } else {
+    form.classList.add('open');
+    document.getElementById('btn-toggle-add-step').textContent = '- Cancel';
+    setTimeout(() => document.getElementById('step-title-input').focus(), 100);
+  }
+}
+
+function closeAddStep() {
+  document.getElementById('add-step-form').classList.remove('open');
+  document.getElementById('btn-toggle-add-step').textContent = '+ Add Step';
+}
+
+async function saveStep() {
+  const title = document.getElementById('step-title-input').value.trim();
+  const desc  = document.getElementById('step-desc-input').value.trim();
+
+  if (!title) { showToast('Step title is required.'); return; }
+  if (!currentRoadmap) return;
+
+  setLoading('btn-save-step', true, 'Save Step');
+  try {
+    const r = await fetch(`${API}/api/steps`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roadmapId: currentRoadmap._id, title, description: desc }),
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.message);
+
+    steps.push(d.data);
+    document.getElementById('step-title-input').value = '';
+    document.getElementById('step-desc-input').value  = '';
+    closeAddStep();
+    renderSteps();
+    showToast('Step added.');
+  } catch (e) {
+    console.error('saveStep:', e);
+    showToast('Could not add step.');
+  } finally {
+    setLoading('btn-save-step', false, 'Save Step');
+  }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// Enter key support on modal inputs
+document.getElementById('rm-title-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') createRoadmap();
+});
+document.getElementById('step-title-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) saveStep();
+});
+
+// ─── INIT ────────────────────────────────────────────────
+(async () => {
+  await initUser();
+  await loadRoadmaps();
+})();
+</script>
+</body>
+</html>
