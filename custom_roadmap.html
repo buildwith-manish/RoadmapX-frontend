@@ -1,0 +1,200 @@
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  CUSTOM ROADMAP SYSTEM — HTML ADDITIONS                      ║
+  ║  Add these blocks to roadmaps.html exactly as instructed.    ║
+  ╚══════════════════════════════════════════════════════════════╝
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 1 ─ Add a nav button to the sidebar <nav class="sidebar-nav">
+           Place after the existing Roadmaps nav-item button.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<!-- NAV ITEM — paste inside <nav class="sidebar-nav"> after the Roadmaps button -->
+<button class="nav-item" data-panel="custom-roadmaps">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  </svg>
+  <span>My Roadmaps</span>
+  <span class="nav-badge" id="nav-custom-roadmaps-count">0</span>
+</button>
+
+
+<!--
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 2 ─ Add this PANEL inside <main class="main-content">
+           after the closing </section> of panel-settings.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<!-- ── CUSTOM ROADMAPS PANEL ── -->
+<section class="panel" id="panel-custom-roadmaps">
+
+  <!-- LIST VIEW (default) -->
+  <div id="cr-list-view">
+    <div class="panel-header">
+      <h2 class="panel-title">My Roadmaps</h2>
+      <button class="btn-primary glow-btn" onclick="openCreateRoadmapModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Roadmap
+      </button>
+    </div>
+
+    <!-- Roadmap cards grid -->
+    <div class="cr-grid" id="cr-grid">
+      <!-- Injected by renderRoadmaps() -->
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="cr-empty" style="display:none">
+      <div class="empty-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+      </div>
+      <div class="empty-title">No custom roadmaps yet</div>
+      <div class="empty-sub">Create your first roadmap to organize your learning journey with weeks and steps.</div>
+      <button class="btn-primary glow-btn" style="margin-top:16px;width:auto;padding:10px 24px" onclick="openCreateRoadmapModal()">
+        + Create Roadmap
+      </button>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW (shown when a roadmap is opened) -->
+  <div id="cr-detail-view" style="display:none">
+
+    <!-- Detail header -->
+    <div class="panel-header">
+      <button class="btn-ghost cr-back-btn" onclick="closeRoadmapDetail()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="cr-detail-title-block">
+        <h2 class="panel-title" id="cr-detail-title">Roadmap</h2>
+        <div class="cr-detail-desc" id="cr-detail-desc"></div>
+      </div>
+      <div class="cr-detail-actions">
+        <button class="btn-secondary" onclick="openEditRoadmapModal()">Edit</button>
+        <button class="btn-danger cr-delete-btn" onclick="deleteCurrentRoadmap()">Delete</button>
+        <button class="btn-primary glow-btn" onclick="openAddWeekModal()">+ Add Week</button>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="cr-progress-wrap">
+      <div class="cr-progress-labels">
+        <span id="cr-progress-label">0 / 0 steps</span>
+        <span class="cr-progress-pct" id="cr-progress-pct">0%</span>
+      </div>
+      <div class="cr-progress-track">
+        <div class="cr-progress-fill" id="cr-progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Weeks list -->
+    <div class="cr-weeks" id="cr-weeks">
+      <!-- Injected by renderRoadmapDetail() -->
+    </div>
+
+    <!-- Empty weeks state -->
+    <div class="empty-state" id="cr-weeks-empty" style="display:none">
+      <div class="empty-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="empty-title">No weeks yet</div>
+      <div class="empty-sub">Add your first week to start building this roadmap.</div>
+      <button class="btn-secondary" style="margin-top:12px;width:auto" onclick="openAddWeekModal()">+ Add Week</button>
+    </div>
+
+  </div>
+</section>
+
+
+<!--
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 3 ─ Add these MODALS just before </body>
+           (alongside the existing modals, before the toast div)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<!-- ── MODAL: CREATE / EDIT ROADMAP ── -->
+<div class="modal-overlay" id="modal-cr-roadmap" onclick="closeModalOnBackdrop(event,'modal-cr-roadmap')">
+  <div class="modal glass-modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="cr-roadmap-modal-title">Create Roadmap</h3>
+      <button class="modal-close" onclick="closeModal('modal-cr-roadmap')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cr-roadmap-edit-id"/>
+      <div class="form-group">
+        <label class="form-label">Roadmap Title *</label>
+        <input class="form-input" type="text" id="cr-roadmap-title-input" placeholder="e.g. DSA Mastery Plan"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input form-textarea" id="cr-roadmap-desc-input"
+          placeholder="What is this roadmap about?" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-cr-roadmap')">Cancel</button>
+      <button class="btn-primary glow-btn" onclick="saveRoadmap()">Save Roadmap</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: ADD / EDIT WEEK ── -->
+<div class="modal-overlay" id="modal-cr-week" onclick="closeModalOnBackdrop(event,'modal-cr-week')">
+  <div class="modal glass-modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="cr-week-modal-title">Add Week</h3>
+      <button class="modal-close" onclick="closeModal('modal-cr-week')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cr-week-edit-id"/>
+      <div class="form-group">
+        <label class="form-label">Week Title *</label>
+        <input class="form-input" type="text" id="cr-week-title-input" placeholder="e.g. Week 1 — Foundations"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-cr-week')">Cancel</button>
+      <button class="btn-primary glow-btn" onclick="saveWeek()">Save Week</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: ADD / EDIT STEP ── -->
+<div class="modal-overlay" id="modal-cr-step" onclick="closeModalOnBackdrop(event,'modal-cr-step')">
+  <div class="modal glass-modal" style="max-width:460px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="cr-step-modal-title">Add Step</h3>
+      <button class="modal-close" onclick="closeModal('modal-cr-step')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cr-step-week-id"/>
+      <input type="hidden" id="cr-step-edit-id"/>
+      <div class="form-group">
+        <label class="form-label">Step Title *</label>
+        <input class="form-input" type="text" id="cr-step-title-input" placeholder="e.g. Arrays & Strings"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input form-textarea" id="cr-step-desc-input"
+          placeholder="What does this step cover?" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-cr-step')">Cancel</button>
+      <button class="btn-primary glow-btn" onclick="saveStep()">Save Step</button>
+    </div>
+  </div>
+</div>
