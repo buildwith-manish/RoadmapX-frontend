@@ -71,6 +71,18 @@
                 </div>
                 <div class="home-card-arrow">›</div>
               </button>
+              <button class="home-path-card myrm-card" onclick="APP.openMyRoadmaps()">
+                <div class="home-card-ico" style="background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.3);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div class="home-card-body">
+                  <div class="home-card-title">My Roadmaps</div>
+                  <div class="home-card-desc">Create custom roadmaps and track your own steps</div>
+                  <div class="home-card-meta"><span class="home-card-tag" style="background:rgba(124,58,237,0.12);border-color:rgba(124,58,237,0.25);color:var(--c2);">CUSTOM</span></div>
+                  <div class="home-card-prog"><div class="home-card-prog-fill" id="home-myrm-prog" style="width:0%;background:var(--c2);"></div></div>
+                </div>
+                <div class="home-card-arrow">›</div>
+              </button>
             </div>
 
             <button class="home-continue-btn" id="home-continue-btn" onclick="APP.continueLastSession()" style="display:none">
@@ -101,6 +113,132 @@
             </div>
           </div>
         </div>
+        <!-- MY ROADMAPS PANEL -->
+        <div id="myrm-panel" style="display:none;position:fixed;inset:0;z-index:150;background:var(--bg0);overflow-y:auto;">
+
+          <!-- Header -->
+          <div style="position:sticky;top:0;z-index:10;background:var(--bg1);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 16px;height:52px;display:flex;align-items:center;gap:12px;">
+            <button onclick="APP.closeMyRoadmaps()" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--bg3);border:1px solid rgba(255,255,255,0.06);cursor:pointer;color:var(--t1);flex-shrink:0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--c2);font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;" id="myrm-hdr-title">My Roadmaps</div>
+              <div style="font-size:9px;color:var(--t2);font-family:var(--font-mono);letter-spacing:0.5px;">ROADMAPX</div>
+            </div>
+          </div>
+
+          <!-- LIST VIEW -->
+          <div id="myrm-view-list" style="padding:16px;max-width:600px;margin:0 auto;">
+            <div id="myrm-list-loader" style="display:flex;justify-content:center;padding:32px;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--c1);animation:myrm-pulse 1s ease-in-out infinite;margin:0 3px;"></div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--c2);animation:myrm-pulse 1s ease-in-out infinite 0.15s;margin:0 3px;"></div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--c3);animation:myrm-pulse 1s ease-in-out infinite 0.3s;margin:0 3px;"></div>
+            </div>
+            <div id="myrm-list-content" style="display:none;">
+              <div id="myrm-list-label" style="font-size:9px;font-weight:700;color:var(--t2);font-family:var(--font-mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">— roadmaps</div>
+              <div id="myrm-cards"></div>
+              <div id="myrm-empty" style="display:none;text-align:center;padding:40px 20px;color:var(--t2);font-size:13px;line-height:1.6;">
+                <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:6px;">No roadmaps yet</div>
+                Create your first roadmap to start tracking progress.
+              </div>
+              <div style="margin-top:12px;">
+                <button onclick="APP.myRmOpenCreate()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#000;font-weight:700;font-size:13px;font-family:var(--font-ui);border-radius:8px;cursor:pointer;border:none;letter-spacing:0.3px;">Create Roadmap</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DETAIL VIEW -->
+          <div id="myrm-view-detail" style="display:none;padding:16px;max-width:600px;margin:0 auto;">
+            <!-- Meta card -->
+            <div style="background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;margin-bottom:16px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+                <div id="myrm-detail-title" style="font-size:16px;font-weight:700;color:var(--t1);"></div>
+                <span id="myrm-detail-pct-tag" style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;font-family:var(--font-mono);letter-spacing:0.5px;text-transform:uppercase;background:rgba(0,229,200,0.10);color:var(--c1);border:1px solid rgba(0,229,200,0.2);">0%</span>
+              </div>
+              <div id="myrm-detail-desc" style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:12px;"></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);font-family:var(--font-mono);margin-bottom:5px;">
+                <span id="myrm-steps-label">0 / 0 steps</span>
+                <span id="myrm-pct-label">0%</span>
+              </div>
+              <div style="height:3px;background:var(--bg5);border-radius:2px;overflow:hidden;">
+                <div id="myrm-prog-fill" style="height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:2px;width:0%;transition:width 0.4s cubic-bezier(.4,0,.2,1);"></div>
+              </div>
+            </div>
+
+            <!-- Steps header + add button -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div id="myrm-steps-count" style="font-size:9px;font-weight:700;color:var(--t2);font-family:var(--font-mono);letter-spacing:1.5px;text-transform:uppercase;">— steps</div>
+              <button id="myrm-btn-add-step" onclick="APP.myRmToggleAddStep()" style="padding:8px 14px;background:var(--bg3);color:var(--t1);font-weight:600;font-size:12px;font-family:var(--font-ui);border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.06);">+ Add Step</button>
+            </div>
+
+            <!-- Add step form -->
+            <div id="myrm-add-form" style="display:none;background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;margin-bottom:10px;">
+              <div style="margin-bottom:10px;">
+                <div style="font-size:10px;font-weight:700;color:var(--t2);font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Step title</div>
+                <input id="myrm-step-title" type="text" maxlength="120" placeholder="e.g. Complete module 1" style="width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--t1);font-family:var(--font-ui);" />
+              </div>
+              <div style="margin-bottom:10px;">
+                <div style="font-size:10px;font-weight:700;color:var(--t2);font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Description (optional)</div>
+                <textarea id="myrm-step-desc" rows="2" placeholder="Brief note..." style="width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--t1);font-family:var(--font-ui);resize:none;"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:4px;">
+                <button onclick="APP.myRmToggleAddStep()" style="padding:10px 14px;background:transparent;color:var(--t2);font-size:12px;font-family:var(--font-ui);border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.06);">Cancel</button>
+                <button id="myrm-btn-save-step" onclick="APP.myRmSaveStep()" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#000;font-weight:700;font-size:12px;font-family:var(--font-ui);border-radius:8px;cursor:pointer;border:none;">Save Step</button>
+              </div>
+            </div>
+
+            <!-- Steps list -->
+            <div id="myrm-steps-loader" style="display:none;justify-content:center;padding:32px;">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--c1);animation:myrm-pulse 1s ease-in-out infinite;margin:0 3px;"></div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--c2);animation:myrm-pulse 1s ease-in-out infinite 0.15s;margin:0 3px;"></div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--c3);animation:myrm-pulse 1s ease-in-out infinite 0.3s;margin:0 3px;"></div>
+            </div>
+            <div id="myrm-steps-list"></div>
+            <div id="myrm-steps-empty" style="display:none;text-align:center;padding:32px 20px;color:var(--t2);font-size:13px;line-height:1.6;">
+              <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:6px;">No steps yet</div>
+              Add your first step above.
+            </div>
+          </div>
+
+        </div><!-- /myrm-panel -->
+
+        <!-- CREATE ROADMAP MODAL -->
+        <div id="myrm-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);align-items:flex-end;justify-content:center;">
+          <div style="background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-bottom:none;border-radius:16px 16px 0 0;padding:20px 16px 32px;width:100%;max-width:600px;animation:myrm-slideup 0.22s ease;">
+            <div style="width:36px;height:4px;background:var(--bg5);border-radius:2px;margin:0 auto 18px;"></div>
+            <div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:16px;">New Roadmap</div>
+            <div style="margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;color:var(--t2);font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Title</div>
+              <input id="myrm-create-title" type="text" maxlength="100" placeholder="e.g. Learn Machine Learning" style="width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--t1);font-family:var(--font-ui);" />
+            </div>
+            <div style="margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;color:var(--t2);font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Description (optional)</div>
+              <textarea id="myrm-create-desc" rows="3" placeholder="What is this roadmap about?" style="width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--t1);font-family:var(--font-ui);resize:none;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:16px;">
+              <button onclick="APP.myRmCloseCreate()" style="padding:10px 16px;background:var(--bg3);color:var(--t1);font-weight:600;font-size:12px;font-family:var(--font-ui);border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.06);">Cancel</button>
+              <button id="myrm-btn-create" onclick="APP.myRmCreate()" style="flex:1;padding:13px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#000;font-weight:700;font-size:13px;font-family:var(--font-ui);border-radius:8px;cursor:pointer;border:none;">Create</button>
+            </div>
+          </div>
+        </div><!-- /myrm-modal -->
+
+        <style>
+          @keyframes myrm-pulse {
+            0%,80%,100%{transform:scale(0.5);opacity:0.4}
+            40%{transform:scale(1);opacity:1}
+          }
+          @keyframes myrm-slideup {
+            from{transform:translateY(100%);opacity:0}
+            to{transform:translateY(0);opacity:1}
+          }
+          .myrm-card .home-card-ico svg { color: var(--c2); }
+          #myrm-step-title:focus, #myrm-step-desc:focus,
+          #myrm-create-title:focus, #myrm-create-desc:focus {
+            border-color: rgba(124,58,237,0.4) !important;
+            outline: none;
+          }
+        </style>
+
         <!-- /tab-home -->
 
         <!-- ──────── TAB: AI ROADMAP ──────── -->
@@ -1236,5 +1374,285 @@
     </div>
   </div>
 
+  <script>
+  // ═══════════════════════════════════════════════
+  //  MY ROADMAPS FEATURE — injected into APP
+  // ═══════════════════════════════════════════════
+  (function() {
+    const API = 'https://roadmapx-backend-3qmc.onrender.com';
+
+    let _roadmaps       = [];
+    let _steps          = [];
+    let _currentRoadmap = null;
+    let _addStepOpen    = false;
+
+    // ── helpers ─────────────────────────────────
+    function uid() {
+      try { return sessionStorage.getItem('rx_user') || ''; } catch(e) { return ''; }
+    }
+
+    function toast(msg) {
+      // reuse existing app toast if present, else console
+      if (window.APP && APP.showToast) { APP.showToast(msg); return; }
+      const el = document.getElementById('toast') || document.getElementById('snackbar');
+      if (el) { el.textContent = msg; el.className = (el.className||'') + ' show'; setTimeout(()=>el.classList.remove('show'),2200); }
+    }
+
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function setBtn(id, disabled, label) {
+      const b = document.getElementById(id);
+      if (!b) return;
+      b.disabled = disabled;
+      b.textContent = label;
+    }
+
+    // ── panel open/close ─────────────────────────
+    function openMyRoadmaps() {
+      document.getElementById('myrm-panel').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      showListView();
+      loadRoadmaps();
+    }
+
+    function closeMyRoadmaps() {
+      document.getElementById('myrm-panel').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function showListView() {
+      document.getElementById('myrm-view-list').style.display = 'block';
+      document.getElementById('myrm-view-detail').style.display = 'none';
+      document.getElementById('myrm-hdr-title').textContent = 'My Roadmaps';
+      _currentRoadmap = null;
+    }
+
+    function showDetailView(rm) {
+      _currentRoadmap = rm;
+      document.getElementById('myrm-view-list').style.display = 'none';
+      document.getElementById('myrm-view-detail').style.display = 'block';
+      document.getElementById('myrm-hdr-title').textContent = rm.title;
+      document.getElementById('myrm-detail-title').textContent = rm.title;
+      document.getElementById('myrm-detail-desc').textContent = rm.description || 'No description.';
+      closeAddStepForm();
+      document.getElementById('myrm-step-title').value = '';
+      document.getElementById('myrm-step-desc').value  = '';
+      loadSteps(rm._id);
+    }
+
+    // ── roadmaps ─────────────────────────────────
+    async function loadRoadmaps() {
+      document.getElementById('myrm-list-loader').style.display = 'flex';
+      document.getElementById('myrm-list-content').style.display = 'none';
+      try {
+        const userId = uid();
+        const url = `${API}/api/roadmaps${userId ? '?userId='+encodeURIComponent(userId) : ''}`;
+        const r = await fetch(url, { credentials: 'include' });
+        const d = await r.json();
+        _roadmaps = d.success ? (d.data || []) : [];
+      } catch(e) { _roadmaps = []; toast('Could not load roadmaps.'); }
+      renderRoadmaps();
+      document.getElementById('myrm-list-loader').style.display = 'none';
+      document.getElementById('myrm-list-content').style.display = 'block';
+    }
+
+    function renderRoadmaps() {
+      const container = document.getElementById('myrm-cards');
+      const empty     = document.getElementById('myrm-empty');
+      document.getElementById('myrm-list-label').textContent =
+        `${_roadmaps.length} roadmap${_roadmaps.length !== 1 ? 's' : ''}`;
+
+      if (_roadmaps.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      container.innerHTML = _roadmaps.map((rm, i) => {
+        const total = rm._stepCount || 0;
+        const done  = rm._completedCount || 0;
+        const pct   = total > 0 ? Math.round(done/total*100) : 0;
+        return `
+          <div onclick="window._myRm.openDetail(${i})" style="background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden;transition:border-color 0.15s,background 0.15s;" onmouseover="this.style.borderColor='rgba(124,58,237,0.3)';this.style.background='var(--bg3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='var(--bg2)'">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+              <div style="font-size:14px;font-weight:600;color:var(--t1);line-height:1.3;">${escH(rm.title)}</div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            ${rm.description ? `<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px;">${escH(rm.description)}</div>` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);font-family:var(--font-mono);margin-bottom:5px;">
+              <span>${done} / ${total} steps</span><span>${pct}%</span>
+            </div>
+            <div style="height:3px;background:var(--bg5);border-radius:2px;overflow:hidden;">
+              <div style="height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:2px;width:${pct}%;transition:width 0.4s;"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── create roadmap ───────────────────────────
+    function openCreate() {
+      document.getElementById('myrm-create-title').value = '';
+      document.getElementById('myrm-create-desc').value  = '';
+      const m = document.getElementById('myrm-modal');
+      m.style.display = 'flex';
+      setTimeout(() => document.getElementById('myrm-create-title').focus(), 100);
+    }
+
+    function closeCreate() {
+      document.getElementById('myrm-modal').style.display = 'none';
+    }
+
+    async function createRoadmap() {
+      const title  = document.getElementById('myrm-create-title').value.trim();
+      const desc   = document.getElementById('myrm-create-desc').value.trim();
+      const userId = uid();
+      if (!title) { toast('Title is required.'); return; }
+      if (!userId) { toast('Please log in first.'); return; }
+      setBtn('myrm-btn-create', true, 'Creating...');
+      try {
+        const r = await fetch(`${API}/api/roadmaps`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, title, description: desc }),
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+        closeCreate();
+        toast('Roadmap created.');
+        await loadRoadmaps();
+      } catch(e) { toast('Could not create roadmap.'); }
+      finally { setBtn('myrm-btn-create', false, 'Create'); }
+    }
+
+    // ── steps ────────────────────────────────────
+    async function loadSteps(roadmapId) {
+      const loader = document.getElementById('myrm-steps-loader');
+      loader.style.display = 'flex';
+      document.getElementById('myrm-steps-list').innerHTML = '';
+      document.getElementById('myrm-steps-empty').style.display = 'none';
+      try {
+        const r = await fetch(`${API}/api/steps/${roadmapId}`, { credentials: 'include' });
+        const d = await r.json();
+        _steps = d.success ? (d.data || []) : [];
+      } catch(e) { _steps = []; toast('Could not load steps.'); }
+      loader.style.display = 'none';
+      renderSteps();
+    }
+
+    function renderSteps() {
+      const container = document.getElementById('myrm-steps-list');
+      const empty     = document.getElementById('myrm-steps-empty');
+      const done      = _steps.filter(s => s.completed).length;
+      const total     = _steps.length;
+      const pct       = total > 0 ? Math.round(done/total*100) : 0;
+
+      document.getElementById('myrm-steps-count').textContent  = `${total} step${total!==1?'s':''}`;
+      document.getElementById('myrm-steps-label').textContent  = `${done} / ${total} steps`;
+      document.getElementById('myrm-pct-label').textContent    = `${pct}%`;
+      document.getElementById('myrm-prog-fill').style.width    = `${pct}%`;
+      document.getElementById('myrm-detail-pct-tag').textContent = `${pct}%`;
+
+      if (total === 0) { container.innerHTML=''; empty.style.display='block'; return; }
+      empty.style.display = 'none';
+
+      container.innerHTML = _steps.map(s => `
+        <div id="myrm-step-${s._id}" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;margin-bottom:8px;opacity:${s.completed?'0.55':'1'};transition:opacity 0.2s;">
+          <div onclick="window._myRm.toggleStep('${s._id}',${s.completed})" style="width:18px;height:18px;border-radius:5px;border:1.5px solid ${s.completed?'transparent':'rgba(255,255,255,0.12)'};background:${s.completed?'linear-gradient(135deg,var(--c1),var(--c2))':'var(--bg3)'};flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:background 0.15s;">
+            ${s.completed ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--t1);line-height:1.3;${s.completed?'text-decoration:line-through;color:var(--t2);':''}">${escH(s.title)}</div>
+            ${s.description ? `<div style="font-size:11px;color:var(--t2);margin-top:3px;line-height:1.5;">${escH(s.description)}</div>` : ''}
+          </div>
+        </div>`).join('');
+    }
+
+    async function toggleStep(stepId, currentlyDone) {
+      if (currentlyDone) return;
+      const idx = _steps.findIndex(s => s._id === stepId);
+      if (idx === -1) return;
+      _steps[idx].completed   = true;
+      _steps[idx].completedAt = new Date().toISOString();
+      renderSteps();
+      try {
+        const r = await fetch(`${API}/api/steps/${stepId}`, {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+        toast('Step completed.');
+      } catch(e) {
+        _steps[idx].completed = false;
+        _steps[idx].completedAt = null;
+        renderSteps();
+        toast('Could not update step.');
+      }
+    }
+
+    function toggleAddStepForm() {
+      _addStepOpen = !_addStepOpen;
+      document.getElementById('myrm-add-form').style.display = _addStepOpen ? 'block' : 'none';
+      document.getElementById('myrm-btn-add-step').textContent = _addStepOpen ? '- Cancel' : '+ Add Step';
+      if (_addStepOpen) setTimeout(() => document.getElementById('myrm-step-title').focus(), 80);
+    }
+
+    function closeAddStepForm() {
+      _addStepOpen = false;
+      document.getElementById('myrm-add-form').style.display = 'none';
+      document.getElementById('myrm-btn-add-step').textContent = '+ Add Step';
+    }
+
+    async function saveStep() {
+      const title = document.getElementById('myrm-step-title').value.trim();
+      const desc  = document.getElementById('myrm-step-desc').value.trim();
+      if (!title) { toast('Step title is required.'); return; }
+      if (!_currentRoadmap) return;
+      setBtn('myrm-btn-save-step', true, 'Saving...');
+      try {
+        const r = await fetch(`${API}/api/steps`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roadmapId: _currentRoadmap._id, title, description: desc }),
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+        _steps.push(d.data);
+        document.getElementById('myrm-step-title').value = '';
+        document.getElementById('myrm-step-desc').value  = '';
+        closeAddStepForm();
+        renderSteps();
+        toast('Step added.');
+      } catch(e) { toast('Could not add step.'); }
+      finally { setBtn('myrm-btn-save-step', false, 'Save Step'); }
+    }
+
+    // ── expose to window ─────────────────────────
+    window._myRm = {
+      openDetail: (i) => showDetailView(_roadmaps[i]),
+      toggleStep,
+    };
+
+    // ── attach to APP ────────────────────────────
+    Object.assign(window.APP || (window.APP = {}), {
+      openMyRoadmaps:      openMyRoadmaps,
+      closeMyRoadmaps:     closeMyRoadmaps,
+      myRmOpenCreate:      openCreate,
+      myRmCloseCreate:     closeCreate,
+      myRmCreate:          createRoadmap,
+      myRmToggleAddStep:   toggleAddStepForm,
+      myRmSaveStep:        saveStep,
+    });
+
+    // enter key shortcuts
+    document.getElementById('myrm-create-title').addEventListener('keydown', e => { if(e.key==='Enter') createRoadmap(); });
+    document.getElementById('myrm-step-title').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey) saveStep(); });
+    // close modal on backdrop click
+    document.getElementById('myrm-modal').addEventListener('click', e => { if(e.target===document.getElementById('myrm-modal')) closeCreate(); });
+
+  })();
+  </script>
   </body>
 </html>
