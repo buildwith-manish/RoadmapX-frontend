@@ -810,6 +810,7 @@ function _renderNotes(notes) {
 }
 
 function _loadStatsFromLocalStorage() {
+  // ── Attendance ──
   try {
     const attendance = JSON.parse(localStorage.getItem("attendance") || "{}");
     const days    = Object.values(attendance);
@@ -826,13 +827,51 @@ function _loadStatsFromLocalStorage() {
     if ($("total-days"))  $("total-days").textContent  = total;
   } catch {}
 
+  // ── Pomodoro ──
   try {
-    const pomo = JSON.parse(localStorage.getItem("pomodoroStats") || "{}");
-    const totalMins = (pomo.ai||0) + (pomo.dsa||0) + (pomo.projects||0) + (pomo.extra||0);
+    const pomo     = JSON.parse(localStorage.getItem("pomodoroStats") || "{}");
+    const legacyMins = (pomo.ai||0) + (pomo.dsa||0) + (pomo.projects||0) + (pomo.extra||0);
+
+    // Merge custom-roadmap pomodoro sessions (crm_stats key)
+    const crmStats  = JSON.parse(localStorage.getItem("crm_stats") || "{}");
+    const crmPomos  = crmStats.totalPomodoro || 0;           // count of sessions
+    const totalSessions = (legacyMins > 0 ? Math.ceil(legacyMins / 25) : 0) + crmPomos;
+    const totalMins     = legacyMins + crmPomos * 25;        // estimate: 25min per session
+
     const $ = id => document.getElementById(id);
-    if ($("pomo-sessions")) $("pomo-sessions").textContent = totalMins > 0 ? Math.ceil(totalMins / 25) : 0;
+    if ($("pomo-sessions")) $("pomo-sessions").textContent = totalSessions;
     if ($("pomo-hours"))    $("pomo-hours").textContent    = (totalMins / 60).toFixed(1) + "h";
-    if ($("total-pomo"))    $("total-pomo").textContent    = totalMins;
+    if ($("total-pomo"))    $("total-pomo").textContent    = totalSessions;
+  } catch {}
+
+  // ── Custom Roadmap — Completed Days ──
+  try {
+    const crmStats = JSON.parse(localStorage.getItem("crm_stats") || "{}");
+    const crmDone  = crmStats.completedDays || 0;
+
+    // Update hero stats if those elements exist (total-days might already be set from attendance)
+    const $ = id => document.getElementById(id);
+    // Show in a dedicated element if present, or add to total-days
+    if ($("crm-completed-days")) {
+      $("crm-completed-days").textContent = crmDone;
+    }
+    // Also surface in progress section: if prog-done / prog-total exist, show roadmap progress
+    const crmData   = JSON.parse(localStorage.getItem("crm_v2_data") || '{"roadmaps":[]}');
+    const roadmaps  = crmData.roadmaps || [];
+    let totalDays = 0, doneDays = 0;
+    roadmaps.forEach(rm => {
+      (rm.weeks || []).forEach(wk => {
+        (wk.days || []).forEach(d => {
+          totalDays++;
+          if (d.completed) doneDays++;
+        });
+      });
+    });
+    const rate = totalDays > 0 ? Math.round(doneDays / totalDays * 100) : 0;
+    if ($("prog-done"))  $("prog-done").textContent  = doneDays;
+    if ($("prog-total")) $("prog-total").textContent = totalDays;
+    if ($("prog-rate"))  $("prog-rate").textContent  = rate + "%";
+    if ($("prog-bar"))   $("prog-bar").style.width   = rate + "%";
   } catch {}
 
   document.getElementById("notes-container").innerHTML =
