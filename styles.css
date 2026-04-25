@@ -1170,10 +1170,11 @@ textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.6; }
   position: fixed; bottom: calc(var(--nav) + 10px); left: 10px; right: 10px; z-index: 450;
   background: var(--bg3); border: 1px solid rgba(0,229,200,0.2);
   border-radius: var(--r16); padding: 14px;
-  display: flex; align-items: center; gap: 12px;
+  display: none; align-items: center; gap: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   animation: pwaSlide 0.4s var(--spring);
 }
+.pwa-banner.show { display: flex; }
 @keyframes pwaSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .pwa-banner-ico { display: flex; color: var(--c1); }
 .pwa-banner-ico svg { width: 28px; height: 28px; }

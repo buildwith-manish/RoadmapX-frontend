@@ -1472,6 +1472,9 @@ const DSA_WEEK_DATA = (function(){
 const APP = (function() {
   'use strict';
 
+  // ── PWA deferred install prompt (must be declared here for strict mode) ──
+  let deferredPrompt = null;
+
   // ── Storage Keys ──
   const KEYS = {
     AI_PROGRESS:  'roadmapAI',
@@ -3808,17 +3811,6 @@ if (prog[key].done) {
     }
     localStorage.setItem('lastVisit', todayStr);
 
-    // PWA install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      setTimeout(() => {
-        if (deferredPrompt && !load('pwaDismissed', false)) {
-          document.getElementById('pwa-banner')?.classList.add('show');
-        }
-      }, 10000);
-    });
-
     // Register service worker (inline blob)
     if ('serviceWorker' in navigator) {
       const swCode = `
@@ -5602,11 +5594,13 @@ APP.saveProject = function() {
 };
 
 // Override openProjectModal to populate new fields
-APP.openProjectModal = function(id) {
-  _origOpenProjModal(id);
-  if (id) {
+APP.openProjectModal = function(idOrSource) {
+  _origOpenProjModal(idOrSource);
+  // Only look up project data if this is a real project ID (not a source tag)
+  const isSourceTag = (idOrSource === 'ai' || idOrSource === 'dsa');
+  if (idOrSource && !isSourceTag) {
     const projects = lsGet('projects', []);
-    const proj = projects.find(p => p.id === id);
+    const proj = projects.find(p => p.id === idOrSource);
     if (proj) ProjectEnhancer.populateModal(proj);
   } else {
     if ($('proj-github')) $('proj-github').value = '';

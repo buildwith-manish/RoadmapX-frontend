@@ -6,9 +6,6 @@
     <meta name="theme-color" content="#05050f" />
     <title>RoadmapX: Learn &amp; Track Tech Skills</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="script.js"></script>
-    <script src="hybrid_data.js"></script>
-    <script src="roadmap_bridge.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   </head>
   <body>
@@ -928,7 +925,7 @@
       </div>
 
       <!-- AI MENTOR MODAL -->
-      <div class="ai-modal-overlay" id="ai-modal-overlay">
+      <div class="ai-modal-overlay" id="ai-modal-overlay" onclick="if(event.target===this)APP.closeAIModal()">
         <div class="ai-modal">
           <div class="ai-modal-header">
             <div class="ai-modal-title">
@@ -955,7 +952,7 @@
       </div>
 
       <!-- PWA INSTALL BANNER -->
-      <div class="pwa-banner" id="pwa-banner" style="display:none">
+      <div class="pwa-banner" id="pwa-banner">
         <div class="pwa-banner-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
         </div>
