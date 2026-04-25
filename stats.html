@@ -484,54 +484,71 @@
 <script>
 const API = "https://roadmapx-backend-3qmc.onrender.com";
 
-async function loadStats() {
-  let isGuest = false;
-  let username = null;
+// ── Display helpers ────────────────────────────────────────────────────────
+function _showUser(name) {
+  const badge = document.getElementById("username-badge");
+  const heroName = document.getElementById("hero-name");
+  const heroSub = document.getElementById("hero-sub");
+  if (badge) badge.textContent = "@" + name;
+  if (heroName) heroName.textContent = name;
+  if (heroSub) heroSub.textContent = "// your learning analytics";
+}
 
-  // Build headers — include Bearer token if available
-  const token = localStorage.getItem('rx_token');
+async function loadStats() {
+  const token  = localStorage.getItem('rx_token');
+  const cached = localStorage.getItem('rx_user');
+
+  // ── Step 1: Optimistic render from cache ──────────────────────────────────
+  // Show stored username immediately so the page NEVER flashes "Guest"
+  // for a logged-in user, even while the network request is in flight.
+  let username = null;
+  let isGuest  = false;
+
+  if (token && cached) {
+    username = cached;
+    _showUser(username);
+  }
+
+  // ── Step 2: Verify with the server ───────────────────────────────────────
+  // credentials:include sends the session cookie cross-origin.
   const fetchOpts = {
     credentials: "include",
     headers: { 'Accept': 'application/json' }
   };
-  if (token && token !== 'true') {
-    fetchOpts.headers['Authorization'] = 'Bearer ' + token;
-  }
 
   try {
-    const me = await fetch(API + "/me", fetchOpts);
+    const me     = await fetch(API + "/me", fetchOpts);
     const meData = await me.json();
-    if (!meData.success || !meData.username) {
-      isGuest = true;
-    } else {
+
+    if (meData.success && meData.username) {
+      // Server confirmed login — refresh cache + update display
       username = meData.username;
-      // Refresh cache
+      localStorage.setItem('rx_token', 'true');
       localStorage.setItem('rx_user', username);
-      document.getElementById("username-badge").textContent = "@" + username;
-      document.getElementById("hero-name").textContent = username;
-      document.getElementById("hero-sub").textContent = "// your learning analytics";
+      _showUser(username);
+    } else {
+      // Server says not authenticated.
+      // If we already have a cached username (cross-origin cookie may be
+      // blocked by the browser), keep showing it — never downgrade to Guest
+      // just because a cookie-based /me returned 401.
+      if (!username) {
+        isGuest = true;
+      }
     }
   } catch {
-    // Network error — fall back to cached user if available
-    const cached = localStorage.getItem('rx_user');
-    if (token && cached) {
-      username = cached;
-      document.getElementById("username-badge").textContent = "@" + username;
-      document.getElementById("hero-name").textContent = username;
-      document.getElementById("hero-sub").textContent = "// your learning analytics (cached)";
-    } else {
+    // Network / server error — trust the cache; fall back to guest only if
+    // there was nothing cached.
+    if (!username) {
       isGuest = true;
     }
   }
 
   if (isGuest) {
-    // Show a guest-friendly message instead of redirecting
     document.getElementById("username-badge").textContent = "@guest";
     document.getElementById("hero-name").textContent = "Guest";
     document.getElementById("hero-sub").textContent = "// sign in to track your stats";
 
-    // Inject a sign-in prompt banner below the hero
-    const heroEl = document.querySelector(".stats-hero") || document.querySelector("header");
+    const heroEl = document.querySelector(".hero-card");
     if (heroEl) {
       const banner = document.createElement("div");
       banner.style.cssText = `
@@ -555,12 +572,11 @@ async function loadStats() {
       heroEl.insertAdjacentElement("afterend", banner);
     }
 
-    // Populate stats from localStorage so local data is still visible
     _loadStatsFromLocalStorage();
     return;
   }
 
-  // Helper for authenticated fetches
+  // ── Step 3: Authenticated API calls ──────────────────────────────────────
   const authFetch = (url) => fetch(url, fetchOpts);
 
   // Load attendance
