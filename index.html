@@ -1389,7 +1389,7 @@
 
     // ── helpers ─────────────────────────────────
     function uid() {
-      try { return sessionStorage.getItem('rx_user') || ''; } catch(e) { return ''; }
+      try { return localStorage.getItem('rx_user') || sessionStorage.getItem('rx_user') || ''; } catch(e) { return ''; }
     }
 
     function toast(msg) {
@@ -1640,7 +1640,7 @@
     };
 
     // ── attach to APP ────────────────────────────
-    Object.assign(window.APP || (window.APP = {}), {
+    Object.assign(APP, {
       openMyRoadmaps:      openMyRoadmaps,
       closeMyRoadmaps:     closeMyRoadmaps,
       myRmOpenCreate:      openCreate,
