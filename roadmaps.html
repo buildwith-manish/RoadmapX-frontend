@@ -548,7 +548,6 @@
 ═══════════════════════════════════════════ -->
 <script>
 // ─── CONFIG ──────────────────────────────────────────────
-// Replace with your actual Render backend URL
 const API = 'https://roadmapx-backend-3qmc.onrender.com';
 
 // ─── STATE ───────────────────────────────────────────────
@@ -595,6 +594,12 @@ function showList() {
   document.getElementById('hdr-title').textContent = 'My Roadmaps';
   document.getElementById('hdr-sub').textContent = 'ROADMAPX';
   currentRoadmap = null;
+}
+
+function showDetailById(id) {
+  const roadmap = roadmaps.find(r => r._id === id);
+  if (!roadmap) return;
+  showDetail(roadmap);
 }
 
 function showDetail(roadmap) {
@@ -660,7 +665,7 @@ function renderRoadmaps() {
     const completed = rm._completedCount ?? 0;
     const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
     return `
-      <div class="roadmap-card" onclick="showDetail(${JSON.stringify(rm).replace(/"/g, '&quot;')})">
+      <div class="roadmap-card" onclick="showDetailById('${rm._id}')">
         <div class="roadmap-card-header">
           <div class="roadmap-card-title">${escHtml(rm.title)}</div>
           <div class="roadmap-card-arrow">
