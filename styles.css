@@ -1074,9 +1074,96 @@ textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.6; }
 .cal-cell.missed  { background: rgba(244,63,94,0.15); color: var(--c3); }
 .cal-cell.revision{ background: rgba(124,58,237,0.2); color: var(--c2); }
 .cal-cell.empty   { opacity: 0; pointer-events: none; }
-.cal-legend { display: flex; gap: 16px; justify-content: center; margin-top: 10px; }
+.cal-legend { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
 .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--t2); }
 .cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── cal-day (attendance calendar) ── */
+.cal-day {
+  aspect-ratio: 1; border-radius: var(--r4); display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-family: var(--font-mono);
+  color: var(--t2); cursor: pointer; transition: all var(--dur); position: relative;
+  border: 1px solid transparent;
+}
+.cal-day:active { transform: scale(0.88); }
+.cal-day.empty  { opacity: 0; pointer-events: none; }
+.cal-day.future { opacity: 0.35; cursor: default; pointer-events: none; }
+.cal-day.today  { color: var(--c1); font-weight: 700; border-color: rgba(0,229,200,0.35); }
+.cal-day.studied   { background: rgba(16,185,129,0.2);  color: var(--c5); }
+.cal-day.missed    { background: rgba(244,63,94,0.15);  color: var(--c3); }
+.cal-day.revision  { background: rgba(124,58,237,0.2);  color: var(--c2); }
+.cal-day.att-present { background: rgba(16,185,129,0.28); border-color: rgba(16,185,129,0.5); color: var(--c5); font-weight:700; }
+.cal-day.att-absent  { background: rgba(244,63,94,0.22);  border-color: rgba(244,63,94,0.45);  color: var(--c3); font-weight:700; }
+.cal-day.att-present.today { border-color: rgba(16,185,129,0.8); }
+.cal-day.att-absent.today  { border-color: rgba(244,63,94,0.8); }
+
+/* Completion = green, Revision = orange, Both = split gradient */
+.cal-day.completed { background: rgba(16,185,129,0.22); border-color: rgba(16,185,129,0.45); color: var(--c5); font-weight: 700; }
+.cal-day.revision  { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.4);  color: var(--c4); }
+.cal-day.cal-both  {
+  background: linear-gradient(135deg, rgba(16,185,129,0.22) 50%, rgba(245,158,11,0.22) 50%);
+  border-color: rgba(245,158,11,0.5); color: var(--c4); font-weight: 700;
+}
+.cal-day.cal-both .cal-day-num { color: var(--c5); }
+
+/* Dot indicators shown below the day number */
+.cal-day { flex-direction: column; gap: 1px; }
+.cal-day-num { line-height: 1; }
+.cal-dots { display: flex; gap: 2px; justify-content: center; }
+.cal-dot  { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+.dot-done { background: var(--c5); }
+.dot-rev  { background: var(--c4); }
+
+/* ── Attendance stats bar (inside calendar tab) ── */
+.att-stats-bar {
+  display: flex; gap: 8px; margin: 12px 14px 4px;
+  padding: 10px 14px; background: var(--bg2);
+  border: 1px solid var(--border-default); border-radius: var(--r8);
+}
+.att-stat-item { flex: 1; text-align: center; }
+.att-stat-val  { font-size: 18px; font-weight: 800; font-family: var(--font-mono); }
+.att-stat-val.green { color: var(--c5); }
+.att-stat-val.red   { color: var(--c3); }
+.att-stat-val.gold  { color: var(--c4); }
+.att-stat-lbl  { font-size: 9px; color: var(--t2); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* ── Attendance action modal (bottom sheet) ── */
+.att-modal-overlay {
+  position: fixed; inset: 0; z-index: 800;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.att-modal-overlay.open { opacity: 1; pointer-events: all; }
+.att-modal {
+  width: 100%; max-width: 480px;
+  background: var(--bg2); border-top: 1px solid var(--border-default);
+  border-radius: 18px 18px 0 0; padding: 20px 18px 32px;
+  transform: translateY(100%); transition: transform 0.28s cubic-bezier(.32,1.1,.42,1);
+}
+.att-modal-overlay.open .att-modal { transform: translateY(0); }
+.att-modal-date {
+  font-family: var(--font-mono); font-size: 13px; color: var(--c1);
+  margin-bottom: 6px; letter-spacing: 0.5px;
+}
+.att-modal-current {
+  font-size: 12px; color: var(--t2); margin-bottom: 16px;
+}
+.att-modal-current span.present { color: var(--c5); font-weight: 700; }
+.att-modal-current span.absent  { color: var(--c3); font-weight: 700; }
+.att-modal-btns { display: flex; gap: 8px; }
+.att-modal-btn {
+  flex: 1; padding: 12px; border-radius: var(--r8); border: 1px solid transparent;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--dur);
+  font-family: var(--font-display);
+}
+.att-modal-btn.present { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--c5); }
+.att-modal-btn.present:active { background: rgba(16,185,129,0.28); }
+.att-modal-btn.absent  { background: rgba(244,63,94,0.1);  border-color: rgba(244,63,94,0.28);  color: var(--c3); }
+.att-modal-btn.absent:active  { background: rgba(244,63,94,0.25); }
+.att-modal-btn.reset   { background: var(--bg3); border-color: var(--border-default); color: var(--t2); }
+.att-modal-btn.reset:active   { background: rgba(255,255,255,0.06); }
+.att-modal-cancel { margin-top: 10px; width: 100%; padding: 10px; background: none; border: none; color: var(--t2); font-size: 13px; cursor: pointer; }
 
 /* ── PWA BANNER ── */
 .pwa-banner {

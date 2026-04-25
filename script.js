@@ -4909,102 +4909,381 @@ const Analytics = (function() {
 const Calendar = (function() {
   let viewDate = new Date();
 
-  function render() {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = new Date();
-    const todayISO = today.toISOString().slice(0,10);
+  // ── Local date helper (no UTC drift) ──
+  function localISO(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
 
-    const att = lsGet('attendance', {});
-    const revisions = lsGet('revisions', {});
-    const aiProg = lsGet('roadmapAI', {});
+  // ── Save attendance to localStorage + backend ──
+  function saveAttendance(att) {
+    lsSet('attendance', att);
+    if (window.HybridData && HybridData.isLoggedIn()) {
+      HybridData.saveUserData({ attendance: att });
+    }
+  }
 
-    // Build set of revision-due dates
-    const revDates = new Set();
-    if (Array.isArray(revisions)) {
-      revisions.forEach(r => { if (r && r.date) revDates.add(r.date); });
-    } else {
-      Object.values(revisions).forEach(revArr => {
-        if (Array.isArray(revArr)) revArr.forEach(r => { if (r.date) revDates.add(r.date); });
-      });
+  // ── Update attendance stats bar ──
+  function renderStats(att) {
+    const vals    = Object.values(att);
+    const present = vals.filter(v => v === 'present').length;
+    const absent  = vals.filter(v => v === 'absent').length;
+    const total   = present + absent;
+    const pct     = total > 0 ? Math.round((present / total) * 100) : null;
+    const pEl = document.getElementById('att-cal-present');
+    const aEl = document.getElementById('att-cal-absent');
+    const rEl = document.getElementById('att-cal-pct');
+    if (pEl) pEl.textContent = present;
+    if (aEl) aEl.textContent = absent;
+    if (rEl) rEl.textContent = pct !== null ? pct + '%' : '—%';
+  }
+
+  // ════════════════════════════════════════════════════
+  //  SPACED REPETITION HELPERS
+  // ════════════════════════════════════════════════════
+
+  // Generate revision dates from a completion date (+1,+3,+7,+14,+30 days).
+  // Completion day itself is NEVER included.
+  function generateRevisionDates(completedDate) {
+    const INTERVALS = [1, 3, 7, 14, 30];
+    const seen = new Set();
+    return INTERVALS.map(n => {
+      const d = new Date(completedDate + 'T00:00:00');
+      d.setDate(d.getDate() + n);
+      const y = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const dy = String(d.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${dy}`;
+    }).filter(ds => {
+      // Guard against duplicates (shouldn't happen with fixed intervals)
+      if (seen.has(ds) || ds === completedDate) return false;
+      seen.add(ds);
+      return true;
+    });
+  }
+
+  // Build a map: date → { completed: [{id,title,source}], revision: [{id,title,source,interval}] }
+  // from ALL progress stores + revisions list.
+  function buildDateMap() {
+    const map = {};
+
+    function ensure(ds) {
+      if (!map[ds]) map[ds] = { completed: [], revision: [] };
+      return map[ds];
     }
 
-    // Build set of AI progress dates
-    const studiedDates = new Set();
-    Object.values(aiProg).forEach(v => { if (v.completedDate) studiedDates.add(v.completedDate); });
-    // Also use attendance
-    Object.entries(att).forEach(([d, status]) => { if (status === 'present') studiedDates.add(d); });
+    // ── AI progress ──
+    const aiProg = lsGet('roadmapAI', {});
+    Object.entries(aiProg).forEach(([key, v]) => {
+      if (!v) return;
+      const title = v.title || ('AI Day ' + key);
+      if (v.completedDate) {
+        ensure(v.completedDate).completed.push({ id: 'ai_' + key, title, source: 'ai' });
+        // Generate revision dates on-the-fly for AI topics
+        generateRevisionDates(v.completedDate).forEach((rd, i) => {
+          ensure(rd).revision.push({ id: 'ai_' + key, title, source: 'ai', interval: [1,3,7,14,30][i] });
+        });
+      }
+    });
+
+    // ── DSA progress ──
+    const dsaProg = lsGet('roadmapDSA', {});
+    Object.entries(dsaProg).forEach(([key, v]) => {
+      if (!v) return;
+      const title = v.title || ('DSA ' + key);
+      if (v.completedDate) {
+        ensure(v.completedDate).completed.push({ id: 'dsa_' + key, title, source: 'dsa' });
+        generateRevisionDates(v.completedDate).forEach((rd, i) => {
+          ensure(rd).revision.push({ id: 'dsa_' + key, title, source: 'dsa', interval: [1,3,7,14,30][i] });
+        });
+      }
+    });
+
+    // ── Revisions list (authoritative — covers scheduled entries) ──
+    const revisions = lsGet('revisions', []);
+    const revArr = Array.isArray(revisions)
+      ? revisions
+      : Object.values(revisions).reduce((a, v) => a.concat(Array.isArray(v) ? v : []), []);
+
+    revArr.forEach(r => {
+      if (!r || !r.date) return;
+      const ds = map[r.date] ? map[r.date] : ensure(r.date);
+      // Avoid duplicate revision entries (already added from progress above for AI/DSA)
+      const alreadyHas = ds.revision.some(x => x.id === (r.source + '_' + r.topicDay));
+      if (!alreadyHas) {
+        ds.revision.push({
+          id: r.source + '_' + r.topicDay,
+          title: r.topicTitle || ('Day ' + r.topicDay),
+          source: r.source || 'ai',
+          interval: r.interval,
+          done: r.done,
+        });
+      }
+    });
+
+    return map;
+  }
+
+  // Get data for a specific date — returns { completed, revision, attendance }
+  function getDateData(ds) {
+    const map = buildDateMap();
+    const att = lsGet('attendance', {});
+    return {
+      completed:  (map[ds] || {}).completed  || [],
+      revision:   (map[ds] || {}).revision   || [],
+      attendance: att[ds] || null,
+    };
+  }
+
+  // ════════════════════════════════════════════════════
+  //  RENDER
+  // ════════════════════════════════════════════════════
+  function render() {
+    const year  = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const firstDay    = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today    = new Date();
+    const todayISO = localISO(today);
+
+    const att    = lsGet('attendance', {});
+    const dateMap = buildDateMap();
 
     // Month title
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     if ($('cal-month-title')) $('cal-month-title').textContent = `${months[month]} ${year}`;
 
-    // Render grid
     const grid = $('cal-grid');
     if (!grid) return;
     let html = '';
-    // Empty cells before first day
     for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
-    // Days
-    for (let day = 1; day <= daysInMonth; day++) {
-      const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      const isFuture = new Date(ds) > today;
-      const isToday = ds === todayISO;
-      const isStudied = studiedDates.has(ds);
-      const isMissed = !isFuture && !isToday && !isStudied && new Date(ds) > new Date(year, month-1, 1);
-      const isRevision = revDates.has(ds);
 
+    for (let day = 1; day <= daysInMonth; day++) {
+      const ds      = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dateObj = new Date(year, month, day);
+      const isFuture = dateObj > today && ds !== todayISO;
+      const isToday  = ds === todayISO;
+      const attStatus   = att[ds];
+      const dayData     = dateMap[ds] || { completed: [], revision: [] };
+      const hasCompleted = dayData.completed.length > 0;
+      const hasRevision  = dayData.revision.length > 0;
+
+      // Priority order for class:
+      // att-present / att-absent override study classes (attendance is primary)
+      // Within study: both > completed > revision
       let cls = 'cal-day';
-      if (isFuture && !isToday) cls += ' future';
-      else if (isRevision && !isStudied) cls += ' revision';
-      else if (isStudied) cls += ' studied';
-      else if (isMissed) cls += ' missed';
+      if (isFuture) {
+        cls += ' future';
+        // Still show revision dots on future dates
+        if (hasRevision) cls += ' revision';
+      } else if (attStatus === 'present') {
+        cls += ' att-present';
+        if (hasCompleted) cls += ' completed-dot';
+        if (hasRevision)  cls += ' revision-dot';
+      } else if (attStatus === 'absent') {
+        cls += ' att-absent';
+        if (hasRevision)  cls += ' revision-dot';
+      } else if (hasCompleted && hasRevision) {
+        cls += ' cal-both';
+      } else if (hasCompleted) {
+        cls += ' completed';
+      } else if (hasRevision) {
+        cls += ' revision';
+      }
       if (isToday) cls += ' today';
 
-      html += `<div class="${cls}" onclick="APP.calDayClick('${ds}')">${day}</div>`;
+      // Build dot indicators
+      let dots = '';
+      if (hasCompleted) dots += '<span class="cal-dot dot-done"></span>';
+      if (hasRevision)  dots += '<span class="cal-dot dot-rev"></span>';
+
+      html += `<div class="${cls}" data-date="${ds}" onclick="APP.calDayClick('${ds}')">
+        <span class="cal-day-num">${day}</span>
+        ${dots ? `<span class="cal-dots">${dots}</span>` : ''}
+      </div>`;
     }
     grid.innerHTML = html;
+    renderStats(att);
   }
 
   function prev() { viewDate.setMonth(viewDate.getMonth() - 1); render(); }
   function next() { viewDate.setMonth(viewDate.getMonth() + 1); render(); }
 
+  // ════════════════════════════════════════════════════
+  //  DAY CLICK — shows completed + revision for that date
+  // ════════════════════════════════════════════════════
   function dayClick(ds) {
     const detail = $('cal-day-detail');
-    if (!detail) return;
-    const att = lsGet('attendance', {});
-    const aiProg = lsGet('roadmapAI', {});
-    const revisions = lsGet('revisions', {});
+    const todayISO = localISO(new Date());
+    const isToday = ds === todayISO;
 
-    const doneTopics = Object.entries(aiProg)
-      .filter(([k,v]) => v.done && v.completedDate === ds)
-      .map(([k,v]) => `Day ${k}: completed`);
+    if (detail) {
+      const { completed, revision, attendance } = getDateData(ds);
 
-    const revDue = [];
-    if (Array.isArray(revisions)) {
-      revisions.forEach(r => {
-        if (r && r.date === ds) revDue.push(r.topicTitle || 'Revision');
-      });
-    } else {
-      Object.values(revisions).forEach(revArr => {
-        if (Array.isArray(revArr)) revArr.forEach(r => {
-          if (r.date === ds) revDue.push(r.title || 'Revision');
+      // ── Header ──
+      const dateLabel = new Date(ds + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      let html = `<div style="margin-bottom:10px">
+        <strong style="color:var(--c1);font-size:13px">${dateLabel}</strong>`;
+
+      if (isToday) html += ` <span style="font-size:10px;background:var(--c1);color:#000;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:6px">TODAY</span>`;
+      html += `</div>`;
+
+      // ── Attendance ──
+      if (attendance) {
+        const attColor = attendance === 'present' ? 'var(--c5)' : 'var(--c3)';
+        const attIcon  = attendance === 'present' ? '✅' : '❌';
+        html += `<div style="margin-bottom:10px;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(255,255,255,0.06)">
+          <span style="color:var(--t2);font-size:11px">Attendance: </span>
+          <span style="color:${attColor};font-weight:700;font-size:11px">${attIcon} ${attendance.charAt(0).toUpperCase() + attendance.slice(1)}</span>
+        </div>`;
+      }
+
+      // ── Today banners ──
+      if (isToday && completed.length > 0) {
+        html += `<div style="margin-bottom:8px;padding:6px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:6px;font-size:11px;color:var(--c5);font-weight:700">
+          🎉 Completed Today — great work!
+        </div>`;
+      }
+      if (isToday && revision.length > 0) {
+        html += `<div style="margin-bottom:8px;padding:6px 10px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:6px;font-size:11px;color:var(--c4);font-weight:700">
+          🔔 Revision Due Today!
+        </div>`;
+      }
+
+      // ── Completed topics ──
+      if (completed.length > 0) {
+        html += `<div style="margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--c5);margin-bottom:6px;text-transform:uppercase">✅ Completed (${completed.length})</div>`;
+        completed.forEach(t => {
+          const badge = t.source === 'dsa'
+            ? `<span style="font-size:9px;background:rgba(124,58,237,0.2);color:#a78bfa;padding:1px 5px;border-radius:3px;margin-left:4px">DSA</span>`
+            : `<span style="font-size:9px;background:rgba(0,229,200,0.15);color:var(--c1);padding:1px 5px;border-radius:3px;margin-left:4px">AI</span>`;
+          html += `<div style="padding:6px 8px;margin-bottom:4px;background:rgba(16,185,129,0.07);border-left:2px solid var(--c5);border-radius:0 4px 4px 0;font-size:12px;color:var(--t1)">
+            ${t.title}${badge}
+          </div>`;
         });
-      });
+        html += `</div>`;
+      }
+
+      // ── Revision topics ──
+      if (revision.length > 0) {
+        html += `<div style="margin-bottom:4px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--c4);margin-bottom:6px;text-transform:uppercase">🔁 Revision Due (${revision.length})</div>`;
+        revision.forEach(t => {
+          const intervalLabel = t.interval ? `+${t.interval}d` : '';
+          const doneStyle = t.done
+            ? 'opacity:0.5;text-decoration:line-through;'
+            : '';
+          const badge = t.source === 'dsa'
+            ? `<span style="font-size:9px;background:rgba(124,58,237,0.2);color:#a78bfa;padding:1px 5px;border-radius:3px;margin-left:4px">DSA</span>`
+            : `<span style="font-size:9px;background:rgba(0,229,200,0.15);color:var(--c1);padding:1px 5px;border-radius:3px;margin-left:4px">AI</span>`;
+          const intervalBadge = intervalLabel
+            ? `<span style="font-size:9px;background:rgba(245,158,11,0.15);color:var(--c4);padding:1px 5px;border-radius:3px;margin-left:4px">${intervalLabel}</span>`
+            : '';
+          html += `<div style="padding:6px 8px;margin-bottom:4px;background:rgba(245,158,11,0.07);border-left:2px solid var(--c4);border-radius:0 4px 4px 0;font-size:12px;color:var(--t1);${doneStyle}">
+            ${t.title}${badge}${intervalBadge}
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      // ── Empty state ──
+      if (!completed.length && !revision.length && !attendance) {
+        html += `<div style="color:var(--t2);font-size:12px;text-align:center;padding:8px 0">No activities logged for this day.</div>`;
+      }
+
+      detail.innerHTML = html;
     }
 
-    let html = `<strong style="color:var(--c1)">${ds}</strong><br>`;
-    html += `<span style="color:var(--t2)">Attendance: </span><span style="color:${att[ds]==='present'?'var(--c5)':att[ds]==='absent'?'var(--c3)':'var(--t2)'}">${att[ds] || 'Not marked'}</span><br>`;
-    if (doneTopics.length) html += `<div style="margin-top:4px;color:var(--c5)">✅ ${doneTopics.join(', ')}</div>`;
-    if (revDue.length) html += `<div style="margin-top:4px;color:var(--c2)">🔁 Revisions: ${revDue.join(', ')}</div>`;
-    if (!doneTopics.length && !revDue.length) html += `<div style="margin-top:4px;color:var(--t2)">No activities logged.</div>`;
-
-    detail.innerHTML = html;
+    // Open the attendance action modal
+    AttModal.open(ds);
   }
 
-  return { render, prev, next, dayClick };
+  return { render, prev, next, dayClick, saveAttendance, renderStats, getDateData, generateRevisionDates };
+})();
+
+// ═══════════════════════════════════════════════════════
+//  ATTENDANCE MODAL
+// ═══════════════════════════════════════════════════════
+const AttModal = (function() {
+  let _currentDate = null;
+
+  function _toast(msg) {
+    const el = document.getElementById('toast');
+    if (el) { el.textContent = msg; el.className = 'show info'; setTimeout(() => el.className = '', 2800); }
+  }
+    _currentDate = ds;
+    const att = lsGet('attendance', {});
+    const existing = att[ds];
+
+    // Populate modal
+    const dateEl    = document.getElementById('att-modal-date');
+    const curEl     = document.getElementById('att-modal-current');
+    const resetBtn  = document.getElementById('att-modal-reset-btn');
+    if (dateEl) dateEl.textContent = ds;
+    if (curEl) {
+      if (existing) {
+        curEl.innerHTML = `Currently: <span class="${existing}">${existing === 'present' ? '✅ Present' : '❌ Absent'}</span>`;
+      } else {
+        curEl.textContent = 'Not marked yet';
+      }
+    }
+    // Show/hide reset button
+    if (resetBtn) resetBtn.style.display = existing ? '' : 'none';
+
+    const overlay = document.getElementById('att-modal-overlay');
+    if (overlay) overlay.classList.add('open');
+  }
+
+  function close() {
+    const overlay = document.getElementById('att-modal-overlay');
+    if (overlay) overlay.classList.remove('open');
+    _currentDate = null;
+  }
+
+  function bgClose(e) {
+    if (e.target === document.getElementById('att-modal-overlay')) close();
+  }
+
+  function mark(status) {
+    if (!_currentDate) return;
+    const att = lsGet('attendance', {});
+    const existing = att[_currentDate];
+
+    const doMark = () => {
+      att[_currentDate] = status;
+      Calendar.saveAttendance(att);
+      Calendar.render();
+      close();
+      _toast(status === 'present' ? '✅ Marked Present!' : '❌ Marked Absent');
+    };
+
+    if (existing && existing !== status) {
+      // Already marked with a different status — ask before overwriting
+      if (confirm(`This day is already marked as "${existing}". Change to "${status}"?`)) {
+        doMark();
+      }
+    } else {
+      doMark();
+    }
+  }
+
+  function reset() {
+    if (!_currentDate) return;
+    const att = lsGet('attendance', {});
+    if (!att[_currentDate]) { close(); return; }
+    if (confirm(`Remove attendance record for ${_currentDate}?`)) {
+      delete att[_currentDate];
+      Calendar.saveAttendance(att);
+      Calendar.render();
+      close();
+      _toast('🗑 Attendance removed');
+    }
+  }
+
+  return { open, close, bgClose, mark, reset };
 })();
 
 // ═══════════════════════════════════════════════════════
@@ -5342,9 +5621,12 @@ APP.askAI           = AIMentor.ask.bind(AIMentor);
 APP.saveAINote      = AIMentor.saveNote.bind(AIMentor);
 APP.openAIMentor    = AIMentor.open.bind(AIMentor);
 
-APP.calPrev         = Calendar.prev.bind(Calendar);
-APP.calNext         = Calendar.next.bind(Calendar);
-APP.calDayClick     = Calendar.dayClick.bind(Calendar);
+APP.calPrev              = Calendar.prev.bind(Calendar);
+APP.calNext              = Calendar.next.bind(Calendar);
+APP.calDayClick          = Calendar.dayClick.bind(Calendar);
+APP.calGetDateData       = Calendar.getDateData.bind(Calendar);
+APP.calGenRevisionDates  = Calendar.generateRevisionDates.bind(Calendar);
+window.AttModal          = AttModal;
 
 APP.saveGoals       = Goals.save.bind(Goals);
 APP.installPWA      = PWA.install.bind(PWA);
@@ -5415,6 +5697,15 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     // Init PWA
     PWA.init();
+    // Render XP in header area (add to hdr-right)
+    const hdrRight = document.querySelector('.hdr-right');
+    if (hdrRight) {
+      const syncEl = document.createElement('div');
+      syncEl.className = 'sync-indicator';
+      syncEl.innerHTML = '<div class="sync-dot"></div><span>Local</span>';
+      syncEl.style.cssText = 'font-size:9px;color:var(--t2);display:flex;align-items:center;gap:3px';
+      hdrRight.prepend(syncEl);
+    }
 
     // Revision nav removed — revisions now appear inline in AI/DSA roadmaps
 
