@@ -485,21 +485,43 @@
 const API = "https://roadmapx-backend-3qmc.onrender.com";
 
 async function loadStats() {
-  // Check auth — guests get a friendly empty state instead of a hard redirect
   let isGuest = false;
+  let username = null;
+
+  // Build headers — include Bearer token if available
+  const token = localStorage.getItem('rx_token');
+  const fetchOpts = {
+    credentials: "include",
+    headers: { 'Accept': 'application/json' }
+  };
+  if (token && token !== 'true') {
+    fetchOpts.headers['Authorization'] = 'Bearer ' + token;
+  }
+
   try {
-    const me = await fetch(API + "/me", { credentials: "include" });
+    const me = await fetch(API + "/me", fetchOpts);
     const meData = await me.json();
-    if (!meData.success) {
+    if (!meData.success || !meData.username) {
       isGuest = true;
     } else {
-      const username = meData.username;
+      username = meData.username;
+      // Refresh cache
+      localStorage.setItem('rx_user', username);
       document.getElementById("username-badge").textContent = "@" + username;
       document.getElementById("hero-name").textContent = username;
       document.getElementById("hero-sub").textContent = "// your learning analytics";
     }
   } catch {
-    isGuest = true;
+    // Network error — fall back to cached user if available
+    const cached = localStorage.getItem('rx_user');
+    if (token && cached) {
+      username = cached;
+      document.getElementById("username-badge").textContent = "@" + username;
+      document.getElementById("hero-name").textContent = username;
+      document.getElementById("hero-sub").textContent = "// your learning analytics (cached)";
+    } else {
+      isGuest = true;
+    }
   }
 
   if (isGuest) {
@@ -538,9 +560,12 @@ async function loadStats() {
     return;
   }
 
+  // Helper for authenticated fetches
+  const authFetch = (url) => fetch(url, fetchOpts);
+
   // Load attendance
   try {
-    const res = await fetch(API + "/get-attendance", { credentials: "include" });
+    const res = await authFetch(API + "/get-attendance");
     if (res.ok) {
       const data = await res.json();
       const records = data.data || [];
@@ -559,7 +584,7 @@ async function loadStats() {
 
   // Load pomodoro
   try {
-    const res = await fetch(API + "/get-pomo", { credentials: "include" });
+    const res = await authFetch(API + "/get-pomo");
     if (res.ok) {
       const data = await res.json();
       const sessions = data.data || [];
@@ -574,7 +599,7 @@ async function loadStats() {
 
   // Load progress
   try {
-    const res = await fetch(API + "/get-progress", { credentials: "include" });
+    const res = await authFetch(API + "/get-progress");
     if (res.ok) {
       const data = await res.json();
       const topics = data.data || [];
@@ -591,7 +616,7 @@ async function loadStats() {
 
   // Load notes
   try {
-    const res = await fetch(API + "/get-text", { credentials: "include" });
+    const res = await authFetch(API + "/get-text");
     if (res.ok) {
       const data = await res.json();
       const notes = data.data || [];

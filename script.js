@@ -5415,15 +5415,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     // Init PWA
     PWA.init();
-    // Render XP in header area (add to hdr-right)
-    const hdrRight = document.querySelector('.hdr-right');
-    if (hdrRight) {
-      const syncEl = document.createElement('div');
-      syncEl.className = 'sync-indicator';
-      syncEl.innerHTML = '<div class="sync-dot"></div><span>Local</span>';
-      syncEl.style.cssText = 'font-size:9px;color:var(--t2);display:flex;align-items:center;gap:3px';
-      hdrRight.prepend(syncEl);
-    }
 
     // Revision nav removed — revisions now appear inline in AI/DSA roadmaps
 

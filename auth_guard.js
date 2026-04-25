@@ -67,28 +67,16 @@
     // Remove guest elements
     const signinBtn = hdrRight.querySelector('.hdr-signin-btn');
     if (signinBtn) signinBtn.remove();
+
+    // Remove any stale username pill (no longer shown)
     const stalePill = hdrRight.querySelector('.hdr-user-pill');
     if (stalePill) stalePill.remove();
 
     // Always suppress guest banner for logged-in users
     hideGuestBanner();
 
+    // Add Profile button if not already present
     const hasProfile = hdrRight.querySelector('button[title="Profile"]');
-
-    // Username pill
-    const pill = document.createElement('div');
-    pill.className = 'hdr-user-pill';
-    pill.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round"
-        style="width:11px;height:11px;flex-shrink:0;color:var(--c1)">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-      <span title="${username}">${username}</span>`;
-
-    hasProfile ? hdrRight.insertBefore(pill, hasProfile) : hdrRight.appendChild(pill);
-
     if (!hasProfile) {
       const profileBtn = document.createElement('button');
       profileBtn.className = 'hdr-btn';
