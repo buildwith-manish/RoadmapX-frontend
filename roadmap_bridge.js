@@ -21,7 +21,7 @@
   /* ── Config ─────────────────────────────────────────────── */
   // Set window.API_BASE before loading this script if the backend
   // runs on a different origin, e.g.:
-  //   window.API_BASE = 'https://roadmapx-backend-3qmc.onrender.com';
+  window.API_BASE = 'https://roadmapx-backend-3qmc.onrender.com';
   const API_BASE = (window.API_BASE || '').replace(/\/$/, '');
 
   /* ── State ──────────────────────────────────────────────── */
