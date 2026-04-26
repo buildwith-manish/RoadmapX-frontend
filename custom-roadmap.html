@@ -164,103 +164,145 @@
          SCREEN: Day Detail
     ──────────────────────────────────────── -->
     <div class="crm-screen" id="crm-screen-day-detail">
-      <div class="crm-day-detail-pad">
 
-        <!-- Day hero -->
-        <div class="crm-day-hero">
-          <div class="crm-day-hero-orb"></div>
-          <div class="crm-day-num-badge"    id="crm-day-num-badge">DAY 1</div>
-          <div class="crm-day-detail-title" id="crm-day-detail-title">Day Title</div>
-          <div class="crm-day-detail-meta"  id="crm-day-detail-meta"></div>
+      <!-- Day hero -->
+      <div class="crm-day-hero">
+        <div class="crm-day-hero-orb"></div>
+        <div class="crm-day-num-badge"    id="crm-day-num-badge">DAY 1</div>
+        <div class="crm-day-detail-title" id="crm-day-detail-title">Day Title</div>
+        <div class="crm-day-detail-meta"  id="crm-day-detail-meta"></div>
+      </div>
+
+      <!-- ── SUBTAB BAR ── -->
+      <div class="crm-subtab-bar">
+        <button class="crm-subtab active" id="crm-subtab-roadmap" onclick="CRM.switchDaySub('roadmap',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          Roadmap
+        </button>
+        <button class="crm-subtab" id="crm-subtab-revision" onclick="CRM.switchDaySub('revision',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
+          Revision
+        </button>
+        <button class="crm-subtab" id="crm-subtab-pomo" onclick="CRM.switchDaySub('pomo',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Pomo
+        </button>
+        <button class="crm-subtab" id="crm-subtab-notes" onclick="CRM.switchDaySub('notes',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Notes
+        </button>
+        <button class="crm-subtab" id="crm-subtab-projects" onclick="CRM.switchDaySub('projects',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+          Projects
+        </button>
+      </div>
+
+      <!-- ── SUB: ROADMAP (tasks + progress) ── -->
+      <div class="crm-day-sub active" id="crm-day-sub-roadmap">
+        <div class="crm-day-detail-pad">
+          <div class="crm-detail-blocks">
+
+            <!-- PROGRESS -->
+            <div class="crm-detail-block" id="crm-day-progress-block">
+              <div class="crm-detail-block-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                PROGRESS
+              </div>
+              <div class="crm-day-progress-inner">
+                <div class="crm-day-prog-row">
+                  <span class="crm-day-prog-label" id="crm-day-prog-label">0 / 0 tasks</span>
+                  <span class="crm-day-prog-pct"   id="crm-day-prog-pct">0%</span>
+                </div>
+                <div class="crm-day-prog-bar">
+                  <div class="crm-day-prog-fill" id="crm-day-prog-fill" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TASKS -->
+            <div class="crm-detail-block" id="crm-day-task-block">
+              <div class="crm-detail-block-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                TASKS
+              </div>
+              <div class="crm-task-list" id="crm-task-list-inner"></div>
+              <div class="crm-add-task-row">
+                <input class="crm-add-task-input" id="crm-add-task-input"
+                  placeholder="Add a task…" maxlength="120"
+                  onkeydown="if(event.key==='Enter')CRM.addTask()" />
+                <button class="crm-add-task-btn" onclick="CRM.addTask()" aria-label="Add task">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+          <!-- Complete / Edit bar -->
+          <div class="crm-complete-wrap">
+            <div class="crm-complete-status" id="crm-complete-status"></div>
+            <button class="crm-complete-btn" id="crm-complete-btn" onclick="CRM.toggleDayComplete()">
+              <span id="crm-complete-btn-label">Mark as Done</span>
+            </button>
+            <button class="crm-edit-day-btn" onclick="CRM.openEditDay()" aria-label="Edit day">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </div>
         </div>
+      </div>
 
-        <!-- Detail blocks -->
-        <div class="crm-detail-blocks">
-
-          <!-- PROGRESS -->
-          <div class="crm-detail-block" id="crm-day-progress-block">
+      <!-- ── SUB: REVISION ── -->
+      <div class="crm-day-sub" id="crm-day-sub-revision">
+        <div class="crm-day-detail-pad">
+          <div class="crm-detail-block">
             <div class="crm-detail-block-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              PROGRESS
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
+              REVISION SCHEDULE
             </div>
-            <div class="crm-day-progress-inner">
-              <div class="crm-day-prog-row">
-                <span class="crm-day-prog-label" id="crm-day-prog-label">0 / 0 tasks</span>
-                <span class="crm-day-prog-pct"   id="crm-day-prog-pct">0%</span>
-              </div>
-              <div class="crm-day-prog-bar">
-                <div class="crm-day-prog-fill" id="crm-day-prog-fill" style="width:0%"></div>
-              </div>
+            <div class="crm-revision-empty" id="crm-revision-empty">
+              <div class="crm-empty-ico" style="font-size:32px">🔁</div>
+              <div class="crm-empty-title">No revisions yet</div>
+              <div class="crm-empty-sub">Mark this day as done to auto-schedule spaced repetition revisions.</div>
             </div>
+            <div id="crm-revision-list"></div>
           </div>
+        </div>
+      </div>
 
-          <!-- NOTES -->
-          <div class="crm-detail-block" id="crm-day-goal-block">
-            <div class="crm-detail-block-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              NOTES
-              <button class="crm-block-edit-btn" id="crm-notes-edit-btn" onclick="CRM.toggleNotesEdit()" aria-label="Edit notes">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-            </div>
-            <!-- Read mode -->
-            <div class="crm-detail-block-text" id="crm-day-goal-text"></div>
-            <!-- Edit mode -->
-            <textarea class="crm-inline-notes" id="crm-day-notes-inline"
-              placeholder="Write study notes, key concepts, explanations…"
-              style="display:none" oninput="CRM.autoSaveNotes()"></textarea>
-            <div class="crm-notes-save-row" id="crm-notes-save-row" style="display:none">
-              <button class="crm-inline-save-btn" onclick="CRM.saveNotesInline()">Save Notes</button>
-            </div>
-          </div>
-
-          <!-- TASKS -->
-          <div class="crm-detail-block" id="crm-day-task-block">
-            <div class="crm-detail-block-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 11 12 14 22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
-              TASKS
-            </div>
-            <!-- id="crm-task-list-inner" — must match JS _renderTaskList() -->
-            <div class="crm-task-list" id="crm-task-list-inner"></div>
-            <div class="crm-add-task-row">
-              <input class="crm-add-task-input" id="crm-add-task-input"
-                placeholder="Add a task…" maxlength="120"
-                onkeydown="if(event.key==='Enter')CRM.addTask()" />
-              <button class="crm-add-task-btn" onclick="CRM.addTask()" aria-label="Add task">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5"  y1="12" x2="19" y2="12"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- POMODORO
-               IDs used by JS _updateUI():
-                 crm-pomo-time, crm-pomo-mode, crm-pomo-play, crm-pomo-progress
-               IDs used by JS init():
-                 crm-pomo-count, crm-pomo-play-btn, .crm-pomo-dur-btn[data-dur]
-          -->
+      <!-- ── SUB: POMODORO ── -->
+      <div class="crm-day-sub" id="crm-day-sub-pomo">
+        <div class="crm-day-detail-pad">
           <div class="crm-detail-block" id="crm-day-pomo-block">
             <div class="crm-detail-block-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              POMODORO
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              POMODORO TIMER
             </div>
             <div class="crm-pomo-inner">
+              <!-- Duration row -->
+              <div class="crm-pomo-dur-row">
+                <span class="crm-pomo-dur-label">Focus:</span>
+                <input class="crm-pomo-dur-input" id="crm-pomo-dur-input" type="number" value="25" min="1" max="180"
+                  oninput="CRM.pomodoro.syncSlider()"/>
+                <span class="crm-pomo-dur-label">min</span>
+                <button class="crm-pomo-dur-set-btn" onclick="CRM.pomodoro.setCustomDuration()">Set</button>
+                <button class="crm-pomo-alarm-stop-btn" id="crm-pomo-alarm-stop" onclick="CRM.pomodoro.stopAlarm()" style="display:none">Stop</button>
+              </div>
+              <!-- Slider -->
+              <div class="crm-pomo-slider-row">
+                <input class="crm-pomo-slider" id="crm-pomo-slider" type="range" min="1" max="180" value="25"
+                  oninput="CRM.pomodoro.syncFromSlider()"/>
+                <div class="crm-pomo-slider-labels">
+                  <span>1m</span><span>30m</span><span>60m</span><span>90m</span><span>120m</span><span>180m</span>
+                </div>
+              </div>
+              <!-- Quick preset chips -->
+              <div class="crm-pomo-presets">
+                <button class="crm-pomo-preset active" data-dur="25" onclick="CRM.pomodoro.setPreset(this)">25m</button>
+                <button class="crm-pomo-preset" data-dur="45" onclick="CRM.pomodoro.setPreset(this)">45m</button>
+                <button class="crm-pomo-preset" data-dur="60" onclick="CRM.pomodoro.setPreset(this)">60m</button>
+                <button class="crm-pomo-preset" data-dur="90" onclick="CRM.pomodoro.setPreset(this)">90m</button>
+                <button class="crm-pomo-preset" data-dur="120" onclick="CRM.pomodoro.setPreset(this)">120m</button>
+              </div>
               <div class="crm-pomo-display">
                 <div class="crm-pomo-ring">
                   <svg viewBox="0 0 100 100" class="crm-pomo-svg">
@@ -280,64 +322,77 @@
                 </div>
               </div>
               <div class="crm-pomo-controls">
-                <button class="crm-pomo-btn crm-pomo-btn-secondary" onclick="CRM.pomodoro.reset()" aria-label="Reset timer">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="1 4 1 10 7 10"/>
-                    <path d="M3.51 15a9 9 0 1 0 .49-3.67"/>
-                  </svg>
+                <button class="crm-pomo-btn crm-pomo-btn-secondary" onclick="CRM.pomodoro.reset()" aria-label="Reset">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
                 </button>
-                <!-- id="crm-pomo-play" — used by JS _updateUI() to swap icon -->
-                <button class="crm-pomo-btn crm-pomo-btn-primary" id="crm-pomo-play" onclick="CRM.pomodoro.toggle()" aria-label="Start/pause timer">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
-                  </svg>
+                <button class="crm-pomo-btn crm-pomo-btn-primary" id="crm-pomo-play" onclick="CRM.pomodoro.toggle()" aria-label="Start/Pause">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 </button>
-                <button class="crm-pomo-btn crm-pomo-btn-secondary" onclick="CRM.pomodoro.skip()" aria-label="Skip to break">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="5 4 15 12 5 20 5 4"/>
-                    <line x1="19" y1="5" x2="19" y2="19"/>
-                  </svg>
+                <button class="crm-pomo-btn crm-pomo-btn-secondary" onclick="CRM.pomodoro.skip()" aria-label="Skip">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
                 </button>
               </div>
-              <div class="crm-pomo-duration-row">
-                <button class="crm-pomo-dur-btn" data-dur="25" onclick="CRM.pomodoro.setDuration(25)">25m</button>
-                <button class="crm-pomo-dur-btn" data-dur="45" onclick="CRM.pomodoro.setDuration(45)">45m</button>
-                <button class="crm-pomo-dur-btn" data-dur="60" onclick="CRM.pomodoro.setDuration(60)">60m</button>
+              <!-- Focus hours card -->
+              <div class="crm-focus-hours-card">
+                <div class="crm-focus-hours-val" id="crm-pomo-focus-hours">0.0</div>
+                <div class="crm-focus-hours-lbl">Focus Hours (This Day)</div>
               </div>
             </div>
           </div>
-
-          <!-- REVISION DATES (hidden until JS shows it) -->
-          <div class="crm-detail-block" id="crm-day-notes-block" style="display:none">
-            <div class="crm-detail-block-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="1 4 1 10 7 10"/>
-                <path d="M3.51 15a9 9 0 1 0 .49-3.67"/>
-              </svg>
-              REVISION DATES
-            </div>
-            <div class="crm-day-notes-wrap" id="crm-day-notes-text"></div>
-          </div>
-
         </div>
-        <!-- /crm-detail-blocks -->
-
-        <!-- Complete / Edit bar -->
-        <div class="crm-complete-wrap">
-          <div class="crm-complete-status" id="crm-complete-status"></div>
-          <button class="crm-complete-btn" id="crm-complete-btn" onclick="CRM.toggleDayComplete()">
-            <span id="crm-complete-btn-label">Mark as Done</span>
-          </button>
-          <button class="crm-edit-day-btn" onclick="CRM.openEditDay()" aria-label="Edit day">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            Edit
-          </button>
-        </div>
-
       </div>
+
+      <!-- ── SUB: NOTES ── -->
+      <div class="crm-day-sub" id="crm-day-sub-notes">
+        <div class="crm-day-detail-pad">
+          <div class="crm-detail-block" id="crm-day-goal-block">
+            <div class="crm-detail-block-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              STUDY NOTES
+              <button class="crm-block-edit-btn" id="crm-notes-edit-btn" onclick="CRM.toggleNotesEdit()" aria-label="Edit notes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            </div>
+            <div class="crm-detail-block-text" id="crm-day-goal-text"></div>
+            <textarea class="crm-inline-notes" id="crm-day-notes-inline"
+              placeholder="Write study notes, key concepts, explanations…"
+              style="display:none" oninput="CRM.autoSaveNotes()"></textarea>
+            <div class="crm-notes-save-row" id="crm-notes-save-row" style="display:none">
+              <button class="crm-inline-save-btn" onclick="CRM.saveNotesInline()">Save Notes</button>
+            </div>
+          </div>
+          <!-- Saved notes entries -->
+          <div class="crm-detail-block" style="margin-top:12px">
+            <div class="crm-detail-block-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/></svg>
+              SAVED ENTRIES
+            </div>
+            <div id="crm-notes-entries-list">
+              <div class="crm-empty-inline">No saved entries yet — write notes and save them above.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SUB: PROJECTS ── -->
+      <div class="crm-day-sub" id="crm-day-sub-projects">
+        <div class="crm-day-detail-pad">
+          <div class="crm-detail-block">
+            <div class="crm-detail-block-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+              DAY PROJECTS
+            </div>
+            <button class="crm-add-project-btn" onclick="CRM.openAddProject()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Project
+            </button>
+            <div id="crm-projects-list">
+              <div class="crm-empty-inline">No projects yet — add one to track your builds.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
     <!-- /crm-screen-day-detail -->
 
@@ -445,6 +500,12 @@
           <button class="crm-wiz-week-btn" data-value="8"  onclick="CRM.wizSelectWeeks(this)">8</button>
           <button class="crm-wiz-week-btn" data-value="10" onclick="CRM.wizSelectWeeks(this)">10</button>
           <button class="crm-wiz-week-btn" data-value="12" onclick="CRM.wizSelectWeeks(this)">12</button>
+          <button class="crm-wiz-week-btn crm-wiz-week-btn-custom" data-value="custom" onclick="CRM.wizSelectWeeksCustom(this)">✏️ Custom</button>
+        </div>
+        <div class="crm-wiz-custom-week-row" id="crm-wiz-custom-week-row" style="display:none">
+          <input class="crm-input crm-wiz-custom-week-input" id="crm-wiz-custom-week-inp"
+            type="number" min="1" max="520" placeholder="Enter weeks (e.g. 20)"
+            oninput="CRM.wizCustomWeekInput()" />
         </div>
         <div class="crm-wiz-weeks-preview" id="crm-wiz-weeks-preview" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

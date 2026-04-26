@@ -849,7 +849,8 @@ const CRM = (() => {
     recomputeStats();
     renderDayDetail();
     if (d.completed) {
-      toast('🎉 Day completed! Revision scheduled.', 'success', 3000);
+      _scheduleRevisions(_nav.roadmapId, _nav.dayNum, new Date().toISOString().slice(0, 10));
+      toast('🎉 Day completed! Revisions scheduled.', 'success', 3000);
     } else {
       toast('Marked as not done', 'info');
     }
@@ -922,6 +923,9 @@ const CRM = (() => {
     let _total   = 25 * 60;
     let _running = false;
     let _mode    = 'FOCUS';
+    let _alarmInterval = null;
+    let _alarmCtx      = null;
+    let _alarmRinging  = false;
     const DURATIONS = { 25: 25 * 60, 15: 15 * 60, 5: 5 * 60 };
 
     function bindDay(dayNum, weekNum) {
@@ -1026,6 +1030,63 @@ const CRM = (() => {
       _updateUI();
     }
 
+    function setCustomDuration() {
+      const inp = document.getElementById('crm-pomo-dur-input');
+      const mins = Math.max(1, Math.min(180, parseInt(inp?.value) || 25));
+      if (inp) inp.value = mins;
+      _syncSliderEl(mins);
+      setDuration(mins);
+      toast(`⏱️ Focus set to ${mins} min`, 'success', 1800);
+    }
+
+    function syncSlider() {
+      const inp = document.getElementById('crm-pomo-dur-input');
+      const val = Math.max(1, Math.min(180, parseInt(inp?.value) || 25));
+      _syncSliderEl(val);
+    }
+
+    function syncFromSlider() {
+      const slider = document.getElementById('crm-pomo-slider');
+      const val = parseInt(slider?.value) || 25;
+      const inp = document.getElementById('crm-pomo-dur-input');
+      if (inp) inp.value = val;
+      _clearPresets();
+      const match = document.querySelector(`.crm-pomo-preset[data-dur="${val}"]`);
+      if (match) match.classList.add('active');
+    }
+
+    function setPreset(btn) {
+      const val = parseInt(btn.dataset.dur);
+      const inp = document.getElementById('crm-pomo-dur-input');
+      if (inp) inp.value = val;
+      _syncSliderEl(val);
+      setDuration(val);
+      _clearPresets();
+      btn.classList.add('active');
+      toast(`⏱️ ${val}m focus set`, 'success', 1600);
+    }
+
+    function _syncSliderEl(val) {
+      const slider = document.getElementById('crm-pomo-slider');
+      if (slider) slider.value = val;
+    }
+
+    function _clearPresets() {
+      document.querySelectorAll('.crm-pomo-preset').forEach(b => b.classList.remove('active'));
+    }
+
+    function stopAlarm() {
+      try {
+        if (_alarmInterval) { clearInterval(_alarmInterval); _alarmInterval = null; }
+        if (_alarmCtx) { _alarmCtx.close(); _alarmCtx = null; }
+      } catch(e) {}
+      _alarmRinging = false;
+      const stopBtn = document.getElementById('crm-pomo-alarm-stop');
+      if (stopBtn) stopBtn.style.display = 'none';
+      const modeEl = document.getElementById('crm-pomo-mode');
+      if (modeEl && modeEl.textContent.includes('DONE')) modeEl.textContent = 'BREAK';
+    }
+
     function init() {
       _updateUI();
       document.querySelectorAll('.crm-pomo-dur-btn').forEach(b => {
@@ -1033,7 +1094,7 @@ const CRM = (() => {
       });
     }
 
-    return { bindDay, toggle, pause, reset, setDuration, init };
+    return { bindDay, toggle, pause, reset, setDuration, setCustomDuration, syncSlider, syncFromSlider, setPreset, stopAlarm, init };
   })();
 
   /* ══════════════════════════════════════════
@@ -1118,6 +1179,9 @@ const CRM = (() => {
     document.querySelectorAll('.crm-wiz-week-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     _wiz.weeks = parseInt(btn.dataset.value);
+    // Hide custom input row
+    const customRow = document.getElementById('crm-wiz-custom-week-row');
+    if (customRow) customRow.style.display = 'none';
     const preview     = document.getElementById('crm-wiz-weeks-preview');
     const previewText = document.getElementById('crm-wiz-weeks-preview-text');
     if (preview && previewText) {
@@ -1127,6 +1191,41 @@ const CRM = (() => {
     }
     document.getElementById('crm-wiz-next-btn').disabled = false;
     setTimeout(() => { if (_wiz.step === 3) wizNext(); }, 220);
+  }
+
+  function wizSelectWeeksCustom(btn) {
+    document.querySelectorAll('.crm-wiz-week-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    _wiz.weeks = null;
+    // Show custom input
+    const customRow = document.getElementById('crm-wiz-custom-week-row');
+    if (customRow) customRow.style.display = 'flex';
+    const inp = document.getElementById('crm-wiz-custom-week-inp');
+    if (inp) { inp.value = ''; inp.focus(); }
+    // Hide preview until user types
+    const preview = document.getElementById('crm-wiz-weeks-preview');
+    if (preview) preview.style.display = 'none';
+    document.getElementById('crm-wiz-next-btn').disabled = true;
+  }
+
+  function wizCustomWeekInput() {
+    const inp = document.getElementById('crm-wiz-custom-week-inp');
+    if (!inp) return;
+    const val = parseInt(inp.value);
+    const preview     = document.getElementById('crm-wiz-weeks-preview');
+    const previewText = document.getElementById('crm-wiz-weeks-preview-text');
+    if (val && val >= 1 && val <= 520) {
+      _wiz.weeks = val;
+      if (preview && previewText) {
+        previewText.textContent = `${val} week${val !== 1 ? 's' : ''} · ${val * 7} days (auto-generated)`;
+        preview.style.display = 'flex';
+      }
+      document.getElementById('crm-wiz-next-btn').disabled = false;
+    } else {
+      _wiz.weeks = null;
+      if (preview) preview.style.display = 'none';
+      document.getElementById('crm-wiz-next-btn').disabled = true;
+    }
   }
 
   function _wizPopulateSummary() {
@@ -1257,6 +1356,206 @@ const CRM = (() => {
   }
 
   /* ══════════════════════════════════════════
+     DAY SUBTAB SWITCHING
+  ══════════════════════════════════════════ */
+  function switchDaySub(name, btn) {
+    // Switch subtab buttons
+    document.querySelectorAll('.crm-subtab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    // Switch sub panels
+    document.querySelectorAll('.crm-day-sub').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('crm-day-sub-' + name);
+    if (panel) panel.classList.add('active');
+    // Render content on switch
+    if (name === 'revision') _renderRevisionSub();
+    if (name === 'notes')    _renderNotesSub();
+    if (name === 'pomo')     _renderPomoFocusHours();
+    if (name === 'projects') _renderProjectsSub();
+  }
+
+  /* ── Revision sub ── */
+  const REVISION_INTERVALS = [1, 3, 7, 14, 30];
+
+  function _getRevisions() {
+    try { return JSON.parse(localStorage.getItem('crm_revisions') || '[]'); } catch(e) { return []; }
+  }
+  function _saveRevisions(list) {
+    try { localStorage.setItem('crm_revisions', JSON.stringify(list)); } catch(e) {}
+  }
+
+  function _scheduleRevisions(roadmapId, dayNum, completedDate) {
+    let list = _getRevisions().filter(r => !(r.roadmapId === roadmapId && r.dayNum === dayNum));
+    REVISION_INTERVALS.forEach((days, idx) => {
+      const d = new Date(completedDate);
+      d.setDate(d.getDate() + days);
+      list.push({
+        id: uid(), roadmapId, dayNum,
+        date: d.toISOString().slice(0, 10),
+        interval: days, idx, done: false,
+      });
+    });
+    _saveRevisions(list);
+  }
+
+  function _renderRevisionSub() {
+    const rm = getRoadmap(_nav.roadmapId);
+    const listEl = document.getElementById('crm-revision-list');
+    const emptyEl = document.getElementById('crm-revision-empty');
+    if (!listEl) return;
+    const revs = _getRevisions().filter(r => r.roadmapId === _nav.roadmapId && r.dayNum === _nav.dayNum);
+    if (!revs.length) {
+      if (emptyEl) emptyEl.style.display = '';
+      listEl.innerHTML = '';
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+    const today = new Date().toISOString().slice(0, 10);
+    listEl.innerHTML = revs.map(r => {
+      const isDue = r.date <= today && !r.done;
+      const isOverdue = r.date < today && !r.done;
+      const statusClass = r.done ? 'crm-rev-done' : isDue ? 'crm-rev-due' : 'crm-rev-upcoming';
+      const statusLabel = r.done ? '✅ Done' : isOverdue ? '⚠️ Overdue' : isDue ? '🔔 Due Today' : `📅 ${r.date}`;
+      return `<div class="crm-rev-row ${statusClass}">
+        <div class="crm-rev-info">
+          <div class="crm-rev-interval">+${r.interval} day${r.interval !== 1 ? 's' : ''} revision</div>
+          <div class="crm-rev-date">${statusLabel}</div>
+        </div>
+        ${!r.done ? `<button class="crm-rev-done-btn" onclick="CRM.markRevisionDone('${r.id}')">Done</button>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function markRevisionDone(id) {
+    const list = _getRevisions();
+    const rev = list.find(r => r.id === id);
+    if (rev) { rev.done = true; _saveRevisions(list); _renderRevisionSub(); toast('✅ Revision marked done!', 'success'); }
+  }
+
+  /* ── Notes entries sub ── */
+  function _getNoteEntries(roadmapId, dayNum) {
+    try { return JSON.parse(localStorage.getItem(`crm_notes_${roadmapId}_${dayNum}`) || '[]'); } catch(e) { return []; }
+  }
+  function _saveNoteEntries(roadmapId, dayNum, entries) {
+    try { localStorage.setItem(`crm_notes_${roadmapId}_${dayNum}`, JSON.stringify(entries)); } catch(e) {}
+  }
+
+  function saveNotesInline(silent = false) {
+    const textarea = document.getElementById('crm-day-notes-inline');
+    const textEl   = document.getElementById('crm-day-goal-text');
+    if (!textarea) return;
+    const val = textarea.value.trim();
+
+    // Update day notes field
+    const rm = getRoadmap(_nav.roadmapId);
+    const wk = rm ? getWeekByNum(rm, _nav.weekNum) : null;
+    const d  = wk ? getDayByNum(wk, _nav.dayNum)  : null;
+    if (d) { d.notes = val; save(); }
+
+    // Save as a dated entry if non-empty
+    if (val) {
+      const entries = _getNoteEntries(_nav.roadmapId, _nav.dayNum);
+      entries.unshift({ id: uid(), text: val, date: new Date().toLocaleDateString() });
+      _saveNoteEntries(_nav.roadmapId, _nav.dayNum, entries.slice(0, 20));
+    }
+
+    if (textEl) {
+      textEl.textContent = val || '';
+      textEl.style.display = val ? '' : 'none';
+    }
+    textarea.style.display = 'none';
+    const saveRow = document.getElementById('crm-notes-save-row');
+    if (saveRow) saveRow.style.display = 'none';
+    _notesEditMode = false;
+    if (!silent) toast('Notes saved ✓', 'success', 1800);
+    _renderNotesSub();
+  }
+
+  function _renderNotesSub() {
+    const entries = _getNoteEntries(_nav.roadmapId, _nav.dayNum);
+    const listEl = document.getElementById('crm-notes-entries-list');
+    if (!listEl) return;
+    if (!entries.length) {
+      listEl.innerHTML = '<div class="crm-empty-inline">No saved entries yet — write notes and save them above.</div>';
+      return;
+    }
+    listEl.innerHTML = entries.map(e => `
+      <div class="crm-notes-entry-card">
+        <div class="crm-notes-entry-date">${escH(e.date)}</div>
+        <div class="crm-notes-entry-text">${escH(e.text)}</div>
+      </div>`).join('');
+  }
+
+  /* ── Pomo focus hours ── */
+  function _renderPomoFocusHours() {
+    const count = (() => {
+      const rm = getRoadmap(_nav.roadmapId);
+      const wk = rm ? getWeekByNum(rm, _nav.weekNum) : null;
+      const d  = wk ? getDayByNum(wk, _nav.dayNum)  : null;
+      return d ? (d.pomodoroCount || 0) : 0;
+    })();
+    const dur = parseInt(document.getElementById('crm-pomo-dur-input')?.value) || 25;
+    const hrs = ((count * dur) / 60).toFixed(1);
+    const el = document.getElementById('crm-pomo-focus-hours');
+    if (el) el.textContent = hrs;
+    const countEl = document.getElementById('crm-pomo-count');
+    if (countEl) countEl.textContent = count;
+  }
+
+  /* ── Projects sub ── */
+  function _getProjects(roadmapId, dayNum) {
+    try { return JSON.parse(localStorage.getItem(`crm_projects_${roadmapId}_${dayNum}`) || '[]'); } catch(e) { return []; }
+  }
+  function _saveProjects(roadmapId, dayNum, projects) {
+    try { localStorage.setItem(`crm_projects_${roadmapId}_${dayNum}`, JSON.stringify(projects)); } catch(e) {}
+  }
+
+  function openAddProject() {
+    const name = prompt('Project name:');
+    if (!name || !name.trim()) return;
+    const projects = _getProjects(_nav.roadmapId, _nav.dayNum);
+    projects.push({ id: uid(), name: name.trim(), done: false, date: new Date().toLocaleDateString() });
+    _saveProjects(_nav.roadmapId, _nav.dayNum, projects);
+    _renderProjectsSub();
+    toast('Project added! 🚀', 'success');
+  }
+
+  function toggleProject(pid) {
+    const projects = _getProjects(_nav.roadmapId, _nav.dayNum);
+    const p = projects.find(x => x.id === pid);
+    if (p) { p.done = !p.done; _saveProjects(_nav.roadmapId, _nav.dayNum, projects); _renderProjectsSub(); }
+  }
+
+  function deleteProject(pid) {
+    const projects = _getProjects(_nav.roadmapId, _nav.dayNum).filter(x => x.id !== pid);
+    _saveProjects(_nav.roadmapId, _nav.dayNum, projects);
+    _renderProjectsSub();
+    toast('Project removed', 'info', 1600);
+  }
+
+  function _renderProjectsSub() {
+    const projects = _getProjects(_nav.roadmapId, _nav.dayNum);
+    const listEl = document.getElementById('crm-projects-list');
+    if (!listEl) return;
+    if (!projects.length) {
+      listEl.innerHTML = '<div class="crm-empty-inline">No projects yet — add one to track your builds.</div>';
+      return;
+    }
+    listEl.innerHTML = projects.map(p => `
+      <div class="crm-project-row ${p.done ? 'crm-project-done' : ''}">
+        <div class="crm-task-check ${p.done ? 'crm-task-check-done' : ''}" onclick="CRM.toggleProject('${p.id}')">
+          ${p.done ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+        </div>
+        <div class="crm-project-info">
+          <div class="crm-project-name">${escH(p.name)}</div>
+          <div class="crm-project-date">${escH(p.date)}</div>
+        </div>
+        <button class="crm-task-delete-btn" onclick="CRM.deleteProject('${p.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`).join('');
+  }
+
+  /* ══════════════════════════════════════════
      INIT
   ══════════════════════════════════════════ */
   function init() {
@@ -1296,6 +1595,8 @@ const CRM = (() => {
     wizUpdateNext,
     wizSelectLevel,
     wizSelectWeeks,
+    wizSelectWeeksCustom,
+    wizCustomWeekInput,
     wizFinish,
 
     openAddLevel,
@@ -1325,6 +1626,12 @@ const CRM = (() => {
     toggleNotesEdit,
     autoSaveNotes,
     saveNotesInline,
+
+    switchDaySub,
+    markRevisionDone,
+    openAddProject,
+    toggleProject,
+    deleteProject,
 
     pomodoro,
     getStats: () => ({ ..._stats }),

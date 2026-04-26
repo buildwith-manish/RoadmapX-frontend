@@ -1367,6 +1367,24 @@ body::before {
   box-shadow: 0 0 14px rgba(0,229,200,0.15); transform: scale(1.04);
 }
 .crm-wiz-week-btn:active { transform: scale(0.95); }
+.crm-wiz-week-btn-custom {
+  grid-column: span 3; font-size: 14px; font-family: var(--font-ui);
+  font-weight: 700; color: var(--t2); border-style: dashed;
+  letter-spacing: 0.02em;
+}
+.crm-wiz-week-btn-custom:hover { color: var(--c1); }
+.crm-wiz-week-btn-custom.selected { color: var(--c1); border-style: solid; }
+
+.crm-wiz-custom-week-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+  animation: previewFadeIn 0.22s var(--ease) both;
+}
+.crm-wiz-custom-week-input {
+  width: 100%; text-align: center;
+  font-size: 22px; font-weight: 900; font-family: var(--font-mono);
+  color: var(--c1); letter-spacing: 0.04em;
+}
 
 .crm-wiz-weeks-preview {
   display: flex; align-items: center; gap: 8px;
@@ -1451,4 +1469,168 @@ body::before {
   .crm-ai-week-num-val    { font-size: 17px; }
   .crm-complete-wrap      { flex-wrap: wrap; }
   .crm-edit-day-btn       { flex: 1; justify-content: center; }
+}
+
+/* ══════════════════════════════════════════
+   DAY DETAIL SUBTABS
+══════════════════════════════════════════ */
+.crm-subtab-bar {
+  display: flex; gap: 4px; padding: 8px 12px 0;
+  background: var(--bg1); border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.crm-subtab-bar::-webkit-scrollbar { display: none; }
+
+.crm-subtab {
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 12px; border-radius: var(--r8) var(--r8) 0 0;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: var(--t2); font-size: 11px; font-weight: 600; font-family: var(--font-ui);
+  white-space: nowrap; cursor: pointer; transition: all 0.2s var(--ease);
+  letter-spacing: 0.02em;
+}
+.crm-subtab svg { width: 12px; height: 12px; flex-shrink: 0; }
+.crm-subtab:hover { color: var(--t1); background: var(--bg3); }
+.crm-subtab.active {
+  color: var(--c1); border-bottom-color: var(--c1);
+  background: var(--bg2);
+}
+
+.crm-day-sub { display: none; }
+.crm-day-sub.active { display: block; animation: fadeSlideUp 0.2s var(--ease) both; }
+
+/* Remove old crm-day-detail-pad top padding when in subtab mode */
+.crm-screen#crm-screen-day-detail .crm-day-hero { margin-bottom: 0; }
+
+/* ── Revision rows ── */
+.crm-rev-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; margin-bottom: 8px;
+  border-radius: var(--r10); background: var(--bg3);
+  border: 1px solid var(--border-default); gap: 10px;
+}
+.crm-rev-upcoming { border-color: var(--border-default); }
+.crm-rev-due      { border-color: rgba(0,229,200,0.35); background: rgba(0,229,200,0.05); }
+.crm-rev-done     { opacity: 0.5; }
+.crm-rev-info { flex: 1; }
+.crm-rev-interval { font-size: 12px; font-weight: 700; color: var(--t1); font-family: var(--font-mono); }
+.crm-rev-date     { font-size: 11px; color: var(--t2); margin-top: 2px; }
+.crm-rev-done-btn {
+  padding: 6px 14px; border-radius: var(--rfull); font-size: 11px; font-weight: 700;
+  background: rgba(0,229,200,0.12); border: 1px solid rgba(0,229,200,0.3);
+  color: var(--c1); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.crm-rev-done-btn:hover { background: rgba(0,229,200,0.2); }
+
+/* ── Notes entries ── */
+.crm-notes-entry-card {
+  background: var(--bg3); border: 1px solid var(--border-default);
+  border-radius: var(--r10); padding: 12px 14px; margin-bottom: 8px;
+}
+.crm-notes-entry-date { font-size: 10px; color: var(--t2); font-family: var(--font-mono); margin-bottom: 6px; }
+.crm-notes-entry-text { font-size: 13px; color: var(--t1); line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+
+/* ── Pomo focus hours card ── */
+.crm-focus-hours-card {
+  margin-top: 16px; padding: 14px; border-radius: var(--r12);
+  background: var(--bg3); border: 1px solid var(--border-default); text-align: center;
+}
+.crm-focus-hours-val { font-size: 28px; font-weight: 900; color: var(--c1); font-family: var(--font-mono); }
+.crm-focus-hours-lbl { font-size: 11px; color: var(--t2); margin-top: 2px; font-weight: 600; }
+
+/* ── Pomo duration row ── */
+.crm-pomo-dur-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  padding: 10px 14px; background: var(--bg3); border-radius: var(--r10);
+  border: 1px solid var(--border-default);
+}
+.crm-pomo-dur-label { font-size: 12px; color: var(--t2); font-weight: 600; }
+.crm-pomo-dur-input {
+  width: 52px; text-align: center; padding: 4px 6px;
+  background: var(--bg4); border: 1px solid var(--border-default);
+  border-radius: var(--r6); color: var(--t1); font-size: 13px; font-family: var(--font-mono);
+}
+.crm-pomo-dur-set-btn {
+  padding: 5px 12px; border-radius: var(--rfull);
+  background: rgba(0,229,200,0.12); border: 1px solid rgba(0,229,200,0.3);
+  color: var(--c1); font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.crm-pomo-alarm-stop-btn {
+  padding: 5px 12px; border-radius: var(--rfull);
+  background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);
+  color: var(--c3); font-size: 11px; font-weight: 700; cursor: pointer;
+}
+
+/* ── Projects ── */
+.crm-add-project-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; margin-bottom: 12px; width: 100%;
+  background: rgba(0,229,200,0.06); border: 1.5px dashed rgba(0,229,200,0.3);
+  border-radius: var(--r10); color: var(--c1); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.crm-add-project-btn svg { width: 16px; height: 16px; }
+.crm-add-project-btn:hover { background: rgba(0,229,200,0.1); }
+.crm-project-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; margin-bottom: 8px;
+  background: var(--bg3); border: 1px solid var(--border-default); border-radius: var(--r10);
+}
+.crm-project-done .crm-project-name { text-decoration: line-through; opacity: 0.5; }
+.crm-project-info { flex: 1; }
+.crm-project-name { font-size: 13px; font-weight: 600; color: var(--t1); }
+.crm-project-date { font-size: 10px; color: var(--t2); margin-top: 2px; }
+
+/* ── Empty inline ── */
+.crm-empty-inline {
+  text-align: center; padding: 24px 16px;
+  font-size: 13px; color: var(--t2); line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════
+   CUSTOMISABLE POMO SLIDER + PRESETS
+══════════════════════════════════════════ */
+.crm-pomo-slider-row {
+  padding: 4px 0 8px; margin-bottom: 4px;
+}
+.crm-pomo-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 5px; border-radius: 99px;
+  background: var(--bg5); outline: none; cursor: pointer;
+  accent-color: var(--c1);
+}
+.crm-pomo-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--c1); border: 3px solid var(--bg1);
+  box-shadow: 0 0 10px rgba(0,229,200,0.4);
+  cursor: pointer; transition: transform 0.15s;
+}
+.crm-pomo-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+.crm-pomo-slider::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--c1); border: 3px solid var(--bg1);
+  cursor: pointer;
+}
+.crm-pomo-slider-labels {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--t3); font-family: var(--font-mono);
+  margin-top: 4px; padding: 0 2px;
+}
+
+.crm-pomo-presets {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.crm-pomo-preset {
+  padding: 6px 14px; border-radius: var(--rfull);
+  background: var(--bg3); border: 1.5px solid var(--border-default);
+  color: var(--t2); font-size: 12px; font-weight: 700;
+  font-family: var(--font-mono); cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+.crm-pomo-preset:hover { border-color: rgba(0,229,200,0.3); color: var(--t1); }
+.crm-pomo-preset.active {
+  background: rgba(0,229,200,0.12); border-color: rgba(0,229,200,0.5);
+  color: var(--c1); box-shadow: 0 0 10px rgba(0,229,200,0.12);
 }
