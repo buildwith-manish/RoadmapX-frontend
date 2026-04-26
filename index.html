@@ -156,6 +156,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               Projects
             </button>
+            <button class="section-subtab" id="ai-subtab-visual" onclick="APP.switchAISub('visual',this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><circle cx="6" cy="14" r="3"/><circle cx="18" cy="14" r="3"/><line x1="12" y1="13" x2="6" y2="14"/><line x1="12" y1="13" x2="18" y2="14"/></svg>
+              Visual
+            </button>
           </div>
 
           <!-- SUB: Roadmap -->
@@ -356,6 +360,405 @@
           </div>
         </div>
         <!-- /tab-ai -->
+
+        <!-- ──────── TAB: AI VISUAL ROADMAP ──────── -->
+        <div class="tab-panel" id="tab-ai-rm">
+
+          <style>
+            #tab-ai-rm {
+              display: flex;
+              flex-direction: column;
+              background: #05050f;
+              height: 100%;
+              overflow: hidden;
+              position: relative;
+            }
+            .ai-rm-header {
+              position: sticky;
+              top: 0;
+              z-index: 50;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 12px 16px 11px;
+              background: #05050f;
+              border-bottom: 2px solid transparent;
+              background-clip: padding-box;
+              box-shadow: 0 1px 0 0 #10b981, 0 4px 20px rgba(0,0,0,0.6);
+              flex-shrink: 0;
+            }
+            .ai-rm-back-btn {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              background: rgba(16,185,129,0.08);
+              border: 1px solid rgba(16,185,129,0.2);
+              border-radius: 8px;
+              color: #10b981;
+              font-size: 12px;
+              font-weight: 600;
+              padding: 6px 10px;
+              cursor: pointer;
+              letter-spacing: 0.3px;
+              flex-shrink: 0;
+            }
+            .ai-rm-back-btn svg { width:14px; height:14px; }
+            .ai-rm-header-title {
+              font-family: var(--font-mono, monospace);
+              font-size: 13px;
+              font-weight: 800;
+              letter-spacing: 2px;
+              color: #10b981;
+              text-transform: uppercase;
+            }
+            .ai-rm-progress-pill {
+              background: rgba(16,185,129,0.1);
+              border: 1px solid rgba(16,185,129,0.25);
+              border-radius: 999px;
+              color: #10b981;
+              font-family: var(--font-mono, monospace);
+              font-size: 11px;
+              font-weight: 700;
+              padding: 4px 10px;
+              white-space: nowrap;
+              flex-shrink: 0;
+            }
+            .ai-rm-legend {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 8px 14px;
+              background: #0a0a18;
+              border-bottom: 1px solid rgba(255,255,255,0.05);
+              overflow-x: auto;
+              scrollbar-width: none;
+              flex-shrink: 0;
+            }
+            .ai-rm-legend::-webkit-scrollbar { display: none; }
+            .ai-rm-legend-item {
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              font-size: 10px;
+              color: #8080a8;
+              white-space: nowrap;
+              font-family: var(--font-mono, monospace);
+            }
+            .ai-rm-legend-dot {
+              width: 9px;
+              height: 9px;
+              border-radius: 50%;
+              flex-shrink: 0;
+            }
+            .ai-rm-legend-dot.green  { background: #10b981; }
+            .ai-rm-legend-dot.blue   { background: #3b82f6; }
+            .ai-rm-legend-dot.purple { background: #a855f7; }
+            .ai-rm-legend-dot.orange { background: #f97316; }
+            .ai-rm-legend-dot.dashed { background: transparent; border: 1.5px dashed #8080a8; }
+            .ai-rm-graph {
+              flex: 1;
+              overflow-y: auto;
+              overflow-x: hidden;
+              padding: 20px 16px 100px;
+              position: relative;
+              -webkit-overflow-scrolling: touch;
+            }
+            .ai-rm-graph::-webkit-scrollbar { width: 4px; }
+            .ai-rm-graph::-webkit-scrollbar-track { background: transparent; }
+            .ai-rm-graph::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.25); border-radius: 4px; }
+            .ai-rm-svg-layer {
+              position: absolute;
+              top: 0; left: 0;
+              width: 100%; height: 100%;
+              pointer-events: none;
+              overflow: visible;
+              z-index: 0;
+            }
+            .ai-rm-section-label {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin: 28px 0 10px;
+              position: relative;
+              z-index: 2;
+            }
+            .ai-rm-section-num {
+              font-family: var(--font-mono, monospace);
+              font-size: 10px;
+              font-weight: 800;
+              color: #10b981;
+              opacity: 0.6;
+              flex-shrink: 0;
+            }
+            .ai-rm-section-title-text {
+              font-family: var(--font-mono, monospace);
+              font-size: 9px;
+              font-weight: 800;
+              color: #8080a8;
+              letter-spacing: 1.5px;
+              flex-shrink: 0;
+            }
+            .ai-rm-section-line {
+              flex: 1;
+              height: 1px;
+              background: linear-gradient(90deg, rgba(128,128,168,0.25), transparent);
+            }
+            .ai-rm-section-mini-prog {
+              font-family: var(--font-mono, monospace);
+              font-size: 9px;
+              color: #8080a8;
+              flex-shrink: 0;
+            }
+            .ai-rm-section-block {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              position: relative;
+              z-index: 2;
+            }
+            .ai-rm-node {
+              position: relative;
+              border-radius: 10px;
+              cursor: pointer;
+              transition: transform 0.15s, box-shadow 0.15s;
+              user-select: none;
+              -webkit-user-select: none;
+            }
+            .ai-rm-node:active { transform: scale(0.97); }
+            .ai-rm-trunk {
+              width: min(72%, 260px);
+              padding: 13px 16px 14px;
+              text-align: center;
+              margin: 0 auto;
+            }
+            .ai-rm-child {
+              width: 100%;
+              padding: 9px 12px;
+              margin-bottom: 8px;
+              text-align: left;
+            }
+            .ai-rm-node-label {
+              display: block;
+              font-size: 13px;
+              font-weight: 700;
+              line-height: 1.3;
+            }
+            .ai-rm-trunk .ai-rm-node-label { font-size: 14px; }
+            .ai-rm-node-time {
+              display: block;
+              font-family: var(--font-mono, monospace);
+              font-size: 9px;
+              color: #8080a8;
+              margin-top: 4px;
+            }
+            .ai-rm-node-status-badge {
+              position: absolute;
+              top: -5px;
+              right: -5px;
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              font-size: 10px;
+              font-weight: 800;
+              z-index: 3;
+            }
+            .ai-rm-expand-dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background: #10b981;
+              margin: 8px auto 0;
+              opacity: 0.6;
+              transition: opacity 0.2s, transform 0.2s;
+            }
+            .ai-rm-trunk.ai-rm-collapsed .ai-rm-expand-dot { transform: rotate(180deg); opacity: 0.4; }
+            .ai-rm-children-wrap {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 0 12px;
+              width: 100%;
+              margin-top: 10px;
+              padding: 0 2px;
+            }
+            .ai-rm-child-col { display: flex; flex-direction: column; }
+            .ai-rm-done .ai-rm-node-status-badge { display: flex; background: #10b981; color: #fff; }
+            .ai-rm-done .ai-rm-node-status-badge::before { content: '✓'; }
+            .ai-rm-done { opacity: 0.72; }
+            .ai-rm-inprogress { animation: ai-rm-pulse 2s infinite; }
+            .ai-rm-inprogress .ai-rm-node-status-badge { display: flex; background: rgba(16,185,129,0.3); border: 1.5px solid #10b981; color: #10b981; font-size: 7px; }
+            .ai-rm-inprogress .ai-rm-node-status-badge::before { content: '●'; }
+            .ai-rm-skip { opacity: 0.35; }
+            .ai-rm-skip .ai-rm-node-status-badge { display: flex; background: rgba(128,128,168,0.2); color: #8080a8; }
+            .ai-rm-skip .ai-rm-node-status-badge::before { content: '–'; }
+            @keyframes ai-rm-pulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+              50%       { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+            }
+            .ai-rm-node-congrats {
+              background: linear-gradient(135deg, #051a10, #0a0a18) !important;
+              border: 2px solid #10b981 !important;
+              box-shadow: 0 0 30px rgba(16,185,129,0.2) !important;
+              padding: 20px !important;
+              text-align: center;
+            }
+            .ai-rm-node-congrats .ai-rm-node-label { font-size: 18px !important; color: #10b981 !important; }
+            .ai-rm-connector-wrap { display: flex; justify-content: center; position: relative; z-index: 1; }
+            .ai-rm-v-line { width: 2px; background: linear-gradient(180deg, #10b981, rgba(16,185,129,0.15)); border-radius: 2px; }
+            .ai-rm-bottom-bar {
+              position: absolute;
+              bottom: 0; left: 0; right: 0;
+              height: 3px;
+              background: rgba(255,255,255,0.05);
+              z-index: 60;
+              flex-shrink: 0;
+            }
+            .ai-rm-bottom-bar-fill {
+              height: 100%;
+              background: linear-gradient(90deg, #10b981, #6366f1);
+              border-radius: 0 2px 2px 0;
+              transition: width 0.4s ease;
+              width: 0%;
+            }
+            .ai-rm-overlay {
+              position: fixed;
+              inset: 0;
+              background: rgba(0,0,0,0.7);
+              z-index: 200;
+              display: none;
+              backdrop-filter: blur(2px);
+            }
+            .ai-rm-overlay.ai-rm-overlay-show { display: block; }
+            .ai-rm-sheet {
+              position: fixed;
+              bottom: 0; left: 0; right: 0;
+              z-index: 210;
+              background: #0c0c1a;
+              border-top: 1px solid rgba(255,255,255,0.08);
+              border-radius: 20px 20px 0 0;
+              max-height: 88vh;
+              overflow-y: auto;
+              transform: translateY(100%);
+              transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+              padding-bottom: env(safe-area-inset-bottom, 20px);
+            }
+            .ai-rm-sheet.ai-rm-sheet-open { transform: translateY(0); }
+            .ai-rm-sheet::-webkit-scrollbar { width: 3px; }
+            .ai-rm-sheet::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+            .ai-rm-sheet-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 14px auto 0; }
+            .ai-rm-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 18px 4px; gap: 12px; }
+            .ai-rm-sheet-header-left { flex: 1; min-width: 0; }
+            .ai-rm-sheet-close { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.07); border: none; color: #8080a8; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+            .ai-rm-sheet-difficulty { display: inline-block; font-family: var(--font-mono, monospace); font-size: 9px; font-weight: 800; letter-spacing: 1px; padding: 2px 8px; border-radius: 999px; margin-bottom: 6px; }
+            .ai-rm-sheet-title { font-size: 18px; font-weight: 800; color: #f0f0ff; line-height: 1.25; }
+            .ai-rm-sheet-time { font-family: var(--font-mono, monospace); font-size: 10px; color: #8080a8; margin-top: 5px; }
+            .ai-rm-sheet-body { padding: 10px 18px 20px; }
+            .ai-rm-sheet-section-title { font-family: var(--font-mono, monospace); font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: #10b981; text-transform: uppercase; margin: 16px 0 7px; }
+            .ai-rm-sheet-why { font-size: 13px; color: #a0a0c0; line-height: 1.65; }
+            .ai-rm-sheet-learn { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+            .ai-rm-sheet-learn li { font-size: 13px; color: #c0c0e0; padding-left: 16px; position: relative; line-height: 1.5; }
+            .ai-rm-sheet-learn li::before { content: '▸'; position: absolute; left: 0; color: #10b981; font-size: 10px; top: 2px; }
+            .ai-rm-sheet-prereq { font-size: 12px; color: #8080a8; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 11px; }
+            .ai-rm-sheet-task { font-size: 13px; color: #c0c0e0; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 8px; padding: 10px 12px; line-height: 1.6; }
+            .ai-rm-sheet-resources { display: flex; gap: 10px; margin-top: 14px; }
+            .ai-rm-sheet-resource-btn { flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+            #ai-rm-sheet-youtube { background: rgba(255,0,0,0.12); border: 1px solid rgba(255,0,0,0.25); color: #ff4444; }
+            #ai-rm-sheet-docs { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #3b82f6; }
+            .ai-rm-sheet-status-row { display: flex; gap: 8px; margin-top: 14px; }
+            .ai-rm-status-btn { flex: 1; padding: 11px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #8080a8; text-align: center; transition: all 0.15s; }
+            .ai-rm-status-btn.ai-rm-active-status[data-status="done"] { background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; }
+            .ai-rm-status-btn.ai-rm-active-status[data-status="progress"] { background: rgba(99,102,241,0.15); border-color: #6366f1; color: #6366f1; }
+            .ai-rm-status-btn.ai-rm-active-status[data-status="skip"] { background: rgba(128,128,168,0.15); border-color: #8080a8; color: #8080a8; }
+            #ai-rm-toast {
+              position: fixed;
+              bottom: 100px;
+              left: 50%;
+              transform: translateX(-50%) translateY(20px);
+              background: #10b981;
+              color: #fff;
+              font-size: 13px;
+              font-weight: 700;
+              padding: 8px 20px;
+              border-radius: 999px;
+              z-index: 300;
+              opacity: 0;
+              pointer-events: none;
+              transition: opacity 0.2s, transform 0.2s;
+              white-space: nowrap;
+            }
+            #ai-rm-toast.ai-rm-toast-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+            .ai-rm-active-status { font-weight: 800 !important; }
+          </style>
+
+          <!-- Header -->
+          <div class="ai-rm-header">
+            <button class="ai-rm-back-btn" onclick="APP.goBack()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Back
+            </button>
+            <div class="ai-rm-header-title">AI ROADMAP</div>
+            <div class="ai-rm-progress-pill" id="ai-rm-progress-pill">0 / 0 done</div>
+          </div>
+
+          <!-- Legend -->
+          <div class="ai-rm-legend">
+            <div class="ai-rm-legend-item"><div class="ai-rm-legend-dot green"></div>Foundation</div>
+            <div class="ai-rm-legend-item"><div class="ai-rm-legend-dot blue"></div>Tools / Libs</div>
+            <div class="ai-rm-legend-item"><div class="ai-rm-legend-dot purple"></div>Advanced</div>
+            <div class="ai-rm-legend-item"><div class="ai-rm-legend-dot orange"></div>Specialisation</div>
+            <div class="ai-rm-legend-item"><div class="ai-rm-legend-dot dashed"></div>Optional</div>
+          </div>
+
+          <!-- Graph Container -->
+          <div class="ai-rm-graph" id="ai-rm-graph"></div>
+
+          <!-- Bottom Progress Bar -->
+          <div class="ai-rm-bottom-bar">
+            <div class="ai-rm-bottom-bar-fill" id="ai-rm-bottom-fill"></div>
+          </div>
+
+          <!-- Overlay -->
+          <div class="ai-rm-overlay" id="ai-rm-overlay"></div>
+
+          <!-- Bottom Sheet -->
+          <div class="ai-rm-sheet" id="ai-rm-sheet">
+            <div class="ai-rm-sheet-handle"></div>
+            <div class="ai-rm-sheet-header">
+              <div class="ai-rm-sheet-header-left">
+                <div class="ai-rm-sheet-difficulty" id="ai-rm-sheet-difficulty">BEGINNER</div>
+                <div class="ai-rm-sheet-title" id="ai-rm-sheet-title">Node Title</div>
+                <div class="ai-rm-sheet-time" id="ai-rm-sheet-time">⏱ 2–3 weeks</div>
+              </div>
+              <button class="ai-rm-sheet-close" onclick="aiRmCloseSheet()">✕</button>
+            </div>
+            <div class="ai-rm-sheet-body">
+              <div class="ai-rm-sheet-section-title">WHY THIS MATTERS</div>
+              <div class="ai-rm-sheet-why" id="ai-rm-sheet-why"></div>
+              <div class="ai-rm-sheet-section-title">WHAT YOU'LL LEARN</div>
+              <ul class="ai-rm-sheet-learn" id="ai-rm-sheet-learn"></ul>
+              <div class="ai-rm-sheet-section-title">PREREQUISITES</div>
+              <div class="ai-rm-sheet-prereq" id="ai-rm-sheet-prereq"></div>
+              <div class="ai-rm-sheet-section-title">PRACTICE TASK</div>
+              <div class="ai-rm-sheet-task" id="ai-rm-sheet-task"></div>
+              <div class="ai-rm-sheet-resources">
+                <button class="ai-rm-sheet-resource-btn" id="ai-rm-sheet-youtube">▶ YouTube</button>
+                <button class="ai-rm-sheet-resource-btn" id="ai-rm-sheet-docs">📄 Docs</button>
+              </div>
+              <div class="ai-rm-sheet-status-row">
+                <button class="ai-rm-status-btn" id="ai-rm-btn-done"     data-status="done"     onclick="aiRmSetStatus(window._aiRmActiveNode,'done')">✓ Done</button>
+                <button class="ai-rm-status-btn" id="ai-rm-btn-progress" data-status="progress" onclick="aiRmSetStatus(window._aiRmActiveNode,'progress')">⟳ In Progress</button>
+                <button class="ai-rm-status-btn" id="ai-rm-btn-skip"     data-status="skip"     onclick="aiRmSetStatus(window._aiRmActiveNode,'skip')">– Skip</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toast -->
+          <div id="ai-rm-toast"></div>
+
+        </div>
+        <!-- /tab-ai-rm -->
 
         <!-- ──────── TAB: DSA ROADMAP ──────── -->
         <div class="tab-panel" id="tab-dsa">
@@ -2848,5 +3251,7 @@
 })();
 </script>
     <script src="tab-fe-part6.js"></script>
+    <script src="tab-ai-rm-part6.js"></script>
+    <script src="tab-ai-rm-integration.js"></script>
   </body>
 </html>
