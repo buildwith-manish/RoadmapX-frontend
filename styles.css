@@ -26,6 +26,7 @@
   --c5: #10b981;   /* emerald/green */
   --c6: #3b82f6;   /* blue */
   --c7: #ec4899;   /* pink */
+  --cf: #f97316;   /* frontend orange */
 
   /* Glow layers */
   --glow1: rgba(0, 229, 200, 0.12);
@@ -127,7 +128,7 @@ body::before {
   background: linear-gradient(90deg, transparent, var(--c1), var(--c2), transparent);
   opacity: 0.3;
 }
-.hdr-left { display: flex; flex-direction: column; gap: 2px; }
+.hdr-left { display: flex; flex-direction: column; gap: 2px; justify-content: center; }
 .hdr-title {
   font-size: 13px; font-weight: 700; color: var(--c1);
   font-family: var(--font-mono); letter-spacing: 1.5px;
@@ -135,6 +136,7 @@ body::before {
 }
 .hdr-title svg { color: var(--c1); }
 .hdr-sub { font-size: 9px; color: var(--t2); letter-spacing: 0.5px; font-family: var(--font-mono); }
+.hdr-sub:empty { display: none; }
 .hdr-right { display: flex; align-items: center; gap: 8px; }
 .hdr-streak {
   display: flex; align-items: center; gap: 5px;
@@ -835,6 +837,7 @@ textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.6; }
 .home-path-card:active { transform: scale(0.98); }
 .ai-card  { border-color: rgba(0, 229, 200, 0.15); }
 .dsa-card { border-color: rgba(124, 58, 237, 0.15); }
+.fe-card  { border-color: rgba(249, 115, 22, 0.15); }
 .home-card-ico {
   width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -847,6 +850,10 @@ textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.6; }
 .dsa-card .home-card-ico {
   background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.22);
   color: var(--c2);
+}
+.fe-card .home-card-ico {
+  background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.22);
+  color: var(--cf);
 }
 .home-card-body { flex: 1; min-width: 0; }
 .home-card-title { font-size: 14px; font-weight: 700; color: var(--t1); }
@@ -864,6 +871,7 @@ textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.6; }
 }
 .ai-card  .home-card-prog-fill { height: 100%; background: var(--c1); border-radius: 2px; transition: width 0.8s var(--ease); }
 .dsa-card .home-card-prog-fill { height: 100%; background: var(--c2); border-radius: 2px; transition: width 0.8s var(--ease); }
+.fe-card  .home-card-prog-fill { height: 100%; background: var(--cf); border-radius: 2px; transition: width 0.8s var(--ease); }
 .home-card-arrow { font-size: 20px; color: var(--t2); flex-shrink: 0; }
 
 /* Continue button */

@@ -1602,6 +1602,11 @@ const APP = (function() {
     const dsaFill = el('home-dsa-prog');
     if (dsaFill) dsaFill.style.width = dsaPct + '%';
 
+    // FE progress bar (driven by frontend-roadmap.js updateFEProgress, also update here)
+    try {
+      if (typeof updateFEProgress === 'function') updateFEProgress();
+    } catch(e) {}
+
     // Stats strip
     const maxStreak = Math.max(streaks.ai?.current || 0, streaks.dsa?.current || 0);
     const revisions = load(KEYS.REVISIONS, []);
@@ -3651,7 +3656,7 @@ if (prog[key].done) {
     const aiProg = load(KEYS.AI_PROGRESS, {});
     const done = Object.values(aiProg).filter(v => v.done).length;
     const hdrSub = document.getElementById('hdr-sub');
-    if (hdrSub) hdrSub.textContent = `AI • DSA • Web Dev • Data Science`;
+    if (hdrSub) hdrSub.textContent = ``;
     const streaks = load(KEYS.STREAKS, {});
     const maxStreak = Math.max(streaks.ai?.current || 0, streaks.dsa?.current || 0);
     const hdrStreak = document.getElementById('hdr-streak');
@@ -5693,15 +5698,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     // Init PWA
     PWA.init();
-    // Render XP in header area (add to hdr-right)
-    const hdrRight = document.querySelector('.hdr-right');
-    if (hdrRight) {
-      const syncEl = document.createElement('div');
-      syncEl.className = 'sync-indicator';
-      syncEl.innerHTML = '<div class="sync-dot"></div><span>Local</span>';
-      syncEl.style.cssText = 'font-size:9px;color:var(--t2);display:flex;align-items:center;gap:3px';
-      hdrRight.prepend(syncEl);
-    }
 
     // Revision nav removed — revisions now appear inline in AI/DSA roadmaps
 
