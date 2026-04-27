@@ -101,6 +101,22 @@
                 <div class="home-card-arrow">›</div>
               </button>
 
+              <button class="home-path-card" onclick="APP.switchTab('dsa-rm')" style="border-color:rgba(99,102,241,0.25);">
+                <div class="home-card-ico" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.25);color:#6366f1;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><circle cx="6" cy="14" r="3"/><circle cx="18" cy="14" r="3"/><line x1="12" y1="13" x2="6" y2="14"/><line x1="12" y1="13" x2="18" y2="14"/></svg>
+                </div>
+                <div class="home-card-body">
+                  <div class="home-card-title" style="color:#6366f1;">DSA Visual Roadmap</div>
+                  <div class="home-card-desc">Interactive graph — 13 sections, 80+ nodes, tap any node to explore</div>
+                  <div class="home-card-meta">
+                    <span class="home-card-tag" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.25);color:#6366f1;">VISUAL GRAPH</span>
+                    <span class="home-card-tag" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.25);color:#6366f1;">C++ FOCUSED</span>
+                  </div>
+                  <div class="home-card-prog"><div class="home-card-prog-fill" id="home-dsa-rm-prog" style="width:0%;background:#6366f1;"></div></div>
+                </div>
+                <div class="home-card-arrow" style="color:#6366f1;">›</div>
+              </button>
+
               <button class="home-path-card fe-card" onclick="APP.switchTab('fe')">
                 <div class="home-card-ico" style="background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.22);color:var(--cf)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
@@ -960,6 +976,12 @@
           </div>
         </div>
         <!-- /tab-dsa -->
+
+        <!-- ──────── TAB: DSA VISUAL ROADMAP ──────── -->
+        <div class="tab-panel" id="tab-dsa-rm" style="display:flex;flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
+          <!-- tab-dsa-part6.js builds and mounts all UI into this panel automatically -->
+        </div>
+        <!-- /tab-dsa-rm -->
 
         <!-- ──────── TAB: FRONTEND ROADMAP ──────── -->
         <div class="tab-panel" id="tab-fe">
@@ -3277,8 +3299,33 @@
   };
 })();
 </script>
+  <script>
+(function() {
+  const _prevSwitchTab2 = APP.switchTab.bind(APP);
+  APP.switchTab = function(name) {
+    if (name === 'dsa-rm') {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const panel = document.getElementById('tab-dsa-rm');
+      if (panel) panel.classList.add('active');
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.style.display = '';
+      document.getElementById('nav-home')?.classList.add('active');
+      if (typeof dsaRmApplyProgress === 'function') dsaRmApplyProgress();
+      // Update home progress pill
+      const prog = JSON.parse(localStorage.getItem('dsa_visual_progress') || '{}');
+      const done = Object.values(prog).filter(v => v.status === 'done').length;
+      const bar = document.getElementById('home-dsa-rm-prog');
+      if (bar) bar.style.width = Math.round((done / 80) * 100) + '%';
+      return;
+    }
+    _prevSwitchTab2(name);
+  };
+})();
+</script>
     <script src="tab-fe-part6.js"></script>
     <script src="tab-ai-rm-part6.js"></script>
     <script src="tab-ai-rm-integration.js"></script>
+    <script src="tab-dsa-part6.js"></script>
   </body>
 </html>
