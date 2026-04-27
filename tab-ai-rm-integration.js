@@ -105,7 +105,7 @@
         const pct = Math.round((done / total) * 100);
 
         // The AI home card progress bar
-        const fill = document.getElementById('home-ai-prog');
+        const fill = document.getElementById('home-ai-rm-prog');
         if (fill) fill.style.width = pct + '%';
       } catch (e) {
         // silent fail
