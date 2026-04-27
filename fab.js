@@ -151,16 +151,27 @@
 
   // ── Panel open / close ─────────────────────────────────────
   function bindPanel() {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
       if (isDragging) return;
       fabOpen ? closePanel() : openPanel();
     });
-    // Close on outside click
-    document.addEventListener('click', function (e) {
-      if (fabOpen && !panel.contains(e.target) && e.target !== btn) {
+
+    // Stop panel clicks/taps from bubbling to the document close handler
+    panel.addEventListener('click',      function (e) { e.stopPropagation(); });
+    panel.addEventListener('touchstart', function (e) { e.stopPropagation(); }, { passive: true });
+
+    // Close on outside click — use mousedown so it doesn't race with button click handlers
+    document.addEventListener('mousedown', function (e) {
+      if (fabOpen && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
         closePanel();
       }
     });
+    document.addEventListener('touchstart', function (e) {
+      if (fabOpen && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        closePanel();
+      }
+    }, { passive: true });
   }
 
   function openPanel() {
@@ -203,9 +214,18 @@
 
   // ── Pomodoro ───────────────────────────────────────────────
   function bindPomo() {
-    startBtn.addEventListener('click', startPomo);
-    pauseBtn.addEventListener('click', pausePomo);
-    resetBtn.addEventListener('click', resetPomo);
+    // Use both click AND touchend to guarantee response on mobile
+    function addTap(el, fn) {
+      el.addEventListener('click', function(e) { e.stopPropagation(); fn(); });
+      el.addEventListener('touchend', function(e) {
+        e.preventDefault();    // prevent ghost click
+        e.stopPropagation();
+        fn();
+      });
+    }
+    addTap(startBtn, startPomo);
+    addTap(pauseBtn, pausePomo);
+    addTap(resetBtn, resetPomo);
     updatePomoUI();
   }
 

@@ -45,12 +45,13 @@
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,229,200,0.08);
-  z-index: 99998;
+  z-index: 999999; /* ← FIX: higher than fab-btn so nothing overlaps */
   overflow: hidden;
   display: none;
   flex-direction: column;
   transform-origin: bottom right;
   animation: fab-panel-in 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: all !important; /* ← FIX: ensure all children receive events */
 }
 #fab-panel.fab-panel-open {
   display: flex;
@@ -117,6 +118,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  pointer-events: none; /* ← FIX: never block clicks that pass through to controls */
 }
 #fab-pomo-time {
   font-family: var(--font-mono, monospace);
@@ -139,6 +141,8 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  position: relative;
+  z-index: 10;       /* ← FIX: sit above any absolutely positioned ring overlays */
 }
 .fab-ctrl-btn {
   width: 38px;
@@ -152,6 +156,11 @@
   background: rgba(255,255,255,0.07);
   color: #f0f0ff;
   transition: background 0.15s, transform 0.1s;
+  pointer-events: all !important; /* ← FIX: ensure tap/click always fires */
+  position: relative;             /* ← FIX: stacking context above the ring overlay */
+  z-index: 10;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;     /* ← FIX: prevents 300ms tap delay on mobile */
 }
 .fab-ctrl-btn:active { transform: scale(0.93); }
 .fab-ctrl-green { background: rgba(0,229,200,0.15); color: var(--c1, #00e5c8); }
