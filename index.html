@@ -7,6 +7,76 @@
     <title>RoadmapX: Learn &amp; Track Tech Skills</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+/* ── Floating Action Button (FAB) ── */
+#fab-btn {
+  position: fixed;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--c1, #00e5c8), var(--c2, #7c3aed));
+  box-shadow: 0 4px 20px rgba(0,229,200,0.35), 0 2px 8px rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 99999;
+  touch-action: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  bottom: calc(var(--nav-h, 60px) + env(safe-area-inset-bottom, 0px) + 14px);
+  right: 16px;
+  pointer-events: all !important;
+  -webkit-tap-highlight-color: transparent;
+}
+#fab-btn svg { width: 22px; height: 22px; color: #fff; pointer-events: none; }
+#fab-btn:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(0,229,200,0.45), 0 3px 12px rgba(0,0,0,0.5); }
+#fab-btn.fab-dragging { transform: scale(1.12); transition: none; }
+#fab-panel {
+  position: fixed; width: 280px;
+  background: #0c0c20;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,229,200,0.08);
+  z-index: 99998; overflow: hidden;
+  display: none; flex-direction: column;
+  transform-origin: bottom right;
+  animation: fab-panel-in 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+#fab-panel.fab-panel-open { display: flex; }
+@keyframes fab-panel-in {
+  from { opacity: 0; transform: scale(0.85) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+#fab-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 10px 10px 0; gap: 4px; }
+.fab-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 5px; padding: 7px 4px; border: none; background: transparent;
+  color: #8080a8; font-size: 11px; font-weight: 700;
+  font-family: var(--font-ui, sans-serif);
+  border-radius: 8px 8px 0 0; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s; letter-spacing: 0.3px;
+}
+.fab-tab-active { color: var(--c1, #00e5c8); border-bottom-color: var(--c1, #00e5c8); }
+.fab-section { padding: 16px 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+#fab-pomo-ring { position: relative; width: 110px; height: 110px; }
+#fab-pomo-svg { width: 110px; height: 110px; }
+#fab-pomo-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#fab-pomo-time { font-family: var(--font-mono, monospace); font-size: 22px; font-weight: 800; color: #f0f0ff; letter-spacing: 1px; }
+#fab-pomo-mode { font-family: var(--font-mono, monospace); font-size: 8px; font-weight: 700; letter-spacing: 2px; color: var(--c1, #00e5c8); margin-top: 2px; }
+#fab-pomo-controls { display: flex; gap: 10px; align-items: center; }
+.fab-ctrl-btn { width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.07); color: #f0f0ff; transition: background 0.15s, transform 0.1s; }
+.fab-ctrl-btn:active { transform: scale(0.93); }
+.fab-ctrl-green { background: rgba(0,229,200,0.15); color: var(--c1, #00e5c8); }
+.fab-ctrl-green:hover { background: rgba(0,229,200,0.25); }
+.fab-ctrl-red { background: rgba(239,68,68,0.12); color: #ef4444; }
+.fab-ctrl-red:hover { background: rgba(239,68,68,0.22); }
+#fab-pomo-session { font-family: var(--font-mono, monospace); font-size: 9px; color: #8080a8; letter-spacing: 0.5px; }
+#fab-notes-ta { width: 100%; min-height: 130px; resize: vertical; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; font-size: 12px; font-family: var(--font-ui, sans-serif); color: #f0f0ff; line-height: 1.6; transition: border-color 0.15s; box-sizing: border-box; }
+#fab-notes-ta:focus { border-color: rgba(0,229,200,0.3); background: rgba(255,255,255,0.06); }
+#fab-notes-ta::placeholder { color: #8080a8; }
+#fab-notes-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+#fab-notes-wc { font-family: var(--font-mono, monospace); font-size: 9px; color: #8080a8; }
+#fab-notes-save { display: flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(0,229,200,0.2); background: rgba(0,229,200,0.12); color: var(--c1, #00e5c8); font-size: 11px; font-weight: 700; font-family: var(--font-ui, sans-serif); cursor: pointer; transition: background 0.15s; }
+#fab-notes-save:hover { background: rgba(0,229,200,0.22); }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -606,24 +676,29 @@
               z-index: 3;
             }
             .ai-rm-expand-dot {
-              width: 7px;
-              height: 7px;
-              border-radius: 50%;
-              background: #10b981;
-              margin: 6px auto 0;
-              opacity: 0.6;
-              transition: opacity 0.2s, transform 0.2s;
+              width: 7px; height: 7px; border-radius: 50%;
+              background: #10b981; margin: 6px auto 0; opacity: 0.6;
+              transition: opacity 0.2s, transform 0.25s;
             }
-            .ai-rm-trunk.ai-rm-collapsed .ai-rm-expand-dot { transform: rotate(180deg); opacity: 0.4; }
+            .ai-rm-trunk.ai-rm-expanded .ai-rm-expand-dot { transform: rotate(180deg); opacity: 0.9; }
             .ai-rm-children-wrap {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 0 8px;
-              width: 90%;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 6px;
+              width: 88%;
               margin: 8px auto 0;
               padding: 0;
+              overflow: hidden;
+              max-height: 0;
+              transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s;
+              opacity: 0;
             }
-            .ai-rm-child-col { display: flex; flex-direction: column; }
+            .ai-rm-children-wrap.ai-rm-children-open {
+              max-height: 2000px;
+              opacity: 1;
+            }
+            .ai-rm-child-col { display: flex; flex-direction: column; width: 100%; }
             .ai-rm-done .ai-rm-node-status-badge { display: flex; background: #10b981; color: #fff; }
             .ai-rm-done .ai-rm-node-status-badge::before { content: '✓'; }
             .ai-rm-done { opacity: 0.72; }
@@ -3296,9 +3371,15 @@
       if (nav) nav.style.display = '';
       document.getElementById('nav-home')?.classList.add('active');
       if (typeof feRmApplyProgress === 'function') feRmApplyProgress();
+      // Push to nav stack so back button works
+      if (window.__pushNavState) window.__pushNavState({ tab: 'fe' });
       return;
     }
     _prevSwitchTab(name);
+  };
+  // Expose __pushNavState for use in overrides
+  window.__pushNavStateProxy = function(s) {
+    if (typeof __pushNavState === 'function') __pushNavState(s);
   };
 })();
 </script>
@@ -3326,6 +3407,32 @@
       const done = Object.values(prog).filter(v => v.status === 'done').length;
       const bar = document.getElementById('home-dsa-rm-prog');
       if (bar) bar.style.width = Math.round((done / 80) * 100) + '%';
+      // Push to nav stack so back button works
+      if (window.__pushNavStateProxy) window.__pushNavStateProxy({ tab: 'dsa-rm' });
+      return;
+    }
+    if (name === 'ai-rm') {
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.remove('active');
+        if (p.id === 'tab-dsa-rm') p.style.display = 'none';
+      });
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const panel = document.getElementById('tab-ai-rm');
+      if (panel) {
+        panel.classList.add('active');
+        panel.style.display = 'flex';
+      }
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.style.display = '';
+      document.getElementById('nav-home')?.classList.add('active');
+      if (typeof aiRmApplyProgress === 'function') aiRmApplyProgress();
+      // Update home progress pill
+      const prog = JSON.parse(localStorage.getItem('ai_visual_progress') || '{}');
+      const done = Object.values(prog).filter(v => v.status === 'done').length;
+      const bar = document.getElementById('home-ai-rm-prog');
+      if (bar) bar.style.width = Math.round((done / 90) * 100) + '%';
+      // Push to nav stack so back button works
+      if (window.__pushNavStateProxy) window.__pushNavStateProxy({ tab: 'ai-rm' });
       return;
     }
     _prevSwitchTab2(name);
@@ -3336,5 +3443,205 @@
     <script src="tab-ai-rm-part6.js"></script>
     <script src="tab-ai-rm-integration.js"></script>
     <script src="tab-dsa-part6.js"></script>
+
+  <!-- ============================================================ -->
+  <!-- FLOATING ACTION BUTTON                                        -->
+  <!-- ============================================================ -->
+  <div id="fab-btn" title="Quick Tools">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
+    </svg>
+  </div>
+  <div id="fab-panel">
+    <div id="fab-tabs">
+      <button class="fab-tab fab-tab-active" data-tab="pomo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Pomodoro
+      </button>
+      <button class="fab-tab" data-tab="notes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Notes
+      </button>
+    </div>
+    <div id="fab-pomo" class="fab-section">
+      <div id="fab-pomo-ring">
+        <svg id="fab-pomo-svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6"/>
+          <circle id="fab-pomo-arc" cx="50" cy="50" r="42" fill="none" stroke="var(--c1,#00e5c8)"
+            stroke-width="6" stroke-linecap="round"
+            stroke-dasharray="264" stroke-dashoffset="0"
+            transform="rotate(-90 50 50)"/>
+        </svg>
+        <div id="fab-pomo-center">
+          <div id="fab-pomo-time">25:00</div>
+          <div id="fab-pomo-mode">FOCUS</div>
+        </div>
+      </div>
+      <div id="fab-pomo-controls">
+        <button id="fab-pomo-start" class="fab-ctrl-btn fab-ctrl-green">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button id="fab-pomo-pause" class="fab-ctrl-btn" style="display:none">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button id="fab-pomo-reset" class="fab-ctrl-btn fab-ctrl-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
+        </button>
+      </div>
+      <div id="fab-pomo-session">Session <span id="fab-pomo-count">1</span> of 4</div>
+    </div>
+    <div id="fab-notes" class="fab-section" style="display:none">
+      <textarea id="fab-notes-ta" placeholder="Quick notes…"></textarea>
+      <div id="fab-notes-footer">
+        <span id="fab-notes-wc">0 words</span>
+        <button id="fab-notes-save">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ── FAB Button Logic ──────────────────────────────────────────────────────────
+  (function () {
+    'use strict';
+    const LS_POS    = 'fab_position';
+    const LS_NOTES  = 'fab_notes';
+    const POMO_WORK = 25 * 60;
+    const POMO_BREAK = 5 * 60;
+    let fabOpen = false, isDragging = false;
+    let dragOffX = 0, dragOffY = 0;
+    let pomoTimer = null, pomoSeconds = POMO_WORK;
+    let pomoRunning = false, pomoSession = 1, pomoIsBreak = false;
+    const CIRCUM = 2 * Math.PI * 42;
+    let btn, panel, arc, timeEl, modeEl, startBtn, pauseBtn, resetBtn, countEl, notesTa, notesWc, notesSave;
+
+    function fabInit() {
+      btn = document.getElementById('fab-btn');
+      panel = document.getElementById('fab-panel');
+      arc = document.getElementById('fab-pomo-arc');
+      timeEl = document.getElementById('fab-pomo-time');
+      modeEl = document.getElementById('fab-pomo-mode');
+      startBtn = document.getElementById('fab-pomo-start');
+      pauseBtn = document.getElementById('fab-pomo-pause');
+      resetBtn = document.getElementById('fab-pomo-reset');
+      countEl = document.getElementById('fab-pomo-count');
+      notesTa = document.getElementById('fab-notes-ta');
+      notesWc = document.getElementById('fab-notes-wc');
+      notesSave = document.getElementById('fab-notes-save');
+      if (!btn || !panel) return;
+      restorePosition(); restoreNotes(); bindDrag(); bindPanel(); bindPomo(); bindNotes(); bindTabs();
+    }
+
+    function restorePosition() {
+      try {
+        const pos = JSON.parse(localStorage.getItem(LS_POS) || 'null');
+        if (pos) { btn.style.right = 'auto'; btn.style.bottom = 'auto'; btn.style.left = clamp(pos.x, 0, window.innerWidth - 52) + 'px'; btn.style.top = clamp(pos.y, 0, window.innerHeight - 52) + 'px'; }
+      } catch (e) {}
+    }
+    function savePosition() {
+      try { const r = btn.getBoundingClientRect(); localStorage.setItem(LS_POS, JSON.stringify({ x: r.left, y: r.top })); } catch (e) {}
+    }
+    function snapToEdge() {
+      const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2, mid = window.innerWidth / 2;
+      const snapX = cx < mid ? 10 : window.innerWidth - r.width - 10;
+      btn.style.transition = 'left 0.25s, top 0.25s';
+      btn.style.left = snapX + 'px';
+      setTimeout(() => { btn.style.transition = ''; }, 280);
+      savePosition();
+    }
+    function bindDrag() {
+      btn.addEventListener('touchstart', onDragStart, { passive: false });
+      document.addEventListener('touchmove', onDragMove, { passive: false });
+      document.addEventListener('touchend', onDragEnd);
+      btn.addEventListener('mousedown', onDragStart);
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+    }
+    function getXY(e) { return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY }; }
+    function onDragStart(e) {
+      const { x, y } = getXY(e); const r = btn.getBoundingClientRect();
+      dragOffX = x - r.left; dragOffY = y - r.top; isDragging = false;
+      btn._dragStartX = x; btn._dragStartY = y; btn._dragStartTime = Date.now();
+      btn.style.right = 'auto'; btn.style.bottom = 'auto'; btn.style.left = r.left + 'px'; btn.style.top = r.top + 'px';
+    }
+    function onDragMove(e) {
+      const { x, y } = getXY(e);
+      const dx = Math.abs(x - (btn._dragStartX || 0)), dy = Math.abs(y - (btn._dragStartY || 0));
+      if (!isDragging && dx < 8 && dy < 8) return;
+      if (!isDragging) { isDragging = true; btn.classList.add('fab-dragging'); }
+      const newX = clamp(x - dragOffX, 0, window.innerWidth - btn.offsetWidth);
+      const newY = clamp(y - dragOffY, 0, window.innerHeight - btn.offsetHeight);
+      btn.style.left = newX + 'px'; btn.style.top = newY + 'px'; positionPanel();
+      if (e.cancelable) e.preventDefault();
+    }
+    function onDragEnd() {
+      if (!isDragging) { btn.style.right = 'auto'; return; }
+      btn.classList.remove('fab-dragging'); isDragging = false; snapToEdge(); closePanel();
+    }
+    function bindPanel() {
+      btn.addEventListener('click', function () { if (isDragging) return; fabOpen ? closePanel() : openPanel(); });
+      document.addEventListener('click', function (e) { if (fabOpen && !panel.contains(e.target) && e.target !== btn) closePanel(); });
+    }
+    function openPanel() { fabOpen = true; positionPanel(); panel.classList.add('fab-panel-open'); }
+    function closePanel() { fabOpen = false; panel.classList.remove('fab-panel-open'); }
+    function positionPanel() {
+      const r = btn.getBoundingClientRect(), pw = 280, ph = 340, gap = 10;
+      let left = r.left + r.width / 2 - pw / 2, top = r.top - ph - gap;
+      left = clamp(left, 8, window.innerWidth - pw - 8);
+      if (top < 8) top = r.bottom + gap;
+      panel.style.left = left + 'px'; panel.style.top = top + 'px';
+    }
+    function bindTabs() {
+      document.querySelectorAll('.fab-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.fab-tab').forEach(t => t.classList.remove('fab-tab-active'));
+          tab.classList.add('fab-tab-active');
+          const which = tab.dataset.tab;
+          document.getElementById('fab-pomo').style.display  = which === 'pomo'  ? 'flex' : 'none';
+          document.getElementById('fab-notes').style.display = which === 'notes' ? 'flex' : 'none';
+        });
+      });
+    }
+    function bindPomo() { startBtn.addEventListener('click', startPomo); pauseBtn.addEventListener('click', pausePomo); resetBtn.addEventListener('click', resetPomo); updatePomoUI(); }
+    function startPomo() { if (pomoRunning) return; pomoRunning = true; startBtn.style.display = 'none'; pauseBtn.style.display = 'flex'; pomoTimer = setInterval(tickPomo, 1000); }
+    function pausePomo() { pomoRunning = false; clearInterval(pomoTimer); startBtn.style.display = 'flex'; pauseBtn.style.display = 'none'; }
+    function resetPomo() { pausePomo(); pomoSeconds = pomoIsBreak ? POMO_BREAK : POMO_WORK; updatePomoUI(); }
+    function tickPomo() { if (pomoSeconds <= 0) { clearInterval(pomoTimer); pomoRunning = false; onPomoEnd(); return; } pomoSeconds--; updatePomoUI(); }
+    function onPomoEnd() {
+      startBtn.style.display = 'flex'; pauseBtn.style.display = 'none';
+      try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); [0, 0.3, 0.6].forEach(function (delay) { const osc = ctx.createOscillator(), gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 880; osc.type = 'sine'; gain.gain.setValueAtTime(0.4, ctx.currentTime + delay); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3); osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.3); }); } catch (e) {}
+      if (!pomoIsBreak) { if (pomoSession >= 4) { pomoSession = 1; pomoIsBreak = true; pomoSeconds = 15 * 60; modeEl.textContent = 'LONG BREAK'; } else { pomoIsBreak = true; pomoSeconds = POMO_BREAK; modeEl.textContent = 'BREAK'; } } else { pomoIsBreak = false; pomoSeconds = POMO_WORK; if (pomoSession < 4) pomoSession++; modeEl.textContent = 'FOCUS'; }
+      countEl.textContent = pomoSession; updatePomoUI(); openPanel();
+    }
+    function updatePomoUI() {
+      const total = pomoIsBreak ? (pomoSession >= 4 ? 15 * 60 : POMO_BREAK) : POMO_WORK;
+      const m = Math.floor(pomoSeconds / 60), s = pomoSeconds % 60;
+      timeEl.textContent = pad(m) + ':' + pad(s);
+      arc.style.strokeDashoffset = CIRCUM * (1 - pomoSeconds / total);
+      arc.style.stroke = pomoIsBreak ? 'var(--c2,#7c3aed)' : 'var(--c1,#00e5c8)';
+      modeEl.textContent = pomoIsBreak ? 'BREAK' : 'FOCUS';
+      countEl.textContent = pomoSession;
+    }
+    function restoreNotes() { try { const saved = localStorage.getItem(LS_NOTES) || ''; if (saved && notesTa) { notesTa.value = saved; updateWordCount(); } } catch (e) {} }
+    function bindNotes() {
+      notesTa.addEventListener('input', updateWordCount);
+      notesSave.addEventListener('click', function () { try { localStorage.setItem(LS_NOTES, notesTa.value); notesSave.style.background = 'rgba(0,229,200,0.3)'; setTimeout(() => { notesSave.style.background = ''; }, 600); } catch (e) {} });
+      let autoSaveTimer; notesTa.addEventListener('input', function () { clearTimeout(autoSaveTimer); autoSaveTimer = setTimeout(() => { try { localStorage.setItem(LS_NOTES, notesTa.value); } catch (e) {} }, 1500); });
+    }
+    function updateWordCount() { const words = notesTa.value.trim() === '' ? 0 : notesTa.value.trim().split(/\s+/).length; notesWc.textContent = words + (words === 1 ? ' word' : ' words'); }
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fabInit); } else { fabInit(); }
+  })();
+  </script>
+  <!-- ============================================================ -->
+  <!-- END FLOATING ACTION BUTTON                                    -->
+  <!-- ============================================================ -->
+
   </body>
 </html>

@@ -5758,6 +5758,8 @@ function __pushNavState(s) {
     history.pushState({ __nav: true, ...s }, '', '#' + s.tab);
   } catch (e) { /* ignore */ }
 }
+// Expose for use by switchTab overrides in index.html
+window.__pushNavState = __pushNavState;
 
 // Restore a full state object without touching the stack
 function __applyNavState(s) {
@@ -5776,6 +5778,33 @@ function __applyNavState(s) {
     } else if (s.tab === 'ai' && s.view === 'levels') {
       APP.switchTab('ai');
       if (APP.showAILevels) APP.showAILevels();
+    } else if (s.tab === 'ai-rm') {
+      // Go to AI Visual Roadmap
+      const panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(p => { p.classList.remove('active'); });
+      const aiRmPanel = document.getElementById('tab-ai-rm');
+      if (aiRmPanel) { aiRmPanel.classList.add('active'); aiRmPanel.style.display = 'flex'; }
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.style.display = '';
+      if (typeof aiRmApplyProgress === 'function') aiRmApplyProgress();
+    } else if (s.tab === 'dsa-rm') {
+      const panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(p => { p.classList.remove('active'); if (p.id === 'tab-dsa-rm') p.style.display = 'none'; });
+      const dsaRmPanel = document.getElementById('tab-dsa-rm');
+      if (dsaRmPanel) { dsaRmPanel.classList.add('active'); dsaRmPanel.style.display = 'flex'; }
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.style.display = '';
+      if (typeof dsaRmApplyProgress === 'function') dsaRmApplyProgress();
+    } else if (s.tab === 'fe') {
+      const panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(p => { p.classList.remove('active'); });
+      const dsaRm = document.getElementById('tab-dsa-rm');
+      if (dsaRm) dsaRm.style.display = 'none';
+      const fePanel = document.getElementById('tab-fe');
+      if (fePanel) fePanel.classList.add('active');
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.style.display = '';
+      if (typeof feRmApplyProgress === 'function') feRmApplyProgress();
     } else {
       APP.switchTab(s.tab);
     }
@@ -5822,8 +5851,8 @@ APP.goBack = function () {
     const prev = navStack[navStack.length - 1];
     __applyNavState(prev);
   } else {
-    const cur = navStack[0];
-    if (!cur || cur.tab !== 'home') APP.switchTab('home');
+    // Fall through to home if stack is empty or on first entry
+    APP.switchTab('home');
   }
 };
 
