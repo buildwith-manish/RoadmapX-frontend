@@ -107,42 +107,46 @@
     const r = btn.getBoundingClientRect();
     dragOffX   = x - r.left;
     dragOffY   = y - r.top;
-    isDragging = false; // becomes true on move > threshold
+    isDragging = false;
     btn._dragStartX = x;
     btn._dragStartY = y;
-    btn.classList.add('fab-dragging');
+    btn._dragStartTime = Date.now();
     // clear fixed right/bottom, switch to left/top
     btn.style.right  = 'auto';
     btn.style.bottom = 'auto';
     btn.style.left   = r.left + 'px';
     btn.style.top    = r.top  + 'px';
-    if (e.cancelable) e.preventDefault();
+    // Don't preventDefault here — allow click to fire if no drag occurs
   }
 
   function onDragMove(e) {
-    if (!btn.classList.contains('fab-dragging')) return;
     const { x, y } = getXY(e);
-    const dx = Math.abs(x - btn._dragStartX);
-    const dy = Math.abs(y - btn._dragStartY);
-    if (dx > 4 || dy > 4) isDragging = true;
+    const dx = Math.abs(x - (btn._dragStartX || 0));
+    const dy = Math.abs(y - (btn._dragStartY || 0));
+    // Only start drag if moved more than 8px
+    if (!isDragging && dx < 8 && dy < 8) return;
+    if (!isDragging) {
+      isDragging = true;
+      btn.classList.add('fab-dragging');
+    }
     const newX = clamp(x - dragOffX, 0, window.innerWidth  - btn.offsetWidth);
     const newY = clamp(y - dragOffY, 0, window.innerHeight - btn.offsetHeight);
     btn.style.left = newX + 'px';
     btn.style.top  = newY + 'px';
-    // Move panel with button
     positionPanel();
     if (e.cancelable) e.preventDefault();
   }
 
   function onDragEnd() {
-    if (!btn.classList.contains('fab-dragging')) return;
-    btn.classList.remove('fab-dragging');
-    if (isDragging) {
-      snapToEdge();
-      // close panel on drag end
-      closePanel();
+    if (!isDragging) {
+      // It was a tap, not a drag — let the click handler deal with it
+      btn.style.right  = 'auto'; // keep left/top positioning
+      return;
     }
+    btn.classList.remove('fab-dragging');
     isDragging = false;
+    snapToEdge();
+    closePanel();
   }
 
   // ── Panel open / close ─────────────────────────────────────

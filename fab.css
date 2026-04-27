@@ -14,11 +14,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 9000;
+  z-index: 99999;
   touch-action: none;
   transition: transform 0.2s, box-shadow 0.2s;
-  bottom: 90px;
+  bottom: calc(var(--nav, 60px) + env(safe-area-inset-bottom, 0px) + 14px);
   right: 16px;
+  pointer-events: all !important;
+  -webkit-tap-highlight-color: transparent;
 }
 #fab-btn svg {
   width: 22px;
@@ -43,7 +45,7 @@
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,229,200,0.08);
-  z-index: 8999;
+  z-index: 99998;
   overflow: hidden;
   display: none;
   flex-direction: column;
