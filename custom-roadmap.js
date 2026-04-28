@@ -36,14 +36,86 @@ const CRM = (() => {
   let _toastBusy  = false;
 
   /* ══════════════════════════════════════════
-     PERSISTENCE
+     PERSISTENCE  (localStorage + backend sync)
   ══════════════════════════════════════════ */
+
+  // ── Backend helpers ────────────────────────────────────
+  // Reads BASE_URL from config.js if available, falls back gracefully.
+  function _apiBase() {
+    try { return (typeof BASE_URL !== 'undefined' && BASE_URL) ? BASE_URL : ''; }
+    catch(e) { return ''; }
+  }
+
+  async function _isLoggedIn() {
+    try {
+      const res = await fetch(_apiBase() + '/me', { credentials: 'include' });
+      const j   = await res.json();
+      return !!(j && j.success);
+    } catch(e) { return false; }
+  }
+
+  // Pull custom roadmap data from /api/user-data
+  async function _loadFromBackend() {
+    try {
+      const res = await fetch(_apiBase() + '/api/user-data', { credentials: 'include' });
+      if (!res.ok) return null;
+      const j = await res.json();
+      if (j && j.success && j.data && j.data.customRoadmaps) {
+        return j.data.customRoadmaps;
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  // Push current _data.roadmaps to /api/user-data
+  async function _saveToBackend() {
+    try {
+      await fetch(_apiBase() + '/api/user-data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customRoadmaps: _data.roadmaps }),
+      });
+    } catch(e) {
+      console.warn('[CRM] backend save failed, data still in localStorage:', e);
+    }
+  }
+
+  // ── Core load/save ─────────────────────────────────────
   function load() {
+    // Always start from localStorage for instant render
     try {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) _data = JSON.parse(raw);
     } catch(e) { _data = { roadmaps: [] }; }
     if (!Array.isArray(_data.roadmaps)) _data.roadmaps = [];
+
+    // Merge with backend data asynchronously (non-blocking for first render)
+    _isLoggedIn().then(loggedIn => {
+      if (!loggedIn) return;
+      _loadFromBackend().then(backendRoadmaps => {
+        if (!backendRoadmaps) return;
+        // Use backend as source of truth when logged in —
+        // merge by id so any roadmaps only in localStorage aren't lost,
+        // but backend wins on conflicts.
+        const localIds = new Set(_data.roadmaps.map(r => r.id));
+        const backendIds = new Set(backendRoadmaps.map(r => r.id));
+        // Add backend-only roadmaps
+        backendRoadmaps.forEach(r => { if (!localIds.has(r.id)) _data.roadmaps.push(r); });
+        // Update existing roadmaps from backend
+        _data.roadmaps = _data.roadmaps.map(local => {
+          const remote = backendRoadmaps.find(r => r.id === local.id);
+          return remote || local;
+        });
+        // If there were any localStorage-only roadmaps, push them back up
+        const hasLocalOnly = [...localIds].some(id => !backendIds.has(id));
+        if (hasLocalOnly) _saveToBackend();
+        // Persist merged result locally and re-render
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(_data)); } catch(e) {}
+        recomputeStats();
+        renderRoadmapList();
+      });
+    });
 
     try {
       const sr = localStorage.getItem(STATS_KEY);
@@ -53,6 +125,8 @@ const CRM = (() => {
 
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(_data)); } catch(e) {}
+    // Sync to backend asynchronously — fire-and-forget, localStorage is the fallback
+    _isLoggedIn().then(loggedIn => { if (loggedIn) _saveToBackend(); });
   }
 
   function saveStats() {

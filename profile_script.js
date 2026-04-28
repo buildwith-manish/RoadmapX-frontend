@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  RoadmapX — Profile page script
 // ═══════════════════════════════════════════════════════
-const API = "https://roadmapx-backend-3qmc.onrender.com";
+const API = window.RX_API; // set by config.js
 const $ = (id) => document.getElementById(id);
 
 // ── Guest check — hide edit forms if not logged in ──────

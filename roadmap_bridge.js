@@ -19,9 +19,9 @@
   'use strict';
 
   /* ── Config ─────────────────────────────────────────────── */
-  // Set window.API_BASE before loading this script if the backend
-  // runs on a different origin, e.g.:
-  window.API_BASE = 'https://roadmapx-backend-3qmc.onrender.com';
+  // API base URL is set by config.js (window.RX_API).
+  // Falls back to the Render URL for safety if config.js is missing.
+  window.API_BASE = window.RX_API || 'https://roadmapx-backend-3qmc.onrender.com';
   const API_BASE = (window.API_BASE || '').replace(/\/$/, '');
 
   /* ── State ──────────────────────────────────────────────── */
@@ -58,6 +58,7 @@
     const url = API_BASE + path;
     const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',   // required: sends session cookie cross-origin
       ...options,
     });
     const data = await res.json();

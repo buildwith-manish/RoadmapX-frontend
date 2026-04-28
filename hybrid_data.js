@@ -36,7 +36,7 @@
   'use strict';
 
   // ─── Config ────────────────────────────────────────────
-  const API = 'https://roadmapx-backend-3qmc.onrender.com';
+  const API = window.RX_API; // set by config.js
 
   // Debounce delay before writing to backend (ms).
   // Prevents hammering the API on every keystroke.

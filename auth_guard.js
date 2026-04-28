@@ -23,7 +23,7 @@
 (function () {
   'use strict';
 
-  const API = 'https://roadmapx-backend-3qmc.onrender.com';
+  const API = window.RX_API; // set by config.js
 
   // ── UI: Guest header ─────────────────────────────────────────────────────
   function applyGuestHeader() {
