@@ -1,17 +1,344 @@
-// ═══════════════════════════════════════════════════════════════
-// DSA VISUAL ROADMAP — PART 6 OF 6 — ASSEMBLY & INIT
-// Replaces the week-list UI inside div#dsa-sub-roadmap
-// Drop-in: <script src="tab-dsa-part6.js"></script> before </body>
-// localStorage key: dsa_visual_progress  (does NOT touch roadmapDSA / ai_struct_*)
-// ═══════════════════════════════════════════════════════════════
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>DSA Visual Roadmap</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg0:#05050f;--bg1:#0a0a18;--bg2:#0c0c1a;--bg3:#12122a;
+    --t1:#f0f0ff;--t2:#8080a8;
+    --c1:#6366f1;--c2:#3b82f6;--c3:#a855f7;--c4:#f97316;--c5:#8080a8;
+    --mono:'Courier New',monospace;
+  }
+  html,body{height:100%;background:var(--bg0);color:var(--t1);font-family:system-ui,sans-serif;overflow:hidden;}
 
-(function () {
+  /* ── Layout ── */
+  #app{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+
+  /* ── Header ── */
+  #hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;background:var(--bg2);
+    border-bottom:2px solid transparent;
+    border-image:linear-gradient(90deg,transparent,#6366f1,transparent) 1;
+    flex-shrink:0;position:sticky;top:0;z-index:50;
+  }
+  #hdr-back{
+    display:flex;align-items:center;gap:5px;
+    background:none;border:none;color:var(--t2);
+    font-size:13px;cursor:pointer;padding:4px 8px;
+    border-radius:6px;font-family:var(--mono);
+  }
+  #hdr-back:hover{background:rgba(99,102,241,.1);color:var(--t1);}
+  #hdr-title{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--c1);}
+  #hdr-pill{
+    background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);
+    border-radius:999px;color:#a5b4fc;font-family:var(--mono);
+    font-size:11px;font-weight:700;padding:3px 10px;white-space:nowrap;
+  }
+
+  /* ── Legend ── */
+  #legend{
+    display:flex;align-items:center;gap:8px 12px;padding:8px 14px;
+    background:var(--bg1);border-bottom:1px solid rgba(99,102,241,.1);
+    overflow-x:auto;scrollbar-width:none;flex-shrink:0;flex-wrap:wrap;
+  }
+  #legend::-webkit-scrollbar{display:none;}
+  .leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);white-space:nowrap;font-family:var(--mono);}
+  .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .leg-dot.green{background:#10b981;}
+  .leg-dot.blue{background:#3b82f6;}
+  .leg-dot.purple{background:#a855f7;}
+  .leg-dot.orange{background:#f97316;}
+  .leg-dot.dashed{border:1.5px dashed #8080a8;background:transparent;}
+
+  /* ── Hint bar ── */
+  #hint{
+    text-align:center;padding:6px;font-size:10px;color:var(--t2);
+    font-family:var(--mono);background:rgba(99,102,241,.04);
+    border-bottom:1px solid rgba(99,102,241,.08);flex-shrink:0;letter-spacing:.5px;
+  }
+
+  /* ── Graph scroll area ── */
+  #graph{
+    flex:1;overflow-y:auto;overflow-x:hidden;
+    padding:12px 10px 80px;-webkit-overflow-scrolling:touch;
+    position:relative;box-sizing:border-box;
+  }
+
+  /* ── SVG overlay ── */
+  .svg-layer{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overflow:visible;}
+
+  /* ── Section label ── */
+  .sec-label{
+    display:flex;align-items:center;gap:8px;margin:20px 0 10px;
+    position:relative;z-index:2;
+  }
+  .sec-num{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--c1);letter-spacing:1px;}
+  .sec-title{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--t2);letter-spacing:1.2px;}
+  .sec-line{flex:1;height:1px;background:rgba(99,102,241,.15);}
+  .sec-prog{font-family:var(--mono);font-size:9px;color:rgba(99,102,241,.6);}
+
+  /* ── Section block ── */
+  .sec-block{display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;width:100%;box-sizing:border-box;}
+  .trunk-row{display:flex;justify-content:center;width:100%;}
+  .connector-wrap{display:flex;justify-content:center;width:100%;}
+  .v-line{width:2px;background:rgba(99,102,241,.15);}
+
+  /* ── Trunk node ── */
+  .trunk{
+    position:relative;border-radius:10px;cursor:pointer;
+    padding:12px 20px 14px;text-align:center;
+    min-width:180px;max-width:280px;width:70%;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    transition:transform .12s,box-shadow .15s;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  }
+  .trunk:active{transform:scale(.97);}
+  .trunk-label{font-family:var(--mono);font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+  .trunk-time{font-family:var(--mono);font-size:9px;color:var(--t2);margin-top:2px;}
+  /* ── Expand button (matches ai-roadmap) ── */
+  .exp-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;}
+  .expand-dot{
+    width:24px;height:24px;border-radius:50%;
+    background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .25s,background .15s;
+    font-size:12px;color:var(--c1);line-height:1;
+  }
+  .expand-dot.open{transform:rotate(180deg);background:rgba(99,102,241,.22);}
+
+  /* ── Children grid ── */
+  .children-wrap{
+    display:none;
+    flex-direction:row;gap:10px;width:100%;
+    margin-top:10px;justify-content:center;
+    position:relative;z-index:2;
+    box-sizing:border-box;
+    opacity:0;transform:translateY(-8px);
+    transition:opacity .22s ease,transform .22s ease;
+  }
+  .children-wrap.open{
+    opacity:1;transform:translateY(0);
+  }
+  .child-col{
+    display:flex;flex-direction:column;gap:8px;
+    flex:1;min-width:0;max-width:calc(50% - 5px);
+    box-sizing:border-box;
+  }
+  .child-col.left{align-items:flex-end;}
+  .child-col.right{align-items:flex-start;}
+
+  /* ── Child node ── */
+  .child{
+    position:relative;border-radius:8px;cursor:pointer;
+    padding:7px 12px;width:100%;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:transform .12s,box-shadow .15s;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+    box-sizing:border-box;min-width:0;word-break:break-word;
+  }
+  .child:active{transform:scale(.96);}
+  .child-label{font-size:11px;font-weight:600;color:var(--t1);line-height:1.3;word-break:break-word;}
+
+  /* ── Congrats node ── */
+  .node-congrats{
+    background:linear-gradient(135deg,#051a10,#0f0520)!important;
+    border:2px solid #10b981!important;
+    box-shadow:0 0 20px rgba(16,185,129,.2),0 0 40px rgba(99,102,241,.1)!important;
+    padding:14px 24px 16px!important;
+  }
+  .node-congrats .trunk-label{
+    background:linear-gradient(90deg,#10b981,#6366f1);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;font-size:15px!important;
+  }
+
+  /* ── Status badge ── */
+  .node-status-badge{position:absolute;top:4px;right:4px;z-index:3;pointer-events:none;}
+  .done-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;
+    background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.5);
+    border-radius:50%;color:#6ee7b7;font-size:9px;font-weight:800;
+    font-family:var(--mono);
+  }
+  .skip-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:16px;height:16px;
+    background:rgba(128,128,168,.12);border:1px solid rgba(128,128,168,.3);
+    border-radius:50%;color:#8080a8;font-size:9px;
+  }
+  .progress-ring{
+    display:inline-block;width:14px;height:14px;
+    border:2px solid rgba(99,102,241,.2);border-top-color:#6366f1;
+    border-radius:50%;animation:spin 1.2s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── Node states ── */
+  .node.node-done{border-color:rgba(16,185,129,.6)!important;background:rgba(16,185,129,.05)!important;}
+  .node.node-progress{box-shadow:0 0 0 2px rgba(99,102,241,.3),0 0 12px rgba(99,102,241,.15)!important;}
+  .node.node-skip{opacity:.45;filter:saturate(.3);}
+
+  /* ── Bottom progress bar ── */
+  #prog-bar-wrap{height:3px;background:rgba(99,102,241,.1);flex-shrink:0;}
+  #prog-bar-fill{height:100%;background:linear-gradient(90deg,#6366f1,#10b981);width:0%;transition:width .4s ease;}
+
+  /* ── Overlay + Sheet ── */
+  #overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.65);
+    z-index:200;opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  #overlay.show{opacity:1;pointer-events:all;}
+  #sheet{
+    position:fixed;bottom:0;left:0;right:0;z-index:210;
+    background:var(--bg2);border-top:1px solid rgba(99,102,241,.25);
+    border-radius:16px 16px 0 0;max-height:85vh;
+    overflow-y:auto;transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.32,.72,0,1);
+    padding-bottom:env(safe-area-inset-bottom,12px);
+  }
+  #sheet.open{transform:translateY(0);}
+  #sheet::-webkit-scrollbar{width:3px;}
+  #sheet::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+
+  .sheet-handle{width:36px;height:4px;background:rgba(99,102,241,.3);border-radius:2px;margin:10px auto 0;}
+  .sheet-top{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px 0;gap:12px;}
+  .sheet-meta{display:flex;flex-direction:column;gap:4px;flex:1;}
+  .sheet-close{
+    background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;line-height:1;padding:0 4px;
+  }
+  .sheet-close:hover{color:var(--t1);}
+  .diff-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;}
+  .diff-badge.beginner{background:rgba(16,185,129,.15);color:#6ee7b7;}
+  .diff-badge.intermediate{background:rgba(59,130,246,.15);color:#93c5fd;}
+  .diff-badge.advanced{background:rgba(168,85,247,.15);color:#d8b4fe;}
+  .diff-badge.optional{background:rgba(128,128,168,.15);color:#8080a8;}
+  .sheet-title{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--t1);margin-top:4px;line-height:1.2;}
+  .sheet-time-badge{
+    display:inline-flex;align-items:center;gap:4px;
+    background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);
+    border-radius:20px;padding:3px 10px;margin-top:4px;
+    font-family:var(--mono);font-size:10px;color:#a5b4fc;
+  }
+  .sheet-body{padding:14px 16px 8px;}
+  .sec-lbl{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.2px;color:var(--c1);margin:14px 0 6px;text-transform:uppercase;}
+  .sheet-why{font-size:13px;color:#8080a8;line-height:1.65;}
+  .sheet-learn{list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .sheet-learn li{font-size:12px;color:#c8c8e8;padding:5px 0 5px 12px;border-left:2px solid rgba(99,102,241,.3);line-height:1.5;}
+  .sheet-prereq{font-size:12px;color:#8080a8;line-height:1.5;}
+  .practice-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .link-btn{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:6px 12px;border-radius:8px;border:1px solid rgba(99,102,241,.3);
+    background:rgba(99,102,241,.08);color:#a5b4fc;
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    cursor:pointer;transition:background .15s;
+  }
+  .link-btn:hover{background:rgba(99,102,241,.18);color:var(--t1);}
+  .link-btn.lc{border-color:rgba(255,161,22,.3);background:rgba(255,161,22,.07);color:#fbbf24;}
+  .link-btn.cf{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.07);color:#93c5fd;}
+  .link-btn.yt{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07);color:#fca5a5;}
+  .link-btn.docs{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.07);color:#6ee7b7;}
+  .status-row{display:flex;gap:8px;margin-top:16px;padding-bottom:10px;}
+  .st-btn{
+    flex:1;padding:9px 6px;border-radius:10px;border:1px solid rgba(99,102,241,.2);
+    background:rgba(99,102,241,.06);color:var(--t2);
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    cursor:pointer;text-align:center;transition:all .15s;
+  }
+  .st-btn:hover{border-color:rgba(99,102,241,.4);color:var(--t1);}
+  .st-btn.active-done{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:#6ee7b7;}
+  .st-btn.active-progress{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.5);color:#a5b4fc;}
+  .st-btn.active-skip{background:rgba(128,128,168,.12);border-color:rgba(128,128,168,.4);color:#8080a8;}
+
+  /* ── Toast ── */
+  #toast{
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);
+    background:rgba(20,20,40,.95);border:1px solid rgba(99,102,241,.3);
+    border-radius:8px;padding:8px 16px;
+    font-family:var(--mono);font-size:12px;color:#a5b4fc;
+    z-index:300;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <button id="hdr-back" onclick="window.history.length>1?history.back():window.location.href='index.html'">← Back</button>
+    <div id="hdr-title">DSA ROADMAP</div>
+    <div id="hdr-pill">0 / 0 done</div>
+  </div>
+  <div id="legend">
+    <div class="leg-item"><div class="leg-dot green"></div>Foundation</div>
+    <div class="leg-item"><div class="leg-dot blue"></div>Data Structures</div>
+    <div class="leg-item"><div class="leg-dot purple"></div>Algorithms</div>
+    <div class="leg-item"><div class="leg-dot orange"></div>Advanced / CP</div>
+    <div class="leg-item"><div class="leg-dot dashed"></div>Optional</div>
+  </div>
+  <div id="hint">TAP main node → expand sub-topics &nbsp;|&nbsp; HOLD main node → view details &nbsp;|&nbsp; TAP sub-node → view details</div>
+  <div id="prog-bar-wrap"><div id="prog-bar-fill"></div></div>
+  <div id="graph"></div>
+</div>
+
+<div id="overlay"></div>
+
+<div id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-top">
+    <div class="sheet-meta">
+      <div class="diff-badge" id="s-diff"></div>
+      <div class="sheet-title" id="s-title"></div>
+      <div class="sheet-time-badge">⏱ <span id="s-time">—</span></div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sec-lbl">Why This Matters</div>
+    <div class="sheet-why" id="s-why"></div>
+    <div class="sec-lbl">What You'll Learn</div>
+    <ul class="sheet-learn" id="s-learn"></ul>
+    <div class="sec-lbl">Prerequisites</div>
+    <div class="sheet-prereq" id="s-prereq"></div>
+    <div class="sec-lbl">Practice Problems</div>
+    <div class="practice-row">
+      <button class="link-btn lc" id="s-lc">⚡ LeetCode</button>
+      <button class="link-btn cf" id="s-cf">🔵 Codeforces</button>
+    </div>
+    <div class="sec-lbl">Resources</div>
+    <div class="practice-row">
+      <button class="link-btn yt" id="s-yt">▶ YouTube</button>
+      <button class="link-btn docs" id="s-doc">📄 Docs</button>
+    </div>
+    <div class="sec-lbl">Mark Status</div>
+    <div class="status-row">
+      <button class="st-btn" id="sb-done"     onclick="setStatus('done')">✓ Done</button>
+      <button class="st-btn" id="sb-progress" onclick="setStatus('progress')">⚡ In Progress</button>
+      <button class="st-btn" id="sb-skip"     onclick="setStatus('skip')">→ Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function() {
 'use strict';
 
-// ─────────────────────────────────────────────────────────────
-// § 1 — NODE DATA  (Sections 1-13 + Final node)
-// ─────────────────────────────────────────────────────────────
-const DSA_RM_NODES = [
+const LS_KEY = 'dsa_visual_progress';
+let progress  = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+let expanded  = {};
+let activeNode = null;
+const saveProgress = () => localStorage.setItem(LS_KEY, JSON.stringify(progress));
+
+const NODES = [
 
   // ─────────────────────────────────────────────
   // SECTION 1 — C++ FOUNDATIONS
@@ -2351,1101 +2678,352 @@ const DSA_RM_NODES = [
     docsUrl: 'https://neetcode.io/'
   }
 
-]; // end DSA_RM_NODES
+];
 
-
-// ─────────────────────────────────────────────────────────────
-// § 2 — PROGRESS STATE
-// ─────────────────────────────────────────────────────────────
-let dsaRmProgress = JSON.parse(localStorage.getItem('dsa_visual_progress') || '{}');
-const dsaRmSaveProgress = () => localStorage.setItem('dsa_visual_progress', JSON.stringify(dsaRmProgress));
-
-// ─────────────────────────────────────────────────────────────
-// § 3 — EXPAND STATE  (all sections expanded by default)
-// ─────────────────────────────────────────────────────────────
-let dsaRmExpanded = {};
-
-
-// ─────────────────────────────────────────────────────────────
-// § 4 — RENDERING ENGINE
-// ─────────────────────────────────────────────────────────────
-
-const DSA_RM_BORDER_STYLES = {
-  orange: { border: '2px solid #f97316', bg: '#1a0f05', glow: 'rgba(249,115,22,0.18)', color: '#f97316' },
-  blue:   { border: '2px solid #3b82f6', bg: '#05101a', glow: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
-  purple: { border: '2px solid #a855f7', bg: '#0f0520', glow: 'rgba(168,85,247,0.15)', color: '#a855f7' },
-  green:  { border: '2px solid #10b981', bg: '#051a10', glow: 'rgba(16,185,129,0.12)', color: '#10b981' },
-  dashed: { border: '2px dashed #8080a8', bg: '#0c0c20', glow: 'rgba(128,128,168,0.1)', color: '#8080a8' }
+const BORDER_STYLES = {
+  green:  { border: '2px solid #10b981', bg: '#051a10', color: '#10b981' },
+  blue:   { border: '2px solid #3b82f6', bg: '#05101a', color: '#3b82f6' },
+  purple: { border: '2px solid #a855f7', bg: '#0f0520', color: '#a855f7' },
+  orange: { border: '2px solid #f97316', bg: '#1a0f05', color: '#f97316' },
+  dashed: { border: '2px dashed #8080a8', bg: '#0c0c20', color: '#8080a8' }
 };
 
-const DSA_RM_SECTION_TITLES = {
-  1: 'C++ Foundations', 2: 'Arrays & Strings', 3: 'Linear Data Structures',
-  4: 'Recursion & Backtracking', 5: 'Sorting & Searching', 6: 'Trees',
-  7: 'Graphs', 8: 'Dynamic Programming', 9: 'Advanced Graphs',
-  10: 'Mathematical Algorithms', 11: 'String Algorithms',
-  12: 'Competitive Programming', 13: 'SDE Preparation', 14: 'Finish Line'
-};
-
-function dsaRmRender() {
-  const container = document.getElementById('dsa-rm-graph');
+// ── Render ──────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('graph');
   if (!container) return;
-
   container.innerHTML = '';
 
   const sections = {};
-  DSA_RM_NODES.forEach(node => {
-    if (!sections[node.section]) sections[node.section] = [];
-    sections[node.section].push(node);
-  });
+  NODES.forEach(n => { if (!sections[n.section]) sections[n.section] = []; sections[n.section].push(n); });
+  const sNums = Object.keys(sections).map(Number).sort((a,b) => a-b);
+  sNums.forEach(s => { if (expanded[s] === undefined) expanded[s] = true; });
 
-  const sectionNums = Object.keys(sections).map(Number).sort((a, b) => a - b);
+  const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgEl.setAttribute('class', 'svg-layer'); svgEl.id = 'svg-layer';
+  container.appendChild(svgEl);
 
-  sectionNums.forEach(sNum => {
-    if (dsaRmExpanded[sNum] === undefined) dsaRmExpanded[sNum] = true;
-  });
-
-  const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svgLayer.setAttribute('class', 'dsa-rm-svg-layer');
-  svgLayer.setAttribute('id', 'dsa-rm-svg-layer');
-  container.appendChild(svgLayer);
-
-  sectionNums.forEach((sNum, idx) => {
-    const sectionNodes = sections[sNum];
-    const mainNode = sectionNodes.find(n => n.isMain);
-    const children = sectionNodes.filter(n => !n.isMain);
-    const sectionTitle = mainNode?.sectionTitle || DSA_RM_SECTION_TITLES[sNum] || `Section ${sNum}`;
+  sNums.forEach((sNum, idx) => {
+    const sNodes = sections[sNum];
+    const main   = sNodes.find(n => n.isMain);
+    const kids   = sNodes.filter(n => !n.isMain);
 
     if (sNum !== 14) {
       const labelEl = document.createElement('div');
-      labelEl.className = 'dsa-rm-section-label';
-      const sectionDone = sectionNodes.filter(n => {
-        const p = dsaRmProgress[n.id];
-        return p && p.status === 'done';
-      }).length;
+      labelEl.className = 'sec-label';
+      const sDone = sNodes.filter(n => progress[n.id]?.status === 'done').length;
       labelEl.innerHTML = `
-        <span class="dsa-rm-section-num">§${String(sNum).padStart(2,'0')}</span>
-        <span class="dsa-rm-section-title-text">${sectionTitle.toUpperCase()}</span>
-        <span class="dsa-rm-section-line"></span>
-        <span class="dsa-rm-section-mini-prog">${sectionDone}/${sectionNodes.length}</span>
+        <span class="sec-num">§${String(sNum).padStart(2,'0')}</span>
+        <span class="sec-title">${(main?.sectionTitle||'Section '+sNum).toUpperCase()}</span>
+        <span class="sec-line"></span>
+        <span class="sec-prog">${sDone}/${sNodes.length}</span>
       `;
       container.appendChild(labelEl);
     }
 
     const block = document.createElement('div');
-    block.className = 'dsa-rm-section-block';
+    block.className = 'sec-block';
     block.dataset.section = sNum;
 
     const trunkRow = document.createElement('div');
-    trunkRow.className = 'dsa-rm-trunk-row';
-
-    if (mainNode) {
-      const nodeEl = dsaRmCreateNodeEl(mainNode, true, children.length > 0, sNum);
-      trunkRow.appendChild(nodeEl);
-    }
+    trunkRow.className = 'trunk-row';
+    if (main) trunkRow.appendChild(buildNode(main, true, kids.length > 0, sNum));
     block.appendChild(trunkRow);
 
-    if (children.length > 0) {
-      const childrenWrap = document.createElement('div');
-      childrenWrap.className = 'dsa-rm-children-wrap';
-      childrenWrap.id = `dsa-rm-children-${sNum}`;
-
-      if (!dsaRmExpanded[sNum]) {
-        childrenWrap.style.display = 'none';
-      }
-
-      const leftCol = document.createElement('div');
-      leftCol.className = 'dsa-rm-child-col dsa-rm-child-left';
-      const rightCol = document.createElement('div');
-      rightCol.className = 'dsa-rm-child-col dsa-rm-child-right';
-
-      children.forEach((child, i) => {
-        const childEl = dsaRmCreateNodeEl(child, false, false, sNum);
-        if (i % 2 === 0) leftCol.appendChild(childEl);
-        else rightCol.appendChild(childEl);
+    if (kids.length > 0) {
+      const wrap = document.createElement('div');
+      wrap.className = 'children-wrap'; wrap.id = `children-${sNum}`;
+      if (!expanded[sNum]) wrap.style.display = 'none';
+      const leftCol = document.createElement('div'); leftCol.className = 'child-col left';
+      const rightCol = document.createElement('div'); rightCol.className = 'child-col right';
+      kids.forEach((k, i) => {
+        const el = buildNode(k, false, false, sNum);
+        (i % 2 === 0 ? leftCol : rightCol).appendChild(el);
       });
-
-      childrenWrap.appendChild(leftCol);
-      childrenWrap.appendChild(rightCol);
-      block.appendChild(childrenWrap);
+      wrap.appendChild(leftCol); wrap.appendChild(rightCol);
+      block.appendChild(wrap);
     }
-
     container.appendChild(block);
 
-    if (idx < sectionNums.length - 1) {
-      const connector = document.createElement('div');
-      connector.className = 'dsa-rm-connector-wrap';
-      const vLine = document.createElement('div');
-      vLine.className = 'dsa-rm-v-line';
-      vLine.style.height = '28px';
-      connector.appendChild(vLine);
-      container.appendChild(connector);
+    if (idx < sNums.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'connector-wrap';
+      const vl = document.createElement('div');
+      vl.className = 'v-line'; vl.style.height = '28px';
+      conn.appendChild(vl); container.appendChild(conn);
     }
   });
 
-  dsaRmApplyProgress();
-
-  requestAnimationFrame(() => {
-    dsaRmDrawLines();
-  });
+  applyProgress();
+  requestAnimationFrame(drawLines);
 }
 
-function dsaRmCreateNodeEl(node, isTrunk, hasChildren, sNum) {
-  const style = DSA_RM_BORDER_STYLES[node.border] || DSA_RM_BORDER_STYLES.dashed;
-
+function buildNode(node, isTrunk, hasKids, sNum) {
+  const style = BORDER_STYLES[node.border] || BORDER_STYLES.dashed;
   const el = document.createElement('div');
-  el.className = isTrunk ? 'dsa-rm-node dsa-rm-trunk' : 'dsa-rm-node dsa-rm-child';
-  el.id = `dsa-rm-node-${node.id}`;
-  el.dataset.nodeId = node.id;
-  el.dataset.section = sNum;
+  el.className = `node ${isTrunk ? 'trunk' : 'child'}`; 
+  el.id = `node-${node.id}`;
+  if (node.special) el.classList.add('node-congrats');
+  el.style.cssText = `background:${style.bg};border:${style.border};`;
+  let inner = `<div class="node-status-badge" id="badge-${node.id}"></div>`;
+  inner += `<span class="${isTrunk ? 'trunk-label' : 'child-label'}" style="color:${isTrunk ? style.color : 'var(--t1)'}">${node.label}</span>`;
+  if (isTrunk && node.time && node.time !== 'You made it') inner += `<span class="trunk-time">${node.time}</span>`;
+  if (isTrunk && hasKids) inner += `<div class="exp-btn"><div class="expand-dot" id="exp-${sNum}">▾</div></div>`;
+  el.innerHTML = inner;
 
-  if (node.special) el.classList.add('dsa-rm-node-congrats');
-
-  el.style.cssText = `background: ${style.bg}; border: ${style.border}; box-shadow: 0 0 0 0 ${style.glow};`;
-
-  let innerHtml = `<div class="dsa-rm-node-status-badge" id="dsa-rm-badge-${node.id}"></div>`;
-  innerHtml += `<span class="dsa-rm-node-label" style="color: ${isTrunk ? style.color : 'var(--t1)'}">${node.label}</span>`;
-
-  if (isTrunk && node.time && node.time !== 'You made it') {
-    innerHtml += `<span class="dsa-rm-node-time">${node.time}</span>`;
-  }
-  if (isTrunk && hasChildren) {
-    innerHtml += `<div class="dsa-rm-expand-dot" id="dsa-rm-exp-${sNum}"></div>`;
-  }
-
-  el.innerHTML = innerHtml;
-
-  el.addEventListener('click', (e) => {
+  el.addEventListener('click', e => {
     e.stopPropagation();
-    if (isTrunk && hasChildren) {
-      dsaRmToggleSection(sNum, el);
-    } else {
-      dsaRmOpenSheet(node.id);
-    }
+    if (isTrunk && hasKids) toggleSection(sNum);
+    else openSheet(node.id);
   });
-
   if (isTrunk) {
-    let longPressTimer = null;
-    el.addEventListener('touchstart', () => {
-      longPressTimer = setTimeout(() => dsaRmOpenSheet(node.id), 500);
-    }, { passive: true });
-    el.addEventListener('touchend', () => clearTimeout(longPressTimer), { passive: true });
-    el.addEventListener('touchmove', () => clearTimeout(longPressTimer), { passive: true });
+    let lpt = null;
+    el.addEventListener('touchstart', () => { lpt = setTimeout(() => openSheet(node.id), 500); }, {passive:true});
+    el.addEventListener('touchend',   () => clearTimeout(lpt), {passive:true});
+    el.addEventListener('touchmove',  () => clearTimeout(lpt), {passive:true});
   }
-
   return el;
 }
 
-function dsaRmToggleSection(sNum, trunkEl) {
-  dsaRmExpanded[sNum] = !dsaRmExpanded[sNum];
-  const childrenWrap = document.getElementById(`dsa-rm-children-${sNum}`);
-  const expDot = document.getElementById(`dsa-rm-exp-${sNum}`);
-
-  if (childrenWrap) {
-    if (dsaRmExpanded[sNum]) {
-      childrenWrap.style.display = 'flex';
-      childrenWrap.style.animation = 'dsa-rm-fadeIn 0.2s ease';
-      if (expDot) expDot.classList.remove('dsa-rm-collapsed');
-    } else {
-      childrenWrap.style.display = 'none';
-      if (expDot) expDot.classList.add('dsa-rm-collapsed');
-    }
+// ── Toggle ───────────────────────────────────────────────────────
+function toggleSection(sNum) {
+  expanded[sNum] = !expanded[sNum];
+  const wrap = document.getElementById(`children-${sNum}`);
+  const dot  = document.getElementById(`exp-${sNum}`);
+  if (!wrap) return;
+  if (expanded[sNum]) {
+    wrap.style.display = 'flex';
+    requestAnimationFrame(() => wrap.classList.add('open'));
+    if (dot) dot.classList.add('open');
+  } else {
+    wrap.classList.remove('open');
+    if (dot) dot.classList.remove('open');
+    setTimeout(() => { if (!expanded[sNum]) wrap.style.display = 'none'; }, 220);
   }
-
-  requestAnimationFrame(() => dsaRmDrawLines());
+  requestAnimationFrame(drawLines);
 }
 
-function dsaRmDrawLines() {
-  const container = document.getElementById('dsa-rm-graph');
-  const svgLayer = document.getElementById('dsa-rm-svg-layer');
-  if (!svgLayer || !container) return;
-
-  const graphRect = container.getBoundingClientRect();
-  const totalHeight = container.scrollHeight;
-  svgLayer.setAttribute('width', graphRect.width);
-  svgLayer.setAttribute('height', totalHeight);
-  svgLayer.setAttribute('viewBox', `0 0 ${graphRect.width} ${totalHeight}`);
-
-  svgLayer.innerHTML = '';
+// ── SVG Lines ────────────────────────────────────────────────────
+function drawLines() {
+  const container = document.getElementById('graph');
+  const svgEl     = document.getElementById('svg-layer');
+  if (!svgEl || !container) return;
+  const gRect = container.getBoundingClientRect();
+  const totalH = container.scrollHeight;
+  svgEl.setAttribute('width', gRect.width);
+  svgEl.setAttribute('height', totalH);
+  svgEl.setAttribute('viewBox', `0 0 ${gRect.width} ${totalH}`);
+  svgEl.innerHTML = '';
 
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  defs.innerHTML = `
-    <marker id="dsa-rm-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L6,3 z" fill="#2a2a4a"/>
-    </marker>
-  `;
-  svgLayer.appendChild(defs);
+  defs.innerHTML = `<marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#2a2a4a"/></marker>`;
+  svgEl.appendChild(defs);
 
-  const getNodePoints = (el) => {
+  const pts = el => {
     if (!el) return null;
-    const rect = el.getBoundingClientRect();
-    const scrollTop = container.scrollTop;
-    const top = rect.top - graphRect.top + scrollTop;
-    const left = rect.left - graphRect.left;
-    const width = rect.width;
-    const height = rect.height;
-    return {
-      top, bottom: top + height, left, right: left + width,
-      centerX: left + width / 2, centerY: top + height / 2,
-      topCenter: { x: left + width / 2, y: top },
-      bottomCenter: { x: left + width / 2, y: top + height },
-      midLeft: { x: left, y: top + height / 2 },
-      midRight: { x: left + width, y: top + height / 2 }
+    const r = el.getBoundingClientRect();
+    const st = container.scrollTop;
+    const t = r.top - gRect.top + st;
+    return { top:t, bottom:t+r.height, left:r.left-gRect.left, right:r.left-gRect.left+r.width,
+      centerX:r.left-gRect.left+r.width/2, centerY:t+r.height/2,
+      topC:{x:r.left-gRect.left+r.width/2,y:t},
+      botC:{x:r.left-gRect.left+r.width/2,y:t+r.height},
+      midL:{x:r.left-gRect.left,y:t+r.height/2},
+      midR:{x:r.left-gRect.left+r.width,y:t+r.height/2}
     };
   };
 
-  const makePath = (d, color = '#2a2a4a', dashArray = '') => {
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('stroke', color);
-    path.setAttribute('stroke-width', '1.5');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('marker-end', 'url(#dsa-rm-arrow)');
-    if (dashArray) path.setAttribute('stroke-dasharray', dashArray);
-    return path;
+  const mkPath = (d, col='#2a2a4a', dash='') => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d',d); p.setAttribute('stroke',col); p.setAttribute('stroke-width','1.5');
+    p.setAttribute('fill','none'); p.setAttribute('marker-end','url(#arr)');
+    if (dash) p.setAttribute('stroke-dasharray',dash);
+    return p;
   };
 
   const sections = {};
-  DSA_RM_NODES.forEach(node => {
-    if (!sections[node.section]) sections[node.section] = [];
-    sections[node.section].push(node);
-  });
+  NODES.forEach(n => { if (!sections[n.section]) sections[n.section]=[]; sections[n.section].push(n); });
+  const sNums = Object.keys(sections).map(Number).sort((a,b)=>a-b);
+  const trunkEls = sNums.map(s => { const m = sections[s].find(n=>n.isMain); return m ? document.getElementById(`node-${m.id}`) : null; }).filter(Boolean);
 
-  const sectionNums = Object.keys(sections).map(Number).sort((a, b) => a - b);
-
-  const trunkEls = sectionNums.map(sNum => {
-    const mainNode = sections[sNum].find(n => n.isMain);
-    return mainNode ? document.getElementById(`dsa-rm-node-${mainNode.id}`) : null;
-  }).filter(Boolean);
-
-  for (let i = 0; i < trunkEls.length - 1; i++) {
-    const fromPts = getNodePoints(trunkEls[i]);
-    const toPts = getNodePoints(trunkEls[i + 1]);
-    if (!fromPts || !toPts) continue;
-
-    const x = fromPts.bottomCenter.x;
-    const y1 = fromPts.bottomCenter.y;
-    const y2 = toPts.topCenter.y;
-
-    if (y2 > y1) {
-      const spineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      spineEl.setAttribute('x1', x); spineEl.setAttribute('y1', y1);
-      spineEl.setAttribute('x2', x); spineEl.setAttribute('y2', y2);
-      spineEl.setAttribute('stroke', 'rgba(99,102,241,0.2)');
-      spineEl.setAttribute('stroke-width', '2');
-      spineEl.setAttribute('stroke-dasharray', '4 4');
-      svgLayer.appendChild(spineEl);
-    }
+  for (let i=0; i<trunkEls.length-1; i++) {
+    const f = pts(trunkEls[i]), t2 = pts(trunkEls[i+1]);
+    if (!f||!t2||t2.top<=f.bottom) continue;
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',f.botC.x); ln.setAttribute('y1',f.botC.y);
+    ln.setAttribute('x2',t2.topC.x); ln.setAttribute('y2',t2.topC.y);
+    ln.setAttribute('stroke','rgba(99,102,241,0.2)'); ln.setAttribute('stroke-width','2');
+    ln.setAttribute('stroke-dasharray','4 4'); svgEl.appendChild(ln);
   }
 
-  sectionNums.forEach(sNum => {
-    if (!dsaRmExpanded[sNum]) return;
-
-    const sectionNodes = sections[sNum];
-    const mainNode = sectionNodes.find(n => n.isMain);
-    const children = sectionNodes.filter(n => !n.isMain);
-    if (!mainNode || children.length === 0) return;
-
-    const trunkEl = document.getElementById(`dsa-rm-node-${mainNode.id}`);
-    const trunkPts = getNodePoints(trunkEl);
-    if (!trunkPts) return;
-
-    children.forEach((child, i) => {
-      const childEl = document.getElementById(`dsa-rm-node-${child.id}`);
-      if (!childEl) return;
-      const childPts = getNodePoints(childEl);
-      if (!childPts) return;
-
-      const isLeft = (i % 2 === 0);
-      const childBorderStyle = DSA_RM_BORDER_STYLES[child.border] || DSA_RM_BORDER_STYLES.dashed;
-      const connColor = '#2a2a4a';
-
-      const fromX = isLeft ? trunkPts.midLeft.x : trunkPts.midRight.x;
-      const fromY = trunkPts.centerY;
-      const toX = isLeft ? childPts.midRight.x : childPts.midLeft.x;
-      const toY = childPts.centerY;
-
-      const midX = (fromX + toX) / 2;
-      const isDashed = child.border === 'dashed';
-
-      if (Math.abs(fromY - toY) > 5) {
-        const d = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`;
-        svgLayer.appendChild(makePath(d, connColor, isDashed ? '5 3' : ''));
-      } else {
-        const d = `M ${fromX} ${fromY} H ${toX}`;
-        svgLayer.appendChild(makePath(d, connColor, isDashed ? '5 3' : ''));
-      }
+  sNums.forEach(sNum => {
+    if (!expanded[sNum]) return;
+    const sNodes = sections[sNum];
+    const main = sNodes.find(n=>n.isMain);
+    const kids = sNodes.filter(n=>!n.isMain);
+    if (!main||!kids.length) return;
+    const tp = pts(document.getElementById(`node-${main.id}`));
+    if (!tp) return;
+    kids.forEach((k,i) => {
+      const kp = pts(document.getElementById(`node-${k.id}`));
+      if (!kp) return;
+      const isLeft = (i%2===0);
+      const fx = isLeft ? tp.midL.x : tp.midR.x;
+      const tx = isLeft ? kp.midR.x : kp.midL.x;
+      const midX = (fx+tx)/2;
+      const dash = k.border==='dashed' ? '5 3' : '';
+      const d = Math.abs(tp.centerY-kp.centerY)>5
+        ? `M ${fx} ${tp.centerY} H ${midX} V ${kp.centerY} H ${tx}`
+        : `M ${fx} ${tp.centerY} H ${tx}`;
+      svgEl.appendChild(mkPath(d,'#2a2a4a',dash));
     });
   });
 }
 
-function dsaRmApplyProgress() {
-  let doneCount = 0;
-  const totalCount = DSA_RM_NODES.length;
-
-  DSA_RM_NODES.forEach(node => {
-    const el = document.getElementById(`dsa-rm-node-${node.id}`);
-    const badge = document.getElementById(`dsa-rm-badge-${node.id}`);
-    if (!el) return;
-
-    el.classList.remove('dsa-rm-done', 'dsa-rm-inprogress', 'dsa-rm-skip');
-    if (badge) badge.innerHTML = '';
-
-    const prog = dsaRmProgress[node.id];
-    if (!prog) return;
-
-    if (prog.status === 'done') {
-      doneCount++;
-      el.classList.add('dsa-rm-done');
-      if (badge) badge.innerHTML = `<span class="dsa-rm-done-badge">✓</span>`;
-    } else if (prog.status === 'progress') {
-      el.classList.add('dsa-rm-inprogress');
-      if (badge) badge.innerHTML = `<span class="dsa-rm-progress-ring"></span>`;
-    } else if (prog.status === 'skip') {
-      el.classList.add('dsa-rm-skip');
-      if (badge) badge.innerHTML = `<span class="dsa-rm-skip-badge">→</span>`;
-    }
-  });
-
-  const progText = document.getElementById('dsa-rm-prog-text');
-  if (progText) progText.textContent = `${doneCount} / ${totalCount} done`;
-
-  const bar = document.getElementById('dsa-rm-progress-bar');
-  if (bar) {
-    const pct = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
-    bar.style.width = `${pct}%`;
-  }
-}
-
-// Inject dynamic CSS for status badges and node states
-(function dsaRmInjectStyles() {
-  if (document.getElementById('dsa-rm-dynamic-styles')) return;
-  const s = document.createElement('style');
-  s.id = 'dsa-rm-dynamic-styles';
-  s.textContent = `
-    /* ── DSA RM: Graph container ─────────────────────────────── */
-    #dsa-rm-wrap {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      background: #05050f;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Make the tab panel itself a flex column */
-    #tab-dsa-rm {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: #05050f;
-      overflow: hidden;
-    }
-    #tab-dsa-rm.active {
-      display: flex !important;
-    }
-
-    /* ── Header ───────────────────────────────────────────────── */
-    #dsa-rm-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px 10px;
-      background: #0c0c1a;
-      border-bottom: 2px solid transparent;
-      border-image: linear-gradient(90deg, transparent, #6366f1, transparent) 1;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      flex-shrink: 0;
-    }
-    #dsa-rm-back-btn {
-      display: flex; align-items: center; gap: 5px;
-      background: none; border: none; color: #8080a8;
-      font-size: 13px; cursor: pointer; padding: 4px 8px;
-      border-radius: 6px; font-family: var(--font-mono, monospace);
-    }
-    #dsa-rm-back-btn:hover { background: rgba(99,102,241,0.1); color: #f0f0ff; }
-    #dsa-rm-header-title {
-      font-family: var(--font-mono, monospace);
-      font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
-      color: #6366f1;
-    }
-    #dsa-rm-prog-pill {
-      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
-      border-radius: 20px; padding: 3px 10px;
-      font-family: var(--font-mono, monospace); font-size: 11px; color: #a5b4fc;
-    }
-
-    /* ── Legend bar ────────────────────────────────────────────── */
-    #dsa-rm-legend {
-      display: flex; flex-wrap: wrap; gap: 6px 12px;
-      padding: 8px 14px;
-      background: #0a0a18;
-      border-bottom: 1px solid rgba(99,102,241,0.1);
-      flex-shrink: 0;
-    }
-    .dsa-rm-legend-item {
-      display: flex; align-items: center; gap: 5px;
-      font-family: var(--font-mono, monospace); font-size: 10px; color: #8080a8;
-    }
-    .dsa-rm-legend-dot {
-      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
-    }
-    .dsa-rm-legend-dot.dashed {
-      border-radius: 50%; border: 1.5px dashed #8080a8; background: transparent;
-    }
-
-    /* ── Scrollable graph area ─────────────────────────────────── */
-    #dsa-rm-graph {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      padding: 16px 12px 80px;
-      position: relative;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* ── SVG overlay ─────────────────────────────────────────── */
-    .dsa-rm-svg-layer {
-      position: absolute; top: 0; left: 0;
-      pointer-events: none; z-index: 1; overflow: visible;
-    }
-
-    /* ── Section label ───────────────────────────────────────── */
-    .dsa-rm-section-label {
-      display: flex; align-items: center; gap: 8px;
-      margin: 20px 0 10px; position: relative; z-index: 2;
-    }
-    .dsa-rm-section-num {
-      font-family: var(--font-mono, monospace); font-size: 10px;
-      color: #6366f1; font-weight: 700; letter-spacing: 1px;
-    }
-    .dsa-rm-section-title-text {
-      font-family: var(--font-mono, monospace); font-size: 9px;
-      color: #8080a8; letter-spacing: 1.2px; font-weight: 600;
-    }
-    .dsa-rm-section-line {
-      flex: 1; height: 1px; background: rgba(99,102,241,0.15);
-    }
-    .dsa-rm-section-mini-prog {
-      font-family: var(--font-mono, monospace); font-size: 9px;
-      color: rgba(99,102,241,0.6);
-    }
-
-    /* ── Section block ────────────────────────────────────────── */
-    .dsa-rm-section-block {
-      display: flex; flex-direction: column;
-      align-items: center; position: relative; z-index: 2;
-    }
-    .dsa-rm-trunk-row {
-      display: flex; justify-content: center; width: 100%;
-    }
-    .dsa-rm-connector-wrap {
-      display: flex; justify-content: center; width: 100%;
-    }
-    .dsa-rm-v-line {
-      width: 2px; background: rgba(99,102,241,0.15);
-    }
-
-    /* ── Children layout ─────────────────────────────────────── */
-    .dsa-rm-children-wrap {
-      display: flex; flex-direction: row; gap: 10px;
-      width: 100%; margin-top: 10px; justify-content: center;
-      position: relative; z-index: 2;
-    }
-    .dsa-rm-child-col {
-      display: flex; flex-direction: column; gap: 8px;
-      flex: 1; max-width: calc(50% - 5px);
-    }
-    .dsa-rm-child-left { align-items: flex-end; }
-    .dsa-rm-child-right { align-items: flex-start; }
-
-    /* ── Expand dot ───────────────────────────────────────────── */
-    .dsa-rm-expand-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(99,102,241,0.5); margin: 4px auto 0;
-      transition: transform 0.2s; flex-shrink: 0;
-    }
-    .dsa-rm-expand-dot.dsa-rm-collapsed {
-      transform: rotate(180deg); opacity: 0.35;
-    }
-
-    /* ── Node base ────────────────────────────────────────────── */
-    .dsa-rm-node {
-      position: relative; border-radius: 10px; cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 3px;
-      -webkit-tap-highlight-color: transparent; user-select: none;
-    }
-    .dsa-rm-node:active { transform: scale(0.97); }
-    .dsa-rm-trunk {
-      padding: 10px 18px 12px; min-width: 160px; max-width: 260px;
-      width: auto; text-align: center;
-    }
-    .dsa-rm-child {
-      padding: 7px 12px; min-width: 100px; max-width: 160px;
-      width: 100%; text-align: center; border-radius: 8px;
-    }
-    .dsa-rm-node-label {
-      font-family: var(--font-mono, monospace); font-size: 12px;
-      font-weight: 700; letter-spacing: 0.2px; line-height: 1.3;
-      pointer-events: none; display: block; width: 100%;
-    }
-    .dsa-rm-trunk .dsa-rm-node-label { font-size: 13px; letter-spacing: 0.3px; }
-    .dsa-rm-node-time {
-      font-family: var(--font-mono, monospace); font-size: 9px;
-      color: rgba(99,102,241,0.55); letter-spacing: 0.3px;
-      pointer-events: none; margin-top: 1px;
-    }
-
-    /* ── Congrats node ────────────────────────────────────────── */
-    .dsa-rm-node-congrats {
-      background: linear-gradient(135deg, #051a10, #0f0520) !important;
-      border: 2px solid #10b981 !important;
-      box-shadow: 0 0 20px rgba(16,185,129,0.2), 0 0 40px rgba(99,102,241,0.1) !important;
-      padding: 14px 24px 16px !important;
-    }
-    .dsa-rm-node-congrats .dsa-rm-node-label {
-      background: linear-gradient(90deg, #10b981, #6366f1);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; font-size: 15px !important;
-    }
-
-    /* ── Status badge ─────────────────────────────────────────── */
-    .dsa-rm-node-status-badge {
-      position: absolute; top: 4px; right: 4px; z-index: 3; pointer-events: none;
-    }
-    .dsa-rm-done-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 16px; height: 16px;
-      background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5);
-      border-radius: 50%; color: #6ee7b7; font-size: 9px; font-weight: 800;
-      font-family: var(--font-mono, monospace);
-    }
-    .dsa-rm-skip-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 16px; height: 16px;
-      background: rgba(128,128,168,0.12); border: 1px solid rgba(128,128,168,0.3);
-      border-radius: 50%; color: #8080a8; font-size: 9px; font-weight: 800;
-      font-family: var(--font-mono, monospace);
-    }
-    .dsa-rm-progress-ring {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(99,102,241,0.2); border-top-color: #6366f1;
-      border-radius: 50%; animation: dsa-rm-spin 1.2s linear infinite;
-    }
-    @keyframes dsa-rm-spin { to { transform: rotate(360deg); } }
-
-    /* ── Node state classes ───────────────────────────────────── */
-    .dsa-rm-node.dsa-rm-done {
-      border-color: rgba(16,185,129,0.6) !important;
-      background: rgba(16,185,129,0.05) !important;
-    }
-    .dsa-rm-node.dsa-rm-inprogress {
-      box-shadow: 0 0 0 2px rgba(99,102,241,0.3), 0 0 12px rgba(99,102,241,0.15) !important;
-    }
-    .dsa-rm-node.dsa-rm-skip {
-      opacity: 0.45; filter: saturate(0.3);
-    }
-
-    /* ── Progress bar ─────────────────────────────────────────── */
-    #dsa-rm-progress-track {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: 3px; background: rgba(99,102,241,0.1);
-      z-index: 100;
-    }
-    #dsa-rm-progress-bar {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, #6366f1, #10b981);
-      transition: width 0.4s ease;
-    }
-
-    /* ── Overlay ──────────────────────────────────────────────── */
-    #dsa-rm-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
-      z-index: 200; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    #dsa-rm-overlay.dsa-rm-visible {
-      opacity: 1; pointer-events: all;
-    }
-
-    /* ── Bottom sheet ─────────────────────────────────────────── */
-    #dsa-rm-sheet {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: #0c0c1a; border-top: 1px solid rgba(99,102,241,0.25);
-      border-radius: 16px 16px 0 0;
-      max-height: 85vh; overflow-y: auto;
-      z-index: 300;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-      padding-bottom: env(safe-area-inset-bottom, 12px);
-    }
-    #dsa-rm-sheet.dsa-rm-sheet-open {
-      transform: translateY(0);
-    }
-    .dsa-rm-sheet-handle {
-      width: 36px; height: 4px; background: rgba(99,102,241,0.3);
-      border-radius: 2px; margin: 10px auto 0; flex-shrink: 0;
-    }
-    .dsa-rm-sheet-top {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 12px 16px 0;
-    }
-    .dsa-rm-sheet-close {
-      background: none; border: none; color: #8080a8;
-      font-size: 20px; cursor: pointer; line-height: 1;
-      padding: 0 4px; margin-top: -2px;
-    }
-    .dsa-rm-sheet-close:hover { color: #f0f0ff; }
-    .dsa-rm-sheet-meta { display: flex; flex-direction: column; gap: 4px; }
-    #dsa-rm-sheet-difficulty {
-      display: inline-block; padding: 2px 8px; border-radius: 4px;
-      font-family: var(--font-mono, monospace); font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
-    }
-    #dsa-rm-sheet-difficulty.beginner { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-    #dsa-rm-sheet-difficulty.intermediate { background: rgba(59,130,246,0.15); color: #93c5fd; }
-    #dsa-rm-sheet-difficulty.advanced { background: rgba(168,85,247,0.15); color: #d8b4fe; }
-    #dsa-rm-sheet-difficulty.optional { background: rgba(128,128,168,0.15); color: #8080a8; }
-    #dsa-rm-sheet-title {
-      font-family: var(--font-mono, monospace); font-size: 16px; font-weight: 700;
-      color: #f0f0ff; margin-top: 4px; line-height: 1.2;
-    }
-    .dsa-rm-sheet-time-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 20px; padding: 3px 10px; margin-top: 4px;
-      font-family: var(--font-mono, monospace); font-size: 10px; color: #a5b4fc;
-    }
-    .dsa-rm-sheet-body {
-      padding: 14px 16px 8px;
-    }
-    .dsa-rm-sheet-section-title {
-      font-family: var(--font-mono, monospace); font-size: 9px;
-      font-weight: 700; letter-spacing: 1.2px; color: #6366f1;
-      margin: 14px 0 6px; text-transform: uppercase;
-    }
-    #dsa-rm-sheet-why {
-      font-size: 13px; line-height: 1.65; color: #8080a8;
-    }
-    #dsa-rm-sheet-learn {
-      list-style: none; padding: 0; margin: 0;
-      display: flex; flex-direction: column; gap: 5px;
-    }
-    #dsa-rm-sheet-learn li {
-      font-size: 12px; color: #c8c8e8; padding: 5px 0 5px 12px;
-      border-left: 2px solid rgba(99,102,241,0.3); line-height: 1.5;
-    }
-    #dsa-rm-sheet-prereq {
-      font-size: 12px; color: #8080a8; line-height: 1.5;
-    }
-    .dsa-rm-sheet-practice-row {
-      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;
-    }
-    .dsa-rm-sheet-link-btn {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3);
-      background: rgba(99,102,241,0.08); color: #a5b4fc;
-      font-family: var(--font-mono, monospace); font-size: 11px; font-weight: 600;
-      cursor: pointer; text-decoration: none; transition: background 0.15s;
-    }
-    .dsa-rm-sheet-link-btn:hover { background: rgba(99,102,241,0.18); color: #f0f0ff; }
-    .dsa-rm-sheet-link-btn.lc { border-color: rgba(255,161,22,0.3); background: rgba(255,161,22,0.07); color: #fbbf24; }
-    .dsa-rm-sheet-link-btn.cf { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.07); color: #93c5fd; }
-    .dsa-rm-sheet-link-btn.yt { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.07); color: #fca5a5; }
-    .dsa-rm-sheet-link-btn.docs { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.07); color: #6ee7b7; }
-
-    /* Status buttons */
-    .dsa-rm-status-row {
-      display: flex; gap: 8px; margin-top: 16px; padding-bottom: 10px;
-    }
-    .dsa-rm-status-btn {
-      flex: 1; padding: 9px 6px; border-radius: 10px; border: 1px solid rgba(99,102,241,0.2);
-      background: rgba(99,102,241,0.06); color: #8080a8;
-      font-family: var(--font-mono, monospace); font-size: 11px; font-weight: 600;
-      cursor: pointer; text-align: center; transition: all 0.15s;
-    }
-    .dsa-rm-status-btn:hover { border-color: rgba(99,102,241,0.4); color: #f0f0ff; }
-    .dsa-rm-status-btn.dsa-rm-active-status { color: #f0f0ff; }
-    #dsa-rm-btn-done.dsa-rm-active-status {
-      background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.5); color: #6ee7b7;
-    }
-    #dsa-rm-btn-progress.dsa-rm-active-status {
-      background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); color: #a5b4fc;
-    }
-    #dsa-rm-btn-skip.dsa-rm-active-status {
-      background: rgba(128,128,168,0.12); border-color: rgba(128,128,168,0.4); color: #8080a8;
-    }
-
-    /* Toast */
-    #dsa-rm-toast {
-      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(16px);
-      background: rgba(20,20,40,0.95); border: 1px solid rgba(99,102,241,0.3);
-      border-radius: 8px; padding: 8px 16px;
-      font-family: var(--font-mono, monospace); font-size: 12px; color: #a5b4fc;
-      z-index: 400; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;
-    }
-    #dsa-rm-toast.dsa-rm-toast-show {
-      opacity: 1; transform: translateX(-50%) translateY(0);
-    }
-
-    /* Fade-in animation */
-    @keyframes dsa-rm-fadeIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  `;
-  document.head.appendChild(s);
-})();
-
-
-// ─────────────────────────────────────────────────────────────
-// § 5 — BOTTOM SHEET & PROGRESS LOGIC
-// ─────────────────────────────────────────────────────────────
-
-function dsaRmOpenSheet(nodeId) {
-  const node = DSA_RM_NODES.find(n => n.id === nodeId);
+// ── Open Sheet ───────────────────────────────────────────────────
+function openSheet(nodeId) {
+  const node = NODES.find(n => n.id === nodeId);
   if (!node) return;
+  activeNode = nodeId;
 
-  window._dsaRmActiveNode = nodeId;
+  const DIFF_MAP = {
+    BEGINNER:     {cls:'beginner'},
+    INTERMEDIATE: {cls:'intermediate'},
+    ADVANCED:     {cls:'advanced'},
+    OPTIONAL:     {cls:'optional'}
+  };
+  const dc = DIFF_MAP[(node.difficulty||'BEGINNER').toUpperCase()] || DIFF_MAP.BEGINNER;
 
-  const sheet   = document.getElementById('dsa-rm-sheet');
-  const overlay = document.getElementById('dsa-rm-overlay');
-  if (!sheet || !overlay) return;
+  const diffEl = document.getElementById('s-diff');
+  diffEl.textContent = (node.difficulty||'BEGINNER').toUpperCase();
+  diffEl.className = `diff-badge ${dc.cls}`;
 
-  // Difficulty badge
-  const diffEl = document.getElementById('dsa-rm-sheet-difficulty');
-  if (diffEl) {
-    const diff = (node.difficulty || 'BEGINNER').toUpperCase();
-    const diffClass = { BEGINNER: 'beginner', INTERMEDIATE: 'intermediate', ADVANCED: 'advanced', OPTIONAL: 'optional' }[diff] || 'beginner';
-    diffEl.textContent = diff;
-    diffEl.className = `dsa-rm-sheet-difficulty ${diffClass}`;
-  }
+  document.getElementById('s-title').textContent = node.special ? '🎉 DSA Master!' : node.label;
+  document.getElementById('s-time').textContent   = node.time || '—';
+  document.getElementById('s-why').textContent    = node.whyMatters || '';
+  document.getElementById('s-prereq').textContent = node.prerequisites || 'None';
 
-  // Title
-  const titleEl = document.getElementById('dsa-rm-sheet-title');
-  if (titleEl) titleEl.textContent = node.special ? '🎉 DSA Master!' : node.label;
+  const learnEl = document.getElementById('s-learn');
+  learnEl.innerHTML = (node.learn||[]).map(x=>`<li>${x}</li>`).join('');
 
-  // Time badge
-  const timeEl = document.getElementById('dsa-rm-sheet-time-text');
-  if (timeEl) timeEl.textContent = node.time || '—';
+  const lcBtn = document.getElementById('s-lc');
+  lcBtn.onclick = () => node.leetcodeUrl && window.open(node.leetcodeUrl, '_blank', 'noopener');
+  lcBtn.style.display = node.leetcodeUrl ? '' : 'none';
 
-  // Why this matters
-  const whyEl = document.getElementById('dsa-rm-sheet-why');
-  if (whyEl) whyEl.textContent = node.whyMatters || '';
+  const cfBtn = document.getElementById('s-cf');
+  cfBtn.style.display = node.codeforcesUrl ? '' : 'none';
+  if (node.codeforcesUrl) cfBtn.onclick = () => window.open(node.codeforcesUrl, '_blank', 'noopener');
 
-  // Learn bullets
-  const learnEl = document.getElementById('dsa-rm-sheet-learn');
-  if (learnEl) {
-    learnEl.innerHTML = '';
-    (Array.isArray(node.learn) ? node.learn : []).forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      learnEl.appendChild(li);
-    });
-  }
+  document.getElementById('s-yt').onclick  = () => window.open(`https://youtube.com/results?search_query=${encodeURIComponent(node.youtubeQuery||node.label+' tutorial')}`,'_blank','noopener');
+  const docBtn = document.getElementById('s-doc');
+  docBtn.onclick = () => node.docsUrl && window.open(node.docsUrl, '_blank', 'noopener');
+  docBtn.style.opacity = node.docsUrl ? '1' : '0.4';
 
-  // Prerequisites
-  const prereqEl = document.getElementById('dsa-rm-sheet-prereq');
-  if (prereqEl) prereqEl.textContent = node.prerequisites || 'None';
-
-  // LeetCode button
-  const lcBtn = document.getElementById('dsa-rm-sheet-leetcode');
-  if (lcBtn) {
-    lcBtn.onclick = () => { if (node.leetcodeUrl) window.open(node.leetcodeUrl, '_blank', 'noopener'); };
-    lcBtn.style.display = node.leetcodeUrl ? '' : 'none';
-  }
-
-  // Codeforces button
-  const cfBtn = document.getElementById('dsa-rm-sheet-codeforces');
-  if (cfBtn) {
-    cfBtn.style.display = node.codeforcesUrl ? '' : 'none';
-    if (node.codeforcesUrl) {
-      cfBtn.onclick = () => window.open(node.codeforcesUrl, '_blank', 'noopener');
-    }
-  }
-
-  // YouTube button
-  const ytBtn = document.getElementById('dsa-rm-sheet-youtube');
-  if (ytBtn) {
-    ytBtn.onclick = () => {
-      const query = encodeURIComponent(node.youtubeQuery || node.label + ' tutorial');
-      window.open('https://www.youtube.com/results?search_query=' + query, '_blank', 'noopener');
-    };
-  }
-
-  // Docs button
-  const docsBtn = document.getElementById('dsa-rm-sheet-docs');
-  if (docsBtn) {
-    docsBtn.onclick = () => { if (node.docsUrl) window.open(node.docsUrl, '_blank', 'noopener'); };
-    docsBtn.style.opacity = node.docsUrl ? '1' : '0.4';
-    docsBtn.style.pointerEvents = node.docsUrl ? '' : 'none';
-  }
-
-  dsaRmRefreshStatusButtons(nodeId);
-
-  overlay.classList.add('dsa-rm-visible');
-  sheet.classList.add('dsa-rm-sheet-open');
-  requestAnimationFrame(() => { sheet.scrollTop = 0; });
+  refreshStatusBtns(nodeId);
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('sheet').scrollTop = 0;
   document.body.style.overflow = 'hidden';
 }
 
-function dsaRmCloseSheet() {
-  const sheet   = document.getElementById('dsa-rm-sheet');
-  const overlay = document.getElementById('dsa-rm-overlay');
-  if (sheet)   sheet.classList.remove('dsa-rm-sheet-open');
-  if (overlay) overlay.classList.remove('dsa-rm-visible');
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('sheet').classList.remove('open');
   document.body.style.overflow = '';
-  setTimeout(() => {
-    if (!sheet || !sheet.classList.contains('dsa-rm-sheet-open')) {
-      window._dsaRmActiveNode = null;
+  activeNode = null;
+}
+
+// ── Status ───────────────────────────────────────────────────────
+window.setStatus = function(status) {
+  if (!activeNode) return;
+  const cur = progress[activeNode]?.status;
+  if (cur === status) delete progress[activeNode];
+  else progress[activeNode] = { status, doneAt: new Date().toISOString() };
+  saveProgress(); applyProgress(); refreshStatusBtns(activeNode);
+  if (cur !== status) showToast(status==='done'?'✓ Marked complete!':status==='progress'?'⚡ In Progress':'→ Skipped');
+  else showToast('↩ Unmarked');
+};
+
+function refreshStatusBtns(nodeId) {
+  const s = progress[nodeId]?.status;
+  document.getElementById('sb-done').className     = 'st-btn'+(s==='done'?     ' active-done':'');
+  document.getElementById('sb-progress').className = 'st-btn'+(s==='progress'?' active-progress':'');
+  document.getElementById('sb-skip').className     = 'st-btn'+(s==='skip'?     ' active-skip':'');
+}
+
+// ── Apply Progress ───────────────────────────────────────────────
+function applyProgress() {
+  let done = 0;
+  NODES.forEach(node => {
+    const el  = document.getElementById(`node-${node.id}`);
+    const bdg = document.getElementById(`badge-${node.id}`);
+    if (!el) return;
+    el.classList.remove('node-done','node-progress','node-skip');
+    if (bdg) bdg.innerHTML = '';
+    const p = progress[node.id];
+    if (!p) return;
+    if (p.status === 'done') {
+      done++;
+      el.classList.add('node-done');
+      if (bdg) bdg.innerHTML = '<span class="done-badge">✓</span>';
+    } else if (p.status === 'progress') {
+      el.classList.add('node-progress');
+      if (bdg) bdg.innerHTML = '<span class="progress-ring"></span>';
+    } else if (p.status === 'skip') {
+      el.classList.add('node-skip');
+      if (bdg) bdg.innerHTML = '<span class="skip-badge">→</span>';
     }
-  }, 350);
-}
-
-function dsaRmSetStatus(nodeId, status) {
-  if (!nodeId) return;
-
-  const existing = dsaRmProgress[nodeId];
-  const wasAlreadyThisStatus = existing && existing.status === status;
-
-  if (wasAlreadyThisStatus) {
-    delete dsaRmProgress[nodeId];
-  } else {
-    dsaRmProgress[nodeId] = { status, doneAt: new Date().toISOString() };
-  }
-
-  dsaRmSaveProgress();
-  dsaRmApplyProgress();
-  dsaRmRefreshStatusButtons(nodeId);
-
-  if (!wasAlreadyThisStatus && status === 'done') dsaRmShowToast('✓ Marked complete!');
-  else if (!wasAlreadyThisStatus && status === 'progress') dsaRmShowToast('⚡ In progress');
-  else if (!wasAlreadyThisStatus && status === 'skip') dsaRmShowToast('→ Skipped');
-  else if (wasAlreadyThisStatus && status === 'done') dsaRmShowToast('↩ Unmarked');
-}
-
-function dsaRmRefreshStatusButtons(nodeId) {
-  const prog = dsaRmProgress[nodeId];
-  const currentStatus = prog ? prog.status : null;
-
-  const btnDone     = document.getElementById('dsa-rm-btn-done');
-  const btnProgress = document.getElementById('dsa-rm-btn-progress');
-  const btnSkip     = document.getElementById('dsa-rm-btn-skip');
-
-  [btnDone, btnProgress, btnSkip].forEach(btn => { if (btn) btn.classList.remove('dsa-rm-active-status'); });
-
-  if (currentStatus === 'done'     && btnDone)     btnDone.classList.add('dsa-rm-active-status');
-  if (currentStatus === 'progress' && btnProgress) btnProgress.classList.add('dsa-rm-active-status');
-  if (currentStatus === 'skip'     && btnSkip)     btnSkip.classList.add('dsa-rm-active-status');
-}
-
-function dsaRmShowToast(msg) {
-  if (typeof APP !== 'undefined' && typeof APP.toast === 'function') {
-    APP.toast(msg); return;
-  }
-  const toast = document.getElementById('dsa-rm-toast');
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.add('dsa-rm-toast-show');
-  clearTimeout(toast._hideTimer);
-  toast._hideTimer = setTimeout(() => toast.classList.remove('dsa-rm-toast-show'), 1800);
-}
-
-// Swipe to dismiss
-(function dsaRmInitSwipe() {
-  const sheet = document.getElementById('dsa-rm-sheet');
-  if (!sheet) return;
-  let startY = 0, currentY = 0, isDragging = false, startScrollTop = 0;
-
-  sheet.addEventListener('touchstart', (e) => {
-    startScrollTop = sheet.scrollTop;
-    startY = e.touches[0].clientY; currentY = startY; isDragging = true;
-  }, { passive: true });
-
-  sheet.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    currentY = e.touches[0].clientY;
-    const deltaY = currentY - startY;
-    if (deltaY > 0 && startScrollTop <= 0) {
-      sheet.style.transform = `translateY(${Math.min(deltaY * 0.6, 200)}px)`;
-      sheet.style.transition = 'none';
-    }
-  }, { passive: true });
-
-  sheet.addEventListener('touchend', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    sheet.style.transition = '';
-    if ((currentY - startY) > 80 && startScrollTop <= 0) {
-      sheet.style.transform = '';
-      dsaRmCloseSheet();
-    } else {
-      sheet.style.transform = '';
-    }
-  }, { passive: true });
-
-  sheet.addEventListener('touchcancel', () => {
-    isDragging = false;
-    sheet.style.transform = ''; sheet.style.transition = '';
-  }, { passive: true });
-})();
-
-// Overlay click
-(function dsaRmInitOverlayClick() {
-  const overlay = document.getElementById('dsa-rm-overlay');
-  if (overlay) overlay.addEventListener('click', dsaRmCloseSheet);
-})();
-
-// Escape key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const sheet = document.getElementById('dsa-rm-sheet');
-    if (sheet && sheet.classList.contains('dsa-rm-sheet-open')) dsaRmCloseSheet();
-  }
-});
-
-
-// ─────────────────────────────────────────────────────────────
-// § 6 — BUILD THE HTML STRUCTURE (injects into dsa-sub-roadmap)
-// ─────────────────────────────────────────────────────────────
-function dsaRmBuildDOM() {
-  const panel = document.getElementById('tab-dsa-rm');
-  if (!panel) return;
-
-  // Already mounted
-  if (document.getElementById('dsa-rm-wrap')) return;
-
-  const wrap = document.createElement('div');
-  wrap.id = 'dsa-rm-wrap';
-  wrap.innerHTML = `
-    <!-- Header -->
-    <div id="dsa-rm-header">
-      <button id="dsa-rm-back-btn" onclick="APP.goBack()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Home
-      </button>
-      <div id="dsa-rm-header-title">DSA ROADMAP</div>
-      <div id="dsa-rm-prog-pill"><span id="dsa-rm-prog-text">0 / 0 done</span></div>
-    </div>
-
-    <!-- Legend -->
-    <div id="dsa-rm-legend">
-      <div class="dsa-rm-legend-item"><div class="dsa-rm-legend-dot" style="background:#10b981"></div>Foundation</div>
-      <div class="dsa-rm-legend-item"><div class="dsa-rm-legend-dot" style="background:#3b82f6"></div>Data Structures</div>
-      <div class="dsa-rm-legend-item"><div class="dsa-rm-legend-dot" style="background:#a855f7"></div>Algorithms</div>
-      <div class="dsa-rm-legend-item"><div class="dsa-rm-legend-dot" style="background:#f97316"></div>Advanced / Competitive</div>
-      <div class="dsa-rm-legend-item"><div class="dsa-rm-legend-dot dashed"></div>Optional</div>
-    </div>
-
-    <!-- Graph -->
-    <div id="dsa-rm-graph"></div>
-
-    <!-- Progress bar -->
-    <div id="dsa-rm-progress-track"><div id="dsa-rm-progress-bar"></div></div>
-
-    <!-- Toast -->
-    <div id="dsa-rm-toast"></div>
-
-    <!-- Overlay -->
-    <div id="dsa-rm-overlay"></div>
-
-    <!-- Bottom Sheet -->
-    <div id="dsa-rm-sheet" role="dialog" aria-modal="true">
-      <div class="dsa-rm-sheet-handle"></div>
-      <div class="dsa-rm-sheet-top">
-        <div class="dsa-rm-sheet-meta">
-          <div id="dsa-rm-sheet-difficulty" class="dsa-rm-sheet-difficulty beginner">BEGINNER</div>
-          <div id="dsa-rm-sheet-title">Node Title</div>
-          <div class="dsa-rm-sheet-time-badge">⏱ <span id="dsa-rm-sheet-time-text">—</span></div>
-        </div>
-        <button class="dsa-rm-sheet-close" onclick="dsaRmCloseSheet()">✕</button>
-      </div>
-
-      <div class="dsa-rm-sheet-body">
-        <div class="dsa-rm-sheet-section-title">WHY THIS MATTERS</div>
-        <div id="dsa-rm-sheet-why"></div>
-
-        <div class="dsa-rm-sheet-section-title">WHAT YOU'LL LEARN</div>
-        <ul id="dsa-rm-sheet-learn"></ul>
-
-        <div class="dsa-rm-sheet-section-title">PREREQUISITES</div>
-        <div id="dsa-rm-sheet-prereq"></div>
-
-        <div class="dsa-rm-sheet-section-title">PRACTICE PROBLEMS</div>
-        <div class="dsa-rm-sheet-practice-row">
-          <button class="dsa-rm-sheet-link-btn lc" id="dsa-rm-sheet-leetcode">⚡ LeetCode</button>
-          <button class="dsa-rm-sheet-link-btn cf" id="dsa-rm-sheet-codeforces">🔵 Codeforces</button>
-        </div>
-
-        <div class="dsa-rm-sheet-section-title">RESOURCES</div>
-        <div class="dsa-rm-sheet-practice-row">
-          <button class="dsa-rm-sheet-link-btn yt" id="dsa-rm-sheet-youtube">▶ YouTube</button>
-          <button class="dsa-rm-sheet-link-btn docs" id="dsa-rm-sheet-docs">📄 Docs</button>
-        </div>
-
-        <div class="dsa-rm-status-row">
-          <button class="dsa-rm-status-btn" id="dsa-rm-btn-done"
-            onclick="dsaRmSetStatus(window._dsaRmActiveNode, 'done')">✓ Done</button>
-          <button class="dsa-rm-status-btn" id="dsa-rm-btn-progress"
-            onclick="dsaRmSetStatus(window._dsaRmActiveNode, 'progress')">⚡ In Progress</button>
-          <button class="dsa-rm-status-btn" id="dsa-rm-btn-skip"
-            onclick="dsaRmSetStatus(window._dsaRmActiveNode, 'skip')">→ Skip</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  panel.appendChild(wrap);
-}
-
-
-// ─────────────────────────────────────────────────────────────
-// § 7 — INIT FUNCTION
-// ─────────────────────────────────────────────────────────────
-
-function dsaRmInit() {
-  dsaRmBuildDOM();
-  dsaRmRender();
-  dsaRmDrawLines();
-  dsaRmApplyProgress();
-
-  window.addEventListener('resize', () => {
-    clearTimeout(window._dsaRmResizeTimer);
-    window._dsaRmResizeTimer = setTimeout(dsaRmDrawLines, 150);
   });
-
-  const graph = document.getElementById('dsa-rm-graph');
-  if (graph) {
-    graph.addEventListener('scroll', () => {
-      clearTimeout(window._dsaRmScrollTimer);
-      window._dsaRmScrollTimer = setTimeout(dsaRmDrawLines, 80);
-    }, { passive: true });
-  }
+  const pill = document.getElementById('hdr-pill');
+  if (pill) pill.textContent = `${done} / ${NODES.length} done`;
+  const bar = document.getElementById('prog-bar-fill');
+  if (bar) bar.style.width = `${NODES.length?(done/NODES.length*100):0}%`;
+  document.querySelectorAll('.sec-prog').forEach(el => {
+    const sNum = parseInt(el.closest('.sec-label')?.querySelector('.sec-num')?.textContent?.replace('§','').trim());
+    if (!sNum) return;
+    const secNodes = NODES.filter(n=>n.section===sNum);
+    const secDone  = secNodes.filter(n=>progress[n.id]?.status==='done').length;
+    el.textContent = `${secDone}/${secNodes.length}`;
+  });
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// § 8 — GLOBAL EXPOSURES
-// ─────────────────────────────────────────────────────────────
-
-window.dsaRmCloseSheet = dsaRmCloseSheet;
-window.dsaRmOpenSheet  = dsaRmOpenSheet;
-window.dsaRmSetStatus  = dsaRmSetStatus;
-
-if (typeof window._dsaRmActiveNode === 'undefined') {
-  window._dsaRmActiveNode = null;
+// ── Toast ────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'),1800);
 }
 
+// ── Swipe to dismiss ─────────────────────────────────────────────
+(function() {
+  const sheet = document.getElementById('sheet');
+  let sy=0, cy=0, dragging=false, scrollTop=0;
+  sheet.addEventListener('touchstart', e=>{scrollTop=sheet.scrollTop;sy=cy=e.touches[0].clientY;dragging=true;},{passive:true});
+  sheet.addEventListener('touchmove', e=>{
+    if(!dragging)return; cy=e.touches[0].clientY;
+    const d=cy-sy;
+    if(d>0&&scrollTop<=0){sheet.style.transition='none';sheet.style.transform=`translateY(${Math.min(d*.6,200)}px)`;}
+  },{passive:true});
+  sheet.addEventListener('touchend', ()=>{
+    dragging=false; sheet.style.transition='';
+    if((cy-sy)>80&&scrollTop<=0){sheet.style.transform='';closeSheet();}
+    else sheet.style.transform='';
+  },{passive:true});
+  sheet.addEventListener('touchcancel',()=>{dragging=false;sheet.style.transform='';sheet.style.transition='';},{passive:true});
+})();
 
-// ─────────────────────────────────────────────────────────────
-// § 9 — BOOT (DOMContentLoaded guard)
-// ─────────────────────────────────────────────────────────────
+// ── Wire overlay + escape ────────────────────────────────────────
+document.getElementById('overlay').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSheet(); });
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', dsaRmInit);
-} else {
-  dsaRmInit();
-}
+// ── Resize / scroll redraw ───────────────────────────────────────
+window.addEventListener('resize', () => { clearTimeout(window._rst); window._rst = setTimeout(drawLines,150); });
+document.getElementById('graph').addEventListener('scroll', () => { clearTimeout(window._gst); window._gst = setTimeout(drawLines,80); }, {passive:true});
 
-})(); // end IIFE
+// ── Boot ─────────────────────────────────────────────────────────
+render();
+
+})();
+</script>
+</body>
+</html>

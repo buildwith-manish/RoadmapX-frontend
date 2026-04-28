@@ -1,24 +1,320 @@
-// ═══════════════════════════════════════════════════════════════
-// PART 6 OF 6 — ASSEMBLY & INIT
-// This is the COMPLETE <script> block for div#tab-ai-rm.
-// Replace the placeholder <script> from Part 1 with this entire file.
-//
-// Assembly order inside the IIFE:
-//   1. AI_RM_NODES  (Parts 2 + 3 merged)
-//   2. Progress state + save helper
-//   3. Expand state
-//   4. Rendering engine (Part 4)
-//   5. Bottom sheet logic (Part 5)
-//   6. aiRmInit() + DOMContentLoaded guard
-// ═══════════════════════════════════════════════════════════════
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>AI Visual Roadmap</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg0:#05050f;--bg1:#0a0a18;--bg2:#0c0c20;--bg3:#12122a;
+    --t1:#f0f0ff;--t2:#8080a8;
+    --c1:#10b981;--c2:#3b82f6;--c3:#a855f7;--c4:#f97316;--c5:#8080a8;
+    --mono:'Courier New',monospace;
+  }
+  html,body{height:100%;background:var(--bg0);color:var(--t1);font-family:system-ui,sans-serif;overflow:hidden;}
 
-(function () {
+  /* ── Layout ── */
+  #app{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+
+  /* ── Header ── */
+  #hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px;background:var(--bg0);
+    border-bottom:1px solid var(--c1);
+    box-shadow:0 4px 20px rgba(0,0,0,0.6);flex-shrink:0;
+  }
+  #hdr-back{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);
+    border-radius:8px;color:var(--c1);font-size:12px;font-weight:600;
+    padding:6px 12px;cursor:pointer;
+  }
+  #hdr-title{font-family:var(--mono);font-size:13px;font-weight:800;letter-spacing:2px;color:var(--c1);}
+  #hdr-pill{
+    background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);
+    border-radius:999px;color:var(--c1);font-family:var(--mono);
+    font-size:11px;font-weight:700;padding:4px 10px;white-space:nowrap;
+  }
+
+  /* ── Legend ── */
+  #legend{
+    display:flex;align-items:center;gap:12px;padding:8px 14px;
+    background:var(--bg1);border-bottom:1px solid rgba(255,255,255,.05);
+    overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+  }
+  #legend::-webkit-scrollbar{display:none;}
+  .leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);white-space:nowrap;font-family:var(--mono);}
+  .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .leg-dot.green{background:var(--c1);}
+  .leg-dot.blue{background:var(--c2);}
+  .leg-dot.purple{background:var(--c3);}
+  .leg-dot.orange{background:var(--c4);}
+
+  /* ── Hint bar ── */
+  #hint{
+    text-align:center;padding:6px;font-size:10px;color:var(--t2);
+    font-family:var(--mono);background:rgba(16,185,129,.04);
+    border-bottom:1px solid rgba(16,185,129,.08);flex-shrink:0;letter-spacing:.5px;
+  }
+
+  /* ── Graph scroll area ── */
+  #graph{
+    flex:1;overflow-y:auto;overflow-x:hidden;
+    padding:12px 14px 120px;-webkit-overflow-scrolling:touch;
+  }
+
+  /* ── Section label ── */
+  .sec-label{
+    display:flex;align-items:center;gap:6px;margin:18px 0 10px;
+  }
+  .sec-num{font-family:var(--mono);font-size:10px;font-weight:800;color:var(--c1);opacity:.6;}
+  .sec-title{font-family:var(--mono);font-size:9px;font-weight:800;color:var(--t2);letter-spacing:1.5px;}
+  .sec-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(128,128,168,.3),transparent);}
+  .sec-prog{font-family:var(--mono);font-size:9px;color:var(--t2);}
+
+  /* ── Section block ── */
+  .sec-block{display:flex;flex-direction:column;align-items:center;}
+
+  /* ── Trunk node ── */
+  .trunk{
+    position:relative;border-radius:10px;cursor:pointer;
+    padding:12px 20px 14px;text-align:center;
+    min-width:180px;max-width:280px;width:70%;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    transition:transform .12s,box-shadow .15s;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  }
+  .trunk:active{transform:scale(.97);}
+  .trunk-label{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+  .trunk-time{font-family:var(--mono);font-size:9px;color:var(--t2);margin-top:2px;}
+
+  /* ── Expand chevron button ── */
+  .exp-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    margin-top:8px;
+  }
+  .exp-dot{
+    width:24px;height:24px;border-radius:50%;
+    background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .25s,background .15s;cursor:pointer;
+    font-size:12px;color:var(--c1);line-height:1;
+  }
+  .exp-dot.open{transform:rotate(180deg);background:rgba(16,185,129,.22);}
+  .info-btn{
+    width:22px;height:22px;border-radius:50%;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+    color:var(--t2);font-size:11px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;
+  }
+
+  /* ── Status badge ── */
+  .status-badge{
+    position:absolute;top:6px;right:6px;
+    width:16px;height:16px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;font-weight:800;pointer-events:none;
+  }
+
+  /* ── Children grid ── */
+  .children-wrap{
+    display:none;
+    flex-direction:row;gap:10px;width:100%;
+    margin-top:10px;justify-content:center;
+    opacity:0;transform:translateY(-8px);
+    transition:opacity .22s ease, transform .22s ease;
+  }
+  .children-wrap.open{
+    opacity:1;transform:translateY(0);
+  }
+
+  .child-col{display:flex;flex-direction:column;gap:8px;flex:1;max-width:calc(50% - 5px);}
+  .child-col.left{align-items:flex-end;}
+  .child-col.right{align-items:flex-start;}
+
+  /* ── Child node ── */
+  .child{
+    position:relative;border-radius:8px;cursor:pointer;
+    padding:7px 12px;width:100%;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:transform .12s,box-shadow .15s;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  }
+  .child:active{transform:scale(.96);}
+  .child-label{font-size:11px;font-weight:600;color:var(--t1);line-height:1.3;}
+  .child-time{font-family:var(--mono);font-size:8px;color:var(--t2);margin-top:1px;}
+
+  /* ── Connector ── */
+  .connector{display:flex;justify-content:center;padding:4px 0;}
+  .v-line{width:2px;height:28px;background:linear-gradient(180deg,var(--c1),rgba(16,185,129,.15));border-radius:2px;}
+
+  /* ── Border colour classes ── */
+  .border-green{border:2px solid #10b981;background:#051a10;}
+  .border-green .trunk-label{color:#10b981;}
+  .border-blue{border:2px solid #3b82f6;background:#05101a;}
+  .border-blue .child-label{color:#93c5fd;}
+  .border-purple{border:2px solid #a855f7;background:#0f0520;}
+  .border-purple .child-label{color:#d8b4fe;}
+  .border-orange{border:2px solid #f97316;background:#1a0f05;}
+  .border-orange .child-label{color:#fdba74;}
+  .border-dashed{border:2px dashed #8080a8;background:#0c0c20;}
+
+  /* ── Progress states ── */
+  .node-done{opacity:.72;}
+  .node-done .status-badge{background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.5);color:#6ee7b7;}
+  .node-progress{box-shadow:0 0 0 2px rgba(16,185,129,.3),0 0 12px rgba(16,185,129,.12)!important;}
+  .node-skip{opacity:.4;filter:saturate(.3);}
+
+  /* ── Bottom progress bar ── */
+  #prog-bar-wrap{height:3px;background:rgba(255,255,255,.05);flex-shrink:0;}
+  #prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--c1),#6366f1);width:0%;transition:width .4s ease;}
+
+  /* ── Overlay + Sheet ── */
+  #overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.75);
+    backdrop-filter:blur(3px);z-index:200;
+    display:none;
+  }
+  #overlay.show{display:block;}
+  #sheet{
+    position:fixed;bottom:0;left:0;right:0;z-index:210;
+    background:var(--bg2);border-top:1px solid rgba(255,255,255,.08);
+    border-radius:20px 20px 0 0;max-height:88vh;
+    overflow-y:auto;transform:translateY(100%);
+    transition:transform .32s cubic-bezier(.32,.72,0,1);
+    padding-bottom:env(safe-area-inset-bottom,20px);
+  }
+  #sheet.open{transform:translateY(0);}
+  #sheet::-webkit-scrollbar{width:3px;}
+  #sheet::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+
+  .sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:14px auto 0;}
+  .sheet-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 18px 4px;gap:12px;}
+  .sheet-hdr-left{flex:1;min-width:0;}
+  .sheet-close{
+    width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.07);
+    border:none;color:var(--t2);font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .diff-badge{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:800;
+    letter-spacing:1px;padding:2px 8px;border-radius:999px;margin-bottom:6px;}
+  .sheet-title{font-size:18px;font-weight:800;color:var(--t1);line-height:1.25;}
+  .sheet-time{font-family:var(--mono);font-size:10px;color:var(--t2);margin-top:5px;}
+  .sheet-body{padding:10px 18px 24px;}
+  .sec-lbl{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:1.5px;
+    color:var(--c1);text-transform:uppercase;margin:16px 0 7px;}
+  .sheet-why{font-size:13px;color:#a0a0c0;line-height:1.65;}
+  .sheet-learn{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .sheet-learn li{font-size:13px;color:#c0c0e0;padding-left:16px;position:relative;line-height:1.5;}
+  .sheet-learn li::before{content:'▸';position:absolute;left:0;color:var(--c1);font-size:10px;top:2px;}
+  .sheet-prereq{font-size:12px;color:var(--t2);background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 11px;}
+  .sheet-task{font-size:13px;color:#c0c0e0;background:rgba(16,185,129,.05);
+    border:1px solid rgba(16,185,129,.15);border-radius:8px;padding:10px 12px;line-height:1.6;}
+  .res-row{display:flex;gap:10px;margin-top:14px;}
+  .res-btn{flex:1;padding:10px;border-radius:10px;font-size:12px;font-weight:700;
+    cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .res-yt{background:rgba(255,0,0,.12);border:1px solid rgba(255,0,0,.25);color:#ff4444;}
+  .res-doc{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3b82f6;}
+  .status-row{display:flex;gap:8px;margin-top:14px;}
+  .st-btn{flex:1;padding:11px 8px;border-radius:10px;font-size:11px;font-weight:700;
+    cursor:pointer;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);
+    color:var(--t2);text-align:center;transition:all .15s;}
+  .st-btn.active-done{background:rgba(16,185,129,.15);border-color:var(--c1);color:var(--c1);}
+  .st-btn.active-progress{background:rgba(99,102,241,.15);border-color:#6366f1;color:#6366f1;}
+  .st-btn.active-skip{background:rgba(128,128,168,.15);border-color:var(--t2);color:var(--t2);}
+
+  /* ── Toast ── */
+  #toast{
+    position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--c1);color:#fff;font-size:13px;font-weight:700;
+    padding:8px 20px;border-radius:999px;z-index:300;opacity:0;
+    pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ── Long press ripple ── */
+  @keyframes ripple{
+    0%{transform:scale(1);opacity:.5;}
+    100%{transform:scale(1.08);opacity:0;}
+  }
+  .pressing::after{
+    content:'';position:absolute;inset:0;border-radius:inherit;
+    border:2px solid var(--c1);animation:ripple .4s ease forwards;pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <button id="hdr-back" onclick="window.history.length > 1 ? history.back() : window.location.href='index.html'">← Back</button>
+    <div id="hdr-title">AI ROADMAP</div>
+    <div id="hdr-pill">0 / 0 done</div>
+  </div>
+  <div id="legend">
+    <div class="leg-item"><div class="leg-dot green"></div>Foundation</div>
+    <div class="leg-item"><div class="leg-dot blue"></div>Tools / Libs</div>
+    <div class="leg-item"><div class="leg-dot purple"></div>Advanced</div>
+    <div class="leg-item"><div class="leg-dot orange"></div>Specialisation</div>
+  </div>
+  <div id="hint">TAP main node → expand sub-topics &nbsp;|&nbsp; HOLD main node → view details &nbsp;|&nbsp; TAP sub-node → view details</div>
+  <div id="prog-bar-wrap"><div id="prog-bar-fill"></div></div>
+  <div id="graph"></div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay"></div>
+
+<!-- Detail Sheet -->
+<div id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-hdr">
+    <div class="sheet-hdr-left">
+      <div class="diff-badge" id="s-diff"></div>
+      <div class="sheet-title" id="s-title"></div>
+      <div class="sheet-time" id="s-time"></div>
+    </div>
+    <button class="sheet-close" id="sheet-close">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sec-lbl">Why This Matters</div>
+    <div class="sheet-why" id="s-why"></div>
+    <div class="sec-lbl">What You'll Learn</div>
+    <ul class="sheet-learn" id="s-learn"></ul>
+    <div class="sec-lbl">Prerequisites</div>
+    <div class="sheet-prereq" id="s-prereq"></div>
+    <div class="sec-lbl">Practice Task</div>
+    <div class="sheet-task" id="s-task"></div>
+    <div class="res-row">
+      <button class="res-btn res-yt" id="s-yt">▶ YouTube</button>
+      <button class="res-btn res-doc" id="s-doc">📄 Docs</button>
+    </div>
+    <div class="sec-lbl">Mark Status</div>
+    <div class="status-row">
+      <button class="st-btn" id="sb-done"     onclick="setStatus('done')">✓ Done</button>
+      <button class="st-btn" id="sb-progress" onclick="setStatus('progress')">⟳ In Progress</button>
+      <button class="st-btn" id="sb-skip"     onclick="setStatus('skip')">– Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function() {
 'use strict';
 
-// ─────────────────────────────────────────────────────────────
-// § 1 — NODE DATA  (Parts 2 + 3 merged into one array)
-// ─────────────────────────────────────────────────────────────
-const AI_RM_NODES = [
+// ── State ──────────────────────────────────────────────────────
+const LS_KEY = 'ai_visual_progress';
+let progress  = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+let expanded  = {};
+let activeNode = null;
+
+const saveProgress = () => localStorage.setItem(LS_KEY, JSON.stringify(progress));
+
+// ── Complete Node Data ──────────────────────────────────────────
+const NODES = [
 
   // ─────────────────────────────────────────────
   // SECTION 1 — PYTHON FOUNDATIONS
@@ -1691,7 +1987,7 @@ const AI_RM_NODES = [
   {
     id: 'specialisations',
     label: 'Pick a Specialisation',
-    section: 11,
+    section: 20,
     sectionTitle: 'Specialisations',
     isMain: true,
     parent: null,
@@ -1716,7 +2012,7 @@ const AI_RM_NODES = [
   {
     id: 'nlp-engineer',
     label: 'NLP Engineer',
-    section: 11,
+    section: 20,
     sectionTitle: 'Specialisations',
     isMain: false,
     parent: 'specialisations',
@@ -1741,7 +2037,7 @@ const AI_RM_NODES = [
   {
     id: 'cv-engineer',
     label: 'Computer Vision Engineer',
-    section: 11,
+    section: 20,
     sectionTitle: 'Specialisations',
     isMain: false,
     parent: 'specialisations',
@@ -1766,7 +2062,7 @@ const AI_RM_NODES = [
   {
     id: 'ml-engineer',
     label: 'ML Engineer',
-    section: 11,
+    section: 20,
     sectionTitle: 'Specialisations',
     isMain: false,
     parent: 'specialisations',
@@ -1791,7 +2087,7 @@ const AI_RM_NODES = [
   {
     id: 'ai-research',
     label: 'AI Research',
-    section: 11,
+    section: 20,
     sectionTitle: 'Specialisations',
     isMain: false,
     parent: 'specialisations',
@@ -1816,7 +2112,7 @@ const AI_RM_NODES = [
   {
     id: 'data-scientist',
     label: 'Data Scientist',
-    section: 11,
+    section: 20,
     sectionTitle: 'Specialisations',
     isMain: false,
     parent: 'specialisations',
@@ -1845,7 +2141,7 @@ const AI_RM_NODES = [
   {
     id: 'tools-ecosystem',
     label: 'Tools & Ecosystem',
-    section: 12,
+    section: 21,
     sectionTitle: 'Tools & Ecosystem',
     isMain: true,
     parent: null,
@@ -1870,7 +2166,7 @@ const AI_RM_NODES = [
   {
     id: 'git-github',
     label: 'Git & GitHub',
-    section: 12,
+    section: 21,
     sectionTitle: 'Tools & Ecosystem',
     isMain: false,
     parent: 'tools-ecosystem',
@@ -1895,7 +2191,7 @@ const AI_RM_NODES = [
   {
     id: 'jupyter',
     label: 'Jupyter & Notebooks',
-    section: 12,
+    section: 21,
     sectionTitle: 'Tools & Ecosystem',
     isMain: false,
     parent: 'tools-ecosystem',
@@ -1920,7 +2216,7 @@ const AI_RM_NODES = [
   {
     id: 'vscode-cursor',
     label: 'VS Code & Cursor',
-    section: 12,
+    section: 21,
     sectionTitle: 'Tools & Ecosystem',
     isMain: false,
     parent: 'tools-ecosystem',
@@ -1945,7 +2241,7 @@ const AI_RM_NODES = [
   {
     id: 'linux-terminal',
     label: 'Linux & Terminal',
-    section: 12,
+    section: 21,
     sectionTitle: 'Tools & Ecosystem',
     isMain: false,
     parent: 'tools-ecosystem',
@@ -1970,7 +2266,7 @@ const AI_RM_NODES = [
   {
     id: 'api-design',
     label: 'API Design',
-    section: 12,
+    section: 21,
     sectionTitle: 'Tools & Ecosystem',
     isMain: false,
     parent: 'tools-ecosystem',
@@ -1999,7 +2295,7 @@ const AI_RM_NODES = [
   {
     id: 'ai-safety-ethics',
     label: 'AI Safety & Ethics',
-    section: 13,
+    section: 22,
     sectionTitle: 'AI Safety & Ethics',
     isMain: true,
     parent: null,
@@ -2024,7 +2320,7 @@ const AI_RM_NODES = [
   {
     id: 'alignment-basics',
     label: 'Alignment Basics',
-    section: 13,
+    section: 22,
     sectionTitle: 'AI Safety & Ethics',
     isMain: false,
     parent: 'ai-safety-ethics',
@@ -2049,7 +2345,7 @@ const AI_RM_NODES = [
   {
     id: 'bias-fairness',
     label: 'Bias & Fairness',
-    section: 13,
+    section: 22,
     sectionTitle: 'AI Safety & Ethics',
     isMain: false,
     parent: 'ai-safety-ethics',
@@ -2074,7 +2370,7 @@ const AI_RM_NODES = [
   {
     id: 'responsible-ai',
     label: 'Responsible AI',
-    section: 13,
+    section: 22,
     sectionTitle: 'AI Safety & Ethics',
     isMain: false,
     parent: 'ai-safety-ethics',
@@ -2099,7 +2395,7 @@ const AI_RM_NODES = [
   {
     id: 'red-teaming',
     label: 'Red-teaming',
-    section: 13,
+    section: 22,
     sectionTitle: 'AI Safety & Ethics',
     isMain: false,
     parent: 'ai-safety-ethics',
@@ -2128,7 +2424,7 @@ const AI_RM_NODES = [
   {
     id: 'ai-dev-tools',
     label: 'AI Dev Tools',
-    section: 14,
+    section: 23,
     sectionTitle: 'AI Tools for Devs',
     isMain: true,
     parent: null,
@@ -2153,7 +2449,7 @@ const AI_RM_NODES = [
   {
     id: 'github-copilot-ai',
     label: 'GitHub Copilot',
-    section: 14,
+    section: 23,
     sectionTitle: 'AI Tools for Devs',
     isMain: false,
     parent: 'ai-dev-tools',
@@ -2178,7 +2474,7 @@ const AI_RM_NODES = [
   {
     id: 'cursor-ai',
     label: 'Cursor',
-    section: 14,
+    section: 23,
     sectionTitle: 'AI Tools for Devs',
     isMain: false,
     parent: 'ai-dev-tools',
@@ -2203,7 +2499,7 @@ const AI_RM_NODES = [
   {
     id: 'claude-code-ai',
     label: 'Claude Code',
-    section: 14,
+    section: 23,
     sectionTitle: 'AI Tools for Devs',
     isMain: false,
     parent: 'ai-dev-tools',
@@ -2228,7 +2524,7 @@ const AI_RM_NODES = [
   {
     id: 'v0-bolt',
     label: 'v0 & Bolt',
-    section: 14,
+    section: 23,
     sectionTitle: 'AI Tools for Devs',
     isMain: false,
     parent: 'ai-dev-tools',
@@ -2253,7 +2549,7 @@ const AI_RM_NODES = [
   {
     id: 'llm-apis',
     label: 'LLM APIs',
-    section: 14,
+    section: 23,
     sectionTitle: 'AI Tools for Devs',
     isMain: false,
     parent: 'ai-dev-tools',
@@ -2282,7 +2578,7 @@ const AI_RM_NODES = [
   {
     id: 'ai-congrats',
     label: '🎉 AI/ML Engineer',
-    section: 15,
+    section: 24,
     sectionTitle: 'Job Ready',
     isMain: true,
     parent: null,
@@ -2304,925 +2600,1141 @@ const AI_RM_NODES = [
     task: 'Apply for your first ML role or publish your first AI project on GitHub and Hugging Face. Your portfolio should include: one end-to-end ML system with MLOps, one LLM application demonstrating RAG or fine-tuning, and one domain-specific project (CV or NLP). Each must be deployed publicly and documented thoroughly.',
     youtubeQuery: 'how to get first ML AI job 2024 portfolio machine learning engineer',
     docsUrl: 'https://roadmap.sh/ai-data-scientist'
-  }
+  },
 
-]; // end AI_RM_NODES
+  // ─────────────────────────────────────────────
+  // SECTION 11 — WORKING WITH LLMS
+  // ─────────────────────────────────────────────
+  {
+    id: 'working-with-llms',
+    label: 'Working With LLMs',
+    section: 11,
+    sectionTitle: 'Working With LLMs',
+    isMain: true,
+    parent: null,
+    border: 'green',
+    difficulty: 'BEGINNER',
+    time: '2–3 weeks',
+    whyMatters: 'Large language models have fundamentally changed software engineering. Every major tech company — Google, Microsoft, Meta, Amazon — has reorganised engineering teams around LLM integration. Engineers who understand how to work with LLMs effectively — not just call an API — ship AI features 10x faster and make fewer costly mistakes in production. This section is the gateway to the entire modern AI application stack, and every concept here compounds into everything that follows.',
+    learn: [
+      'LLMs are statistical next-token predictors trained on vast corpora; they do not "understand" in a human sense — grasping this prevents a whole class of production mistakes.',
+      'The API call pattern: send a messages array to providers like OpenAI or Anthropic, receive a completion, and understand that every call is stateless — the model has no memory across requests.',
+      'Prompt structure matters enormously: a well-structured system prompt with clear role, context, and constraints produces qualitatively different outputs than an unstructured one.',
+      'Model outputs are probabilistic — the same prompt with temperature > 0 produces different outputs each run, which matters hugely for evaluation and testing strategies.',
+      'Token limits constrain everything: GPT-4o has a 128K context window, Claude 3.5 Sonnet has 200K — understanding how tokens relate to words (roughly 1 token ≈ 0.75 English words) lets you architect solutions that stay within limits.',
+      'Cost is a first-class concern: at scale, an extra 500 tokens per request can add thousands in monthly API spend — always profile your token usage with tiktoken or the Anthropic token counting API.',
+      'LLM capabilities expand rapidly — follow model release notes from Anthropic, OpenAI, and Google DeepMind monthly to understand new capabilities you can leverage.'
+    ],
+    prerequisites: 'Python Foundations',
+    task: 'Build a multi-provider LLM benchmark harness: write a Python script that sends 50 identical prompts to GPT-4o, Claude 3.5 Sonnet, and Gemini 1.5 Pro, measures latency, token usage, and cost per request, and evaluates response quality using an LLM-as-judge approach. Output a ranked comparison table. This belongs prominently in your portfolio.',
+    youtubeQuery: 'working with LLMs beginner guide 2024 OpenAI Anthropic API tutorial',
+    docsUrl: 'https://docs.anthropic.com/en/docs/intro-to-claude'
+  },
+  {
+    id: 'llm-terminology',
+    label: 'Common Terminology',
+    section: 11,
+    sectionTitle: 'Working With LLMs',
+    isMain: false,
+    parent: 'working-with-llms',
+    border: 'blue',
+    difficulty: 'BEGINNER',
+    time: '3–4 days',
+    whyMatters: 'Misusing terminology in an engineering interview or a design doc is an immediate credibility hit. Knowing the precise definition of "embedding" vs "fine-tuning" vs "RAG" means you can read technical papers, evaluate vendor claims, and communicate clearly with teammates. These terms are the vocabulary of the field — you cannot participate in technical discussions without them.',
+    learn: [
+      'LLM vs AGI: an LLM (Large Language Model) is a specific type of model trained to predict tokens; AGI (Artificial General Intelligence) is a theoretical future system with human-like generalised reasoning — conflating the two is a common non-technical mistake that will be noticed.',
+      'Embeddings are dense vector representations of text (or images, audio) in a high-dimensional space where semantic similarity corresponds to geometric proximity — for example, OpenAI\'s text-embedding-3-large produces 3072-dimensional vectors where "cat" and "kitten" are close together.',
+      'Training vs inference: training is the process of learning parameters by gradient descent over a dataset (expensive, done once); inference is running the trained model to produce outputs (cheap, done millions of times) — understanding this distinction is fundamental to cost modelling.',
+      'RAG (Retrieval-Augmented Generation) is the pattern of dynamically fetching relevant documents from a vector database at inference time and injecting them into the prompt, allowing the model to "know" information it was not trained on.',
+      'Fine-tuning is updating a pre-trained model\'s weights on a task-specific dataset — different from RAG, which requires no weight updates. Fine-tuning changes what the model knows; RAG changes what the model can access.',
+      'AI Agents are systems where an LLM iteratively reasons, selects tools (search, code execution, APIs), executes them, and loops until a task is complete — this is distinct from a single-turn LLM call.',
+      'Context engineering is the emerging discipline of deciding what information to include, exclude, and how to structure it in the context window to maximise model performance — it is broader than prompt engineering.'
+    ],
+    prerequisites: 'None',
+    task: 'Create a visual "AI terminology cheat sheet" as a web page: for each of the 11 terms specified (AI vs AGI, LLM, embeddings, training, inference, vector DBs, AI agents, RAG, fine-tuning, prompt engineering, context engineering), write a one-sentence plain-English definition, a one-sentence technical definition, and a real-world example. Deploy it on GitHub Pages.',
+    youtubeQuery: 'LLM terminology explained embeddings RAG fine-tuning agents 2024',
+    docsUrl: 'https://docs.anthropic.com/en/docs/glossary'
+  },
+  {
+    id: 'how-llms-work',
+    label: 'How LLMs Work',
+    section: 11,
+    sectionTitle: 'Working With LLMs',
+    isMain: false,
+    parent: 'working-with-llms',
+    border: 'blue',
+    difficulty: 'BEGINNER',
+    time: '4–5 days',
+    whyMatters: 'Engineers who treat LLMs as black boxes make predictable, avoidable mistakes: they do not understand why reducing temperature fixes hallucinations, why long contexts degrade recall, or why a model seems "lazy" with high repetition penalties. Understanding the mechanics — tokens, sampling, context windows — gives you precise control over model behaviour rather than trial-and-error tuning.',
+    learn: [
+      'Tokenisation: text is split into subword tokens before processing — "unbelievable" might become ["un", "believe", "able"] — and the model predicts the next token, not the next word. Use the Hugging Face tokenizer to inspect how your prompts are tokenised before sending them.',
+      'Context window is the total number of tokens the model can process at once (input + output combined). Claude 3.5 Sonnet supports 200K tokens, but retrieval performance degrades in the middle of long contexts — a phenomenon called "lost in the middle" that affects RAG architectures.',
+      'Temperature controls randomness in sampling: temperature=0 is deterministic (always pick the highest-probability token), temperature=1 samples from the full distribution, temperature>1 creates chaotic outputs. Use temperature=0 for tasks requiring consistency (data extraction, coding) and 0.7–1.0 for creative tasks.',
+      'Top-K sampling restricts the candidate tokens to the K highest probability tokens before sampling — setting top_k=50 means only the 50 most likely next tokens are considered, preventing very low probability tokens from being selected.',
+      'Top-P (nucleus sampling) selects the smallest set of tokens whose cumulative probability exceeds P — top_p=0.9 means tokens covering 90% of probability mass are candidates. Most APIs default to top_p=1.0, and tuning this is often more effective than temperature for certain tasks.',
+      'Repetition penalties penalise tokens that have already appeared in the output, reducing loops and stuttering — presence_penalty in the OpenAI API adds a flat penalty per already-seen token, while frequency_penalty scales with how many times the token has appeared.',
+      'Max tokens controls the maximum length of the model\'s output — setting this too low truncates responses mid-sentence, which is a common bug in production systems that only surfaces on long outputs.'
+    ],
+    prerequisites: 'LLM Common Terminology',
+    task: 'Build a sampling parameter explorer: create a Python notebook that sends the same creative writing prompt to GPT-4o with 20 different temperature/top-p combinations, collects the outputs, and visualises how the parameter space affects output diversity (use a sentence embedding model to measure pairwise cosine distances between outputs). Include a findings writeup.',
+    youtubeQuery: 'how LLMs work tokens context window temperature sampling explained 2024',
+    docsUrl: 'https://platform.openai.com/docs/guides/text-generation/how-to-use-sampling'
+  },
+  {
+    id: 'prompt-engineering',
+    label: 'Prompt Engineering',
+    section: 11,
+    sectionTitle: 'Working With LLMs',
+    isMain: false,
+    parent: 'working-with-llms',
+    border: 'purple',
+    difficulty: 'INTERMEDIATE',
+    time: '1–2 weeks',
+    whyMatters: 'Prompt engineering is the highest-leverage skill in AI application development. A well-engineered prompt can turn a mediocre model into a great one — and a poorly written prompt can make a frontier model look useless. Companies like Microsoft and Anthropic employ dedicated prompt engineers at senior engineering salaries. Mastering techniques like chain-of-thought, few-shot examples, and structured output formatting directly translates to better products.',
+    learn: [
+      'Zero-shot prompting sends the task description without examples and relies on the model\'s training — works for common tasks like "summarise this text" but fails on specialised formats or edge cases that require calibration.',
+      'Few-shot prompting includes 3–10 input/output examples in the prompt before the actual task — this is the single most reliable technique for improving output quality and consistency, especially for classification, extraction, and structured formatting tasks.',
+      'Chain-of-Thought (CoT) prompting instructs the model to show its reasoning step by step before giving the final answer — add "Think step by step" or "Let\'s reason through this:" and watch accuracy on math and logic tasks improve dramatically.',
+      'ReAct (Reason + Act) prompting interleaves reasoning steps with tool calls — the model reasons about what to do, calls a tool, observes the result, reasons again, and repeats — this is the foundation of most agent architectures.',
+      'System prompting sets the model\'s role, persona, constraints, and output format — a good system prompt is like an employee onboarding document: it specifies the job, the rules, and the expected output format before any task begins.',
+      'Structured output with JSON mode: instruct the model to return a JSON object matching a specific schema using response_format={"type": "json_object"} in OpenAI or by specifying the schema in the system prompt for Claude — this is essential for programmatic processing of model outputs.',
+      'Prompt caching: Anthropic\'s Claude supports cache_control headers that cache the prefix of a prompt (system prompt + static context) across requests, reducing latency by 80% and cost by 90% on the cached portion — critical for production systems with long, static system prompts.'
+    ],
+    prerequisites: 'How LLMs Work',
+    task: 'Build a prompt engineering evaluation suite: pick a challenging task (medical entity extraction, code review, or legal clause classification). Write 5 different prompt strategies (zero-shot, few-shot, CoT, structured output, role-based system prompt). Evaluate each on 100 examples from a real dataset using an LLM judge. Measure accuracy, token cost, and latency. Write a report on which techniques matter most.',
+    youtubeQuery: 'prompt engineering guide 2024 few-shot chain-of-thought structured output',
+    docsUrl: 'https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview'
+  },
+  {
+    id: 'context-engineering',
+    label: 'Context Engineering',
+    section: 11,
+    sectionTitle: 'Working With LLMs',
+    isMain: false,
+    parent: 'working-with-llms',
+    border: 'purple',
+    difficulty: 'INTERMEDIATE',
+    time: '1 week',
+    whyMatters: 'Context engineering is what separates engineers who build production LLM systems from those who build demos. The key insight is that the model can only work with what is in its context window — so the engineering challenge is deciding what to put there, when, and in what format. Anthropic engineers coined this term specifically to describe the discipline of managing context as a first-class engineering concern, and it is increasingly cited in senior AI engineering job descriptions.',
+    learn: [
+      'Context engineering vs prompt engineering: prompt engineering focuses on the instruction wording; context engineering is the broader system design of what information flows into the context window and how — including retrieval, memory, tool outputs, and conversation history.',
+      'External memory systems: since LLMs are stateless, you must persist and retrieve memory externally — options include vector databases for semantic memory (Chroma, Pinecone), relational DBs for structured facts, and key-value stores for session state.',
+      'RAG as context injection: retrieval-augmented generation is fundamentally a context engineering technique — you retrieve the most relevant documents at query time and inject them into the context, making the model\'s response grounded in your data rather than its training.',
+      'Dynamic context filtering: not all retrieved context is useful — rank retrieved chunks by relevance score (cosine similarity > 0.7 as a baseline), deduplicate semantically similar chunks, and prioritise recency for time-sensitive information before building the final context.',
+      'Context compaction: when conversation history grows long, summarise earlier turns using the model itself — "Summarise the key facts established in this conversation in 200 words" — and replace the full history with the summary to stay within token limits without losing critical context.',
+      'Context isolation: in multi-tenant systems, never share context between users — build isolation at the retrieval layer by filtering vector DB queries by user_id, and at the prompt layer by structuring context with clear XML tags like <user_context> and <system_context>.',
+      'The context window as a scratchpad: models can use the context for intermediate reasoning steps — explicitly structure the context to include a <scratchpad> section where the model can reason before giving its final answer, dramatically improving accuracy on complex tasks.'
+    ],
+    prerequisites: 'Prompt Engineering',
+    task: 'Build a stateful multi-turn assistant with full context engineering: implement external memory using Chroma for semantic memory and Redis for session state, implement context compaction that auto-summarises when conversation exceeds 80% of the context limit, implement RAG with dynamic filtering for a personal knowledge base of 500+ documents, and measure how response quality degrades (or does not) over 50-turn conversations.',
+    youtubeQuery: 'context engineering LLM memory RAG architecture 2024 production',
+    docsUrl: 'https://www.anthropic.com/research/building-effective-agents'
+  },
 
+  // ─────────────────────────────────────────────
+  // SECTION 12 — AI MODELS
+  // ─────────────────────────────────────────────
+  {
+    id: 'ai-models',
+    label: 'AI Models',
+    section: 12,
+    sectionTitle: 'AI Models',
+    isMain: true,
+    parent: null,
+    border: 'green',
+    difficulty: 'BEGINNER',
+    time: '1–2 weeks',
+    whyMatters: 'The AI model landscape is evolving so fast that the best model today may not be the best model next quarter. Engineers who understand the tradeoffs — capability, cost, latency, privacy, licensing — make better architectural decisions and avoid costly lock-in. Choosing the wrong model for a production system can mean rebuilding your entire stack six months later when the model is deprecated or costs triple your budget.',
+    learn: [
+      'The model landscape is a spectrum from closed, proprietary frontier models (Claude, GPT, Gemini) to open-weight models (Llama, Mistral, Qwen) that you can run on your own hardware — the right choice depends on your data privacy requirements, cost budget, and latency targets.',
+      'Benchmark literacy: MMLU, HumanEval, MATH, and MT-Bench are standard evaluation benchmarks but they measure different capabilities — a model that tops MMLU may not be the best choice for code generation. Always evaluate on your actual task, not just leaderboard scores.',
+      'Model families differ significantly in their strengths: Claude excels at long-context reasoning and instruction following; GPT-4o at multi-modal tasks; Gemini at extremely long contexts; Llama at cost-efficient local deployment.',
+      'API cost model: pricing is per token (input and output separately), so a model that generates verbose responses can cost 3–4x more per task than a concise one — always measure actual token usage per request in your specific use case.',
+      'Latency profiles vary enormously: smaller models (Haiku, GPT-4o-mini) return first tokens in 300–500ms; frontier models can take 1–2 seconds — this matters for real-time applications like chat interfaces.',
+      'Model versioning pitfalls: OpenAI, Anthropic, and Google update models silently on some endpoints — pin to specific model versions (claude-3-5-sonnet-20241022, not "claude-3-5-sonnet") in production to prevent unexpected behaviour changes.',
+      'The open vs closed tradeoff: closed API models are easier to start with but create vendor dependency and data privacy concerns; open-weight models require infrastructure investment but give full control over data, customisation, and costs at scale.'
+    ],
+    prerequisites: 'Working With LLMs',
+    task: 'Build a model selection decision framework: create a weighted scoring matrix that evaluates 6 models (GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, Llama 3.1 70B, Mistral Large, Qwen 2.5 72B) across 8 dimensions (capability on your task, cost per 1M tokens, latency p50/p95, context window, data privacy, licensing, fine-tuning support, ecosystem). Use real API calls to measure actual latency and cost for a representative set of 100 prompts.',
+    youtubeQuery: 'choosing LLM model GPT Claude Gemini Llama comparison 2024',
+    docsUrl: 'https://lmarena.ai/'
+  },
+  {
+    id: 'type-of-models',
+    label: 'Type of Models',
+    section: 12,
+    sectionTitle: 'AI Models',
+    isMain: false,
+    parent: 'ai-models',
+    border: 'blue',
+    difficulty: 'BEGINNER',
+    time: '3–4 days',
+    whyMatters: 'Conflating pre-trained base models, instruction-tuned chat models, and self-hosted models leads to poor architectural decisions. Using a base model when you need a chat model produces incoherent outputs; using a cloud model when regulations require data to stay on-premises violates compliance. Understanding these distinctions prevents costly rewrites and compliance failures.',
+    learn: [
+      'Pre-trained base models are trained purely on next-token prediction on raw internet text — they complete text, they do not follow instructions. GPT-3 (not GPT-3.5-turbo), Llama-3.1 base, and Mistral base are examples — useful for fine-tuning, not for direct chat applications.',
+      'Instruction-tuned models are fine-tuned on instruction/response pairs (and often RLHF) to follow human instructions reliably — GPT-4o, Claude 3.5 Sonnet, and Llama-3.1-8B-Instruct are instruction-tuned and are what you use for almost all applications.',
+      'Closed (proprietary) models are hosted by the provider (OpenAI, Anthropic, Google) — you call their API, never see the weights, and your data goes to their servers. This is the fastest to integrate but creates data privacy concerns and vendor dependency.',
+      'Open-source (open-weight) models like Meta\'s Llama, Mistral, and Qwen release the model weights publicly, allowing you to download, self-host, fine-tune, and run entirely on your infrastructure — the weights are typically in safetensors or GGUF format.',
+      'Self-hosted models run on your own hardware (GPU servers) or within your VPC — tools like vLLM, Ollama, and HuggingFace TGI make this accessible. Self-hosting eliminates per-token costs at scale but requires GPU infrastructure investment and ops expertise.',
+      'Quantised models compress model weights from float32 or bfloat16 to 8-bit (GGUF Q8_0) or 4-bit (GGUF Q4_K_M) integers, reducing memory usage by 50–75% with minimal quality degradation — Llama 3.1 70B runs on a single 48GB GPU in Q4 quantisation.',
+      'Mixture-of-experts (MoE) models like Mixtral 8x7B activate only a subset of parameters per token, achieving large model quality with smaller compute requirements — Mixtral 8x7B has 47B total parameters but only uses ~13B per forward pass.'
+    ],
+    prerequisites: 'Working With LLMs',
+    task: 'Run a side-by-side comparison of a cloud API model vs a self-hosted model: deploy Llama 3.1 8B on a free-tier Vast.ai GPU using vLLM with an OpenAI-compatible endpoint, then benchmark it against GPT-4o-mini on 100 prompts covering coding, reasoning, and creative tasks. Compare: cost per 1M tokens, latency, output quality (LLM judge), and setup complexity.',
+    youtubeQuery: 'open source vs closed LLM models self-hosted Ollama vLLM comparison 2024',
+    docsUrl: 'https://huggingface.co/docs/transformers/index'
+  },
+  {
+    id: 'choosing-model',
+    label: 'Choosing the Right Model',
+    section: 12,
+    sectionTitle: 'AI Models',
+    isMain: false,
+    parent: 'ai-models',
+    border: 'purple',
+    difficulty: 'INTERMEDIATE',
+    time: '4–5 days',
+    whyMatters: 'Model selection is one of the most consequential architectural decisions in an AI system. Picking an overqualified model wastes money; picking an underqualified model produces poor user experiences. Companies like Stripe, Notion, and Linear have engineering blog posts describing how they save millions by routing simpler tasks to smaller, cheaper models while reserving frontier models for complex reasoning tasks.',
+    learn: [
+      'Anthropic Claude family: Claude 3.5 Sonnet (best for complex reasoning, coding, and long-context tasks at a balanced cost), Claude 3.5 Haiku (fastest and cheapest, ideal for classification and simple extraction), Claude 3 Opus (highest capability for research-grade tasks, highest cost).',
+      'OpenAI GPT/o-series: GPT-4o is the flagship multi-modal model for text, image, and audio; GPT-4o-mini is 15x cheaper and handles most tasks well; o1 and o3 are reasoning models that think for extended periods before answering — use them for math, science, and multi-step coding problems.',
+      'Google Gemini: Gemini 1.5 Pro supports a 2 million token context window — unique in the market and invaluable for whole-codebase analysis, long document Q&A, and video processing. Gemini 2.0 Flash is Google\'s fast/cheap option comparable to Haiku and GPT-4o-mini.',
+      'Mistral and Cohere: Mistral Large 2 is a strong closed-model alternative to Claude/GPT with a favourable data privacy policy for European companies. Cohere Command R+ is designed specifically for enterprise RAG with native citation support — worth evaluating for knowledge-base applications.',
+      'Meta Llama 3.1/3.2: the leading open-weight family. Llama 3.1 405B rivals frontier closed models; Llama 3.1 70B is the standard "good open-source model"; Llama 3.2 11B and 3B are designed for edge deployment. All use the same prompt format, making migration between sizes trivial.',
+      'DeepSeek: DeepSeek-V3 and DeepSeek-R1 have shown frontier-level performance at dramatically lower cost, particularly in coding and math. DeepSeek-R1 is an open-weight reasoning model — a genuine open alternative to o1. Caveat: data goes to Chinese servers on the API; self-host for privacy.',
+      'Model routing pattern: in production systems, use a fast classifier (or a small LLM) to categorise incoming requests by complexity, then route simple tasks to a cheap model (Haiku, GPT-4o-mini) and complex tasks to a frontier model — this typically reduces costs by 60–80% with no user-facing quality degradation.'
+    ],
+    prerequisites: 'Type of Models',
+    task: 'Implement a model router for a real application: categorise incoming user requests into 3 complexity tiers (simple factual, moderate reasoning, complex multi-step), route each tier to an appropriate model (Haiku → Sonnet → Opus or equivalent), log all routing decisions, measure the cost savings over always using the frontier model on a 10,000 request dataset, and evaluate that quality does not degrade for the routed requests.',
+    youtubeQuery: 'choosing best LLM model 2024 Claude GPT Gemini Llama DeepSeek comparison',
+    docsUrl: 'https://artificialanalysis.ai/'
+  },
 
-// ─────────────────────────────────────────────────────────────
-// § 2 — PROGRESS STATE
-// ─────────────────────────────────────────────────────────────
-let aiRmProgress = JSON.parse(localStorage.getItem('ai_visual_progress') || '{}');
-const aiRmSaveProgress = () => localStorage.setItem('ai_visual_progress', JSON.stringify(aiRmProgress));
+  // ─────────────────────────────────────────────
+  // SECTION 13 — PLATFORMS & ECOSYSTEM
+  // ─────────────────────────────────────────────
+  {
+    id: 'platforms-ecosystem',
+    label: 'Platforms & Ecosystem',
+    section: 13,
+    sectionTitle: 'Platforms & Ecosystem',
+    isMain: true,
+    parent: null,
+    border: 'green',
+    difficulty: 'BEGINNER',
+    time: '1–2 weeks',
+    whyMatters: 'The AI tooling ecosystem has exploded. Engineers who know where to find pre-trained models, how to run them locally for development, and which SDKs provide the cleanest abstractions ship faster and make better use of the open-source community\'s work. Hugging Face has become the GitHub of AI — it hosts hundreds of thousands of models and datasets that you would otherwise spend months training yourself.',
+    learn: [
+      'Hugging Face is the central hub for open-source AI: browse 750,000+ models, 150,000+ datasets, and 300,000+ Spaces (deployed demos) — before building anything from scratch, check whether it already exists here.',
+      'Ollama, LM Studio, and OpenRouter solve different local deployment problems: Ollama is a CLI for running models with a simple API; LM Studio provides a GUI for testing models; OpenRouter provides a unified API endpoint that routes to 100+ models across providers.',
+      'The OpenAI-compatible API standard has become a defacto protocol — vLLM, Ollama, LM Studio, and many providers expose an /v1/chat/completions endpoint, so switching providers often requires changing just the base_url and api_key.',
+      'Hugging Face Transformers.js brings transformer models to the browser and Node.js — you can run sentence embeddings, text classification, and even small LLMs entirely client-side without API calls.',
+      'The Inference API on Hugging Face lets you call any model on the Hub as a REST API without managing infrastructure — useful for prototyping with less common models before committing to a hosting solution.',
+      'SDK selection matters: the official OpenAI Python SDK and Anthropic Python SDK are the most maintained; LiteLLM provides a unified interface over 100+ LLM providers with the same function signature, eliminating provider-specific code.',
+      'Understanding the relationship between model hubs, local runtimes, and cloud APIs lets you build a development workflow where you iterate locally (Ollama) and deploy to a cloud API (Anthropic, OpenAI) for production — maximising speed and cost efficiency.'
+    ],
+    prerequisites: 'AI Models',
+    task: 'Set up a complete local AI development environment: install Ollama and run Llama 3.1 8B locally, use Open WebUI as a local ChatGPT-style interface, set up LiteLLM as a proxy that unifies Ollama (local) + OpenAI API + Anthropic API behind one endpoint, and build a Python script that switches providers via an environment variable without changing application code.',
+    youtubeQuery: 'AI ecosystem Hugging Face Ollama LiteLLM local LLM setup 2024',
+    docsUrl: 'https://huggingface.co/docs'
+  },
+  {
+    id: 'hugging-face-platform',
+    label: 'Hugging Face',
+    section: 13,
+    sectionTitle: 'Platforms & Ecosystem',
+    isMain: false,
+    parent: 'platforms-ecosystem',
+    border: 'blue',
+    difficulty: 'BEGINNER',
+    time: '4–5 days',
+    whyMatters: 'Hugging Face has displaced academic model zoos and Google Drive links as the universal model distribution platform. 99% of open-source models published in 2024 appear on Hugging Face first. The Hub\'s model cards include benchmark scores, usage examples, and training details — reading them fluently is as important as reading a library\'s README. Companies like Bloomberg, NASA, and NVIDIA host their models here.',
+    learn: [
+      'Hugging Face Hub: navigate to huggingface.co/models, filter by task (text-generation, sentence-similarity, image-classification), sort by downloads to find the most battle-tested options — always check the model card for training data, benchmark scores, and known limitations before using a model.',
+      'The pipeline() API is the simplest way to use any Hub model: from transformers import pipeline; pipe = pipeline("sentiment-analysis"); pipe("I love this product!") — it automatically downloads the model, handles tokenisation, and post-processes the output.',
+      'Model cards are the documentation standard for AI models: they specify intended use, training data, evaluation results, ethical considerations, and carbon emissions — publishing a model without a model card is considered unprofessional in the open-source community.',
+      'Hugging Face Tasks categorise what models can do: text-generation, text-classification, token-classification, question-answering, translation, summarisation, sentence-similarity, image-classification, object-detection — understanding the task taxonomy helps you find the right model quickly.',
+      'Hugging Face Hub Python client: from huggingface_hub import hf_hub_download, snapshot_download — download specific files or entire model repositories programmatically; use hf_hub_download() for single files (tokenizer.json) and snapshot_download() for whole repos.',
+      'Hugging Face Spaces: deployed Gradio and Streamlit apps hosted on Hugging Face infrastructure — the fastest way to share a working model demo publicly without managing servers. Many cutting-edge research demos are published here days after a paper drops.',
+      'Transformers.js: the JavaScript port of the Transformers library — import { pipeline } from "@xenova/transformers"; const pipe = await pipeline("sentiment-analysis"); — runs models in the browser using ONNX Runtime, enabling zero-latency, zero-cost client-side inference.'
+    ],
+    prerequisites: 'Working With LLMs',
+    task: 'Publish a complete AI project to Hugging Face: train or fine-tune a small model (a DistilBERT text classifier or Whisper fine-tune on a custom language), upload it to the Hub with a comprehensive model card, create a Gradio Space that demos the model, and write a README linking the model to the Space. Make it look portfolio-ready — other engineers will find it here.',
+    youtubeQuery: 'Hugging Face Hub tutorial model card Spaces Gradio Transformers pipeline 2024',
+    docsUrl: 'https://huggingface.co/docs/hub/index'
+  },
+  {
+    id: 'local-llm-tools',
+    label: 'Local LLM Tools',
+    section: 13,
+    sectionTitle: 'Platforms & Ecosystem',
+    isMain: false,
+    parent: 'platforms-ecosystem',
+    border: 'blue',
+    difficulty: 'BEGINNER',
+    time: '3–4 days',
+    whyMatters: 'Running LLMs locally is essential for three scenarios: (1) building when you have no internet or tight budget, (2) processing sensitive data that cannot leave your infrastructure, (3) rapid iteration without API latency or per-token cost concerns. Tools like Ollama have democratised local LLM deployment to the point where running Llama 3.1 8B on a MacBook takes one command.',
+    learn: [
+      'Ollama is the de facto standard for local LLM deployment: brew install ollama (macOS), then ollama run llama3.1:8b — it manages model downloads, GPU acceleration, and exposes an OpenAI-compatible API on localhost:11434 automatically.',
+      'Ollama supports the full Modelfile format for customising models: FROM llama3.1, SYSTEM "You are a Python expert...", PARAMETER temperature 0.7 — this is equivalent to a system prompt + parameter configuration baked into a reusable model definition.',
+      'LM Studio provides a graphical interface for downloading, testing, and running models from Hugging Face — ideal for non-technical evaluators and for quickly comparing outputs from multiple models. It supports Apple Silicon Metal, NVIDIA CUDA, and AMD ROCm acceleration.',
+      'OpenRouter is a cloud service that aggregates 100+ models from different providers behind a single OpenAI-compatible API endpoint — useful for prototyping (no per-provider setup) and production cost routing (automatically select the cheapest model that meets your latency requirement).',
+      'Hardware requirements: running a 7B model at acceptable speed requires 8GB VRAM (GPU); 13B requires 16GB; 70B requires 48GB or CPU offloading (much slower). Apple Silicon unifies CPU and GPU memory — an M3 Max with 64GB can run Llama 3.1 70B reasonably well.',
+      'GGUF format (GPT-Generated Unified Format) is the standard for quantised models optimised for llama.cpp and Ollama — Q4_K_M is the recommended quality/size tradeoff for most local use cases, reducing a 70B model from 140GB (FP16) to ~40GB.',
+      'Jan.ai and GPT4All are GUI alternatives to LM Studio with slightly different model compatibility — worth knowing about when teammates prefer different tools, but Ollama + Open WebUI is the most powerful and scriptable combination.'
+    ],
+    prerequisites: 'Type of Models',
+    task: 'Build a local AI development workflow: install Ollama and Open WebUI with Docker Compose, pull Llama 3.1 8B and Mistral 7B, create custom Modelfiles for a coding assistant and a creative writing assistant, write a Python script using the Ollama API to batch-process 1000 text items, measure throughput (tokens/second) on your hardware, and document the entire setup for a teammate to reproduce.',
+    youtubeQuery: 'Ollama local LLM tutorial 2024 Llama LM Studio Open WebUI setup',
+    docsUrl: 'https://ollama.com/docs'
+  },
+  {
+    id: 'apis-sdks',
+    label: 'APIs & SDKs',
+    section: 13,
+    sectionTitle: 'Platforms & Ecosystem',
+    isMain: false,
+    parent: 'platforms-ecosystem',
+    border: 'blue',
+    difficulty: 'INTERMEDIATE',
+    time: '1 week',
+    whyMatters: 'Every production AI application is built on top of one or more LLM APIs. Understanding the differences between providers — not just the models, but the API contracts, error modes, rate limits, and unique features — prevents integration bugs and production incidents. Engineers who have worked with multiple APIs can switch providers with minimal friction, which is a competitive advantage when a new model drops.',
+    learn: [
+      'OpenAI Responses API (the successor to Chat Completions): client.responses.create() with a messages array — it adds built-in tool calling, file search, and computer use. The response object contains output, usage, and tool_calls; always handle tool_calls in a loop until no more tools are needed.',
+      'Claude Messages API: anthropic.messages.create(model="claude-3-5-sonnet-20241022", max_tokens=1024, messages=[...]) — key differences from OpenAI: system is a top-level param (not a message role), and extended thinking uses thinking content blocks. Always check stop_reason — "end_turn" vs "tool_use" requires different handling.',
+      'Google Gemini API via the google-generativeai SDK: genai.GenerativeModel("gemini-1.5-pro") then model.generate_content(contents) — Gemini supports inline image, video, and audio in the contents array natively, and has a Files API for uploading large files before referencing them in prompts.',
+      'Hugging Face Inference API: from huggingface_hub import InferenceClient; client = InferenceClient(); client.text_generation(prompt, model="mistralai/Mistral-7B-Instruct-v0.3") — good for prototyping with models not available on other APIs, and free-tier access is sufficient for experimentation.',
+      'OpenAI-compatible APIs: vLLM, Ollama, Together AI, Fireworks AI, Groq, Anyscale all expose the same /v1/chat/completions endpoint as OpenAI — just change base_url and api_key and your code works. This is why learning the OpenAI SDK first pays dividends across the ecosystem.',
+      'Error handling in production: implement exponential backoff with jitter for rate limit errors (429), circuit breaker patterns for provider outages, and fallback routing to a secondary provider — production LLM systems must handle API unavailability gracefully.',
+      'LiteLLM as a universal adapter: import litellm; litellm.completion(model="anthropic/claude-3-5-sonnet-20241022", messages=[...]) — the same function call works for 100+ models. Use it in internal tooling where you want to swap providers without touching application code.'
+    ],
+    prerequisites: 'Working With LLMs, Type of Models',
+    task: 'Build a production-grade LLM client library as a Python package: wrap the OpenAI, Anthropic, and Gemini SDKs behind a unified interface, implement automatic retry with exponential backoff, provider fallback (if OpenAI fails, try Anthropic), response streaming, structured output validation with Pydantic, per-request cost tracking, and a context manager for rate limiting. Publish to PyPI.',
+    youtubeQuery: 'OpenAI API Anthropic Claude Gemini SDK tutorial Python production 2024',
+    docsUrl: 'https://docs.anthropic.com/en/api/getting-started'
+  },
 
-// ─────────────────────────────────────────────────────────────
-// § 3 — EXPAND STATE  (all sections expanded by default)
-// ─────────────────────────────────────────────────────────────
-let aiRmExpanded = {};
+  // ─────────────────────────────────────────────
+  // SECTION 14 — EMBEDDINGS & VECTOR DATABASES
+  // ─────────────────────────────────────────────
+  {
+    id: 'embeddings-vector-dbs',
+    label: 'Embeddings & Vector DBs',
+    section: 14,
+    sectionTitle: 'Embeddings & Vector DBs',
+    isMain: true,
+    parent: null,
+    border: 'purple',
+    difficulty: 'INTERMEDIATE',
+    time: '2–3 weeks',
+    whyMatters: 'Embeddings and vector databases are the backbone of every modern RAG system, semantic search engine, and recommendation system. Spotify\'s Discover Weekly, Google\'s semantic search, and GitHub Copilot\'s code retrieval all use embedding-based similarity search at their core. Without understanding how embeddings work and how to store and query them efficiently, you cannot build production AI applications that go beyond simple API wrappers.',
+    learn: [
+      'An embedding is a fixed-length dense vector that encodes the semantic meaning of text, images, or other data — semantically similar items have vectors that are geometrically close in the high-dimensional embedding space.',
+      'Cosine similarity is the standard distance metric for comparing text embeddings: it measures the angle between two vectors regardless of magnitude, computed as dot(a, b) / (||a|| * ||b||). A value of 1.0 means identical direction; 0 means orthogonal; -1 means opposite.',
+      'Vector databases (Chroma, Pinecone, Qdrant, Weaviate) store embeddings and support approximate nearest neighbour (ANN) search at scale — they use indexing algorithms like HNSW to return the top-K most similar vectors in milliseconds across millions of entries.',
+      'The embedding model is a critical quality lever — OpenAI text-embedding-3-large consistently outperforms most competitors on MTEB benchmarks; for local/open-source use, bge-m3 and e5-mistral-7b-instruct are strong alternatives.',
+      'Chunking strategy for RAG dramatically affects retrieval quality — fixed-size chunks lose semantic boundaries; recursive character text splitting (LangChain\'s RecursiveCharacterTextSplitter) with overlap is a strong baseline; semantic chunking (split at topic boundaries) is the current best practice.',
+      'Hybrid search (dense + sparse retrieval) combines vector similarity with BM25 keyword search, using a fusion algorithm (Reciprocal Rank Fusion) to merge results — this significantly outperforms pure vector search on queries with specific technical terms, names, or IDs.',
+      'Metadata filtering in vector databases allows you to combine ANN search with structured filters — for example, query only documents where source=="Q4_report" and date > "2024-01-01" — this is essential for multi-tenant systems and time-aware retrieval.'
+    ],
+    prerequisites: 'Working With LLMs, AI Models',
+    task: 'Build a semantic search engine over the arXiv CS papers dataset (available on Hugging Face): embed 50,000 paper abstracts with text-embedding-3-small, store in Qdrant with metadata (title, authors, year, category), implement hybrid search (dense + BM25), build a FastAPI endpoint accepting natural language queries, and evaluate retrieval quality using NDCG@10 against a manually labelled test set of 100 queries.',
+    youtubeQuery: 'embeddings vector database semantic search Chroma Pinecone Qdrant tutorial 2024',
+    docsUrl: 'https://qdrant.tech/documentation/'
+  },
+  {
+    id: 'what-are-embeddings',
+    label: 'What are Embeddings',
+    section: 14,
+    sectionTitle: 'Embeddings & Vector DBs',
+    isMain: false,
+    parent: 'embeddings-vector-dbs',
+    border: 'blue',
+    difficulty: 'INTERMEDIATE',
+    time: '4–5 days',
+    whyMatters: 'Embeddings are the mechanism by which all modern AI systems understand similarity, category, and meaning. Without embeddings, you cannot build semantic search, recommendations, anomaly detection, or RAG systems. The companies winning at AI applications — Notion AI, Perplexity, Glean — are fundamentally embedding companies, using dense vector representations to retrieve the right content at the right time.',
+    learn: [
+      'Semantic search uses embeddings to find results by meaning rather than keyword — a query for "heart attack symptoms" will retrieve "chest pain indicators" and "myocardial infarction warning signs" even if those exact words are not in the query, because they are close in embedding space.',
+      'Data classification with embeddings: embed all documents and query text, then use cosine similarity to classify queries into categories — this zero-shot classification approach requires no labelled training data and outperforms keyword-based classifiers on nuanced categories.',
+      'Recommendation systems use embeddings to find similar items: embed all products/songs/articles, then for a user who liked item X, retrieve the top-K nearest neighbours in embedding space — Spotify\'s collaborative filtering and Amazon\'s product recommendations work on this principle.',
+      'Anomaly detection with embeddings: embed your data distribution, compute the average embedding (centroid), and flag items with cosine similarity below a threshold as anomalies — this works for detecting unusual transactions, log entries, or support tickets that do not fit established patterns.',
+      'Cross-modal embeddings align different data types in the same vector space — CLIP (Contrastive Language-Image Pre-Training) from OpenAI maps images and text to the same space, enabling text-to-image search and zero-shot image classification without task-specific fine-tuning.',
+      'Embedding drift: as your data distribution changes over time, embeddings generated with different model versions are not directly comparable — always store the model version alongside embeddings and re-embed when upgrading models, using cosine similarity thresholds to detect drift.',
+      'Dimensionality reduction for visualisation: use UMAP or t-SNE to project 1536-dimensional embedding vectors to 2D for visualisation — this is an essential debugging tool for understanding whether your embedding model is correctly clustering semantically similar documents.'
+    ],
+    prerequisites: 'Working With LLMs',
+    task: 'Build an embedding-powered document organisation system: take 500 articles from a Wikipedia dump, embed with text-embedding-3-small, apply UMAP to project to 2D, visualise the clusters with Plotly, implement k-means clustering to automatically group similar articles, build a semantic search interface with Streamlit, and demonstrate that the system surfaces thematically related articles better than BM25 keyword search on 20 test queries.',
+    youtubeQuery: 'what are embeddings vector search semantic similarity tutorial 2024',
+    docsUrl: 'https://platform.openai.com/docs/guides/embeddings'
+  },
+  {
+    id: 'embedding-models',
+    label: 'Embedding Models',
+    section: 14,
+    sectionTitle: 'Embeddings & Vector DBs',
+    isMain: false,
+    parent: 'embeddings-vector-dbs',
+    border: 'blue',
+    difficulty: 'INTERMEDIATE',
+    time: '3–4 days',
+    whyMatters: 'Choosing the wrong embedding model is the most common cause of poor RAG performance that engineers misdiagnose as a retrieval architecture problem. A model trained on general web text will underperform on legal contracts; a short-context model will truncate your 2000-word documents. Understanding the tradeoffs between proprietary and open-source embedding models — and knowing how to evaluate them on your own data — is a core production skill.',
+    learn: [
+      'OpenAI Embeddings API: text-embedding-3-small (1536 dims, cheapest at $0.02/1M tokens) and text-embedding-3-large (3072 dims, higher quality) — both support Matryoshka Representation Learning (MRL), allowing you to truncate embeddings to smaller dimensions (e.g., 256 dims) for storage efficiency with minimal quality loss.',
+      'Gemini Embedding: models/text-embedding-004 from Google produces 768-dimensional embeddings via the Gemini API — competitive with OpenAI on MTEB benchmarks and included in Google Cloud pricing, making it cost-effective for GCP-native applications.',
+      'Cohere Embed v3: embed-english-v3.0 and embed-multilingual-v3.0 support compression to binary embeddings (1-bit per dimension), reducing storage by 32x vs float32 with only a small quality drop — ideal for large-scale deployments with storage cost constraints.',
+      'Sentence Transformers (open-source): from sentence_transformers import SentenceTransformer; model = SentenceTransformer("BAAI/bge-large-en-v1.5"); embeddings = model.encode(sentences, normalize_embeddings=True) — runs locally, no API costs, and bge-large-en-v1.5 scores competitively on MTEB.',
+      'Hugging Face MTEB (Massive Text Embedding Benchmark) leaderboard at huggingface.co/spaces/mteb/leaderboard is the authoritative ranking of embedding models — but critically, always evaluate on your own domain-specific data because the general leaderboard may not reflect performance on legal, medical, or code text.',
+      'Jina AI embeddings: jina-embeddings-v3 supports 8192-token input context (vs 8191 for OpenAI) and is strong for long-document retrieval — particularly useful when chunking is suboptimal and you want to embed whole sections rather than split paragraphs.',
+      'Fine-tuning embedding models: when domain-specific performance matters, fine-tune a base embedding model with domain-relevant (query, positive, negative) triplets using the sentence-transformers MultipleNegativesRankingLoss — a few thousand examples can yield significant improvements on specialised corpora.'
+    ],
+    prerequisites: 'What are Embeddings',
+    task: 'Run a systematic embedding model evaluation on a domain-specific dataset of your choice (e.g., 500 customer support tickets or 500 scientific paper abstracts): benchmark OpenAI text-embedding-3-small, text-embedding-3-large, Cohere embed-english-v3.0, and BAAI/bge-large-en-v1.5 using MTEB evaluation metrics (NDCG@10, MAP) on a retrieval task. Report cost-per-embedding, query latency, and quality tradeoffs. Recommend the best model for this use case.',
+    youtubeQuery: 'embedding models comparison OpenAI Cohere Sentence Transformers MTEB 2024',
+    docsUrl: 'https://huggingface.co/spaces/mteb/leaderboard'
+  },
+  {
+    id: 'vector-dbs-14',
+    label: 'Vector Databases',
+    section: 14,
+    sectionTitle: 'Embeddings & Vector DBs',
+    isMain: false,
+    parent: 'embeddings-vector-dbs',
+    border: 'purple',
+    difficulty: 'INTERMEDIATE',
+    time: '1 week',
+    whyMatters: 'Vector databases are the storage layer of the AI application stack. Every RAG system, semantic search engine, and recommendation system depends on one. Engineers who understand indexing strategies, filtering capabilities, and the scalability characteristics of different vector databases can design systems that handle billions of vectors efficiently — a skill in very high demand at companies like Airbnb, Canva, and LinkedIn.',
+    learn: [
+      'HNSW (Hierarchical Navigable Small World) is the dominant ANN index algorithm — it builds a multi-layer graph where each layer is a subset of the previous, allowing logarithmic-time approximate nearest neighbour search. All major vector DBs (Pinecone, Qdrant, Weaviate) use HNSW as their primary index.',
+      'Chroma is the go-to choice for local development and small-scale RAG: import chromadb; client = chromadb.PersistentClient(path="./chroma"); collection = client.create_collection("docs"); collection.add(documents=[...], embeddings=[...], ids=[...]) — pure Python, no server required, great for prototyping.',
+      'Pinecone is the leading managed vector database for production: it handles sharding, replication, and scaling automatically — create an index with dimensions=1536, metric="cosine" then upsert and query via the Python SDK. Serverless tier makes it cost-effective for variable workloads.',
+      'Qdrant is the best open-source production vector database: it supports payload filtering with rich JSON metadata, sparse-dense hybrid search natively, and can be self-hosted with Docker (docker run -p 6333:6333 qdrant/qdrant). Its Rust implementation makes it extremely efficient.',
+      'FAISS (Facebook AI Similarity Search) is a library (not a database) for in-memory or disk-based ANN search — use faiss.IndexFlatL2 for exact search (small datasets), faiss.IndexIVFFlat for approximate search (millions of vectors), and faiss.IndexIVFPQ for compressed storage of billions of vectors.',
+      'Weaviate offers a GraphQL API and native multi-modal support (text + images in the same index) — its "generative search" module lets you embed the LLM call inside the vector search query, combining retrieval and generation in one API call.',
+      'Supabase with pgvector and MongoDB Atlas Vector Search are relational/document databases with vector capabilities added — if you already use Postgres or MongoDB, adding vector search requires only an extension (CREATE EXTENSION vector) or index, avoiding a separate vector DB service.'
+    ],
+    prerequisites: 'Embedding Models, What are Embeddings',
+    task: 'Build a production-ready vector search service: ingest the Wikipedia Simple English dataset (500K articles), chunk with semantic splitting, embed with text-embedding-3-small, index in Qdrant with HNSW, implement hybrid search with BM25 + dense retrieval using Reciprocal Rank Fusion, expose a FastAPI endpoint with metadata filtering by category and date, and benchmark query latency at P50/P95/P99 under load with Locust.',
+    youtubeQuery: 'vector database Chroma Pinecone Qdrant FAISS tutorial RAG 2024',
+    docsUrl: 'https://qdrant.tech/documentation/quick-start/'
+  },
 
+  // ─────────────────────────────────────────────
+  // SECTION 15 — RAGS
+  // ─────────────────────────────────────────────
+  {
+    id: 'rags',
+    label: 'RAGs',
+    section: 15,
+    sectionTitle: 'RAGs',
+    isMain: true,
+    parent: null,
+    border: 'purple',
+    difficulty: 'INTERMEDIATE',
+    time: '2–3 weeks',
+    whyMatters: 'Retrieval-Augmented Generation is the most widely deployed AI architecture in enterprise software. Virtually every "chat with your documents" product, internal knowledge base assistant, and customer support bot runs on RAG. Companies including Salesforce, ServiceNow, and Zendesk have built billion-dollar product lines on RAG systems. Understanding how to build and evaluate RAG correctly — not just make it work, but make it work reliably — is arguably the most valuable applied AI skill in 2024.',
+    learn: [
+      'RAG solves the knowledge cutoff and hallucination problem by grounding model responses in retrieved documents at inference time — the model is always reading from your data, not hallucinating from its training weights.',
+      'The standard RAG pipeline has five stages: (1) chunking documents, (2) embedding chunks, (3) storing in a vector DB, (4) retrieving top-K chunks for a query, (5) passing retrieved context + query to the LLM for generation — each stage has its own quality levers.',
+      'RAG vs fine-tuning: RAG is best for dynamic, frequently changing knowledge bases; fine-tuning is best for teaching the model a new style, format, or reasoning pattern — many production systems use both: fine-tune for behaviour, RAG for knowledge.',
+      'Chunking is the most underestimated RAG parameter: fixed-size 512-token chunks with 50-token overlap is a starting point, but semantic chunking (splitting at paragraph or section boundaries) typically outperforms it by preserving context.',
+      'Advanced RAG patterns: query rewriting (ask the LLM to rephrase the query before retrieval), HyDE (Hypothetical Document Embedding — generate a hypothetical answer, embed it, use that embedding for retrieval), and multi-query retrieval (generate 3 variants of the query, retrieve for each, deduplicate) all significantly improve recall.',
+      'RAGAS (Retrieval Augmented Generation Assessment) is the standard evaluation framework: it measures faithfulness (does the answer cite the retrieved context?), answer relevancy (does the answer address the question?), context precision, and context recall — run RAGAS on every RAG system before declaring it production-ready.',
+      'Framework comparison: LangChain provides the most patterns and integrations but is complex; LlamaIndex has superior document indexing and query pipeline abstractions; Haystack is best for enterprise pipelines with custom components; implementing RAG directly with SDKs gives maximum control and is not as hard as it sounds.'
+    ],
+    prerequisites: 'Embeddings & Vector DBs, Prompt Engineering',
+    task: 'Build and evaluate a production RAG system: ingest a 500+ page technical documentation corpus (e.g., the Python docs or FastAPI docs), implement 3 chunking strategies (fixed, recursive, semantic), evaluate each with RAGAS on 100 manually crafted question-answer pairs, implement the winning strategy with advanced retrieval (hybrid search + reranking with a cross-encoder), build a streaming chat interface with source citations, and measure the LLM cost per conversation turn.',
+    youtubeQuery: 'RAG retrieval augmented generation tutorial LangChain LlamaIndex 2024',
+    docsUrl: 'https://docs.llamaindex.ai/en/stable/'
+  },
+  {
+    id: 'what-are-rags',
+    label: 'What are RAGs?',
+    section: 15,
+    sectionTitle: 'RAGs',
+    isMain: false,
+    parent: 'rags',
+    border: 'blue',
+    difficulty: 'INTERMEDIATE',
+    time: '1–2 weeks',
+    whyMatters: 'Engineers who understand RAG in depth — not just the happy path, but why it fails and how to fix it — can build systems that actually work in production. Most RAG tutorials show you a working demo; they hide the fact that naive RAG fails on 40–60% of real-world queries. Understanding the full implementation with chunking, retrieval, and generation nuances is what separates a junior who built a demo from a mid-level engineer who shipped a reliable product.',
+    learn: [
+      'RAG use cases span internal knowledge management (company wikis, policy docs), customer support (product manuals, FAQs), code assistance (codebase search), legal research (case law retrieval), and medical Q&A (clinical guidelines) — the pattern generalises to any domain where an LLM needs access to a private or rapidly-changing knowledge base.',
+      'The chunking decision tree: for structured documents (markdown, HTML), use heading-based splitting to preserve section boundaries; for long prose (legal contracts, books), use recursive character splitting with overlap=10–15% of chunk size; for code, use AST-aware splitting that respects function/class boundaries.',
+      'Embedding and indexing: once chunked, embed each chunk with your chosen embedding model, then upsert into the vector database with associated metadata (source file, page number, section title, creation date) — metadata is critical for filtering and for generating citations.',
+      'The retrieval process: at query time, embed the user query with the same model, execute a top-K ANN search (K=5–20 depending on LLM context budget), optionally re-rank results with a cross-encoder (ColBERT, BGE-Reranker), and filter by score threshold to remove low-relevance chunks.',
+      'Generation with citations: structure the LLM prompt to include retrieved chunks clearly delineated (e.g., <source id="1">chunk text</source>), then instruct the model to cite source IDs in its response — this enables citation rendering in the UI and allows users to verify claims.',
+      'LangChain RAG implementation: from langchain.chains import RetrievalQA; qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(), retriever=vectorstore.as_retriever(search_kwargs={"k": 5})); qa.invoke({"query": "..."}) — the abstraction handles retrieval and prompt construction.',
+      'LlamaIndex RAG implementation: from llama_index.core import VectorStoreIndex, SimpleDirectoryReader; documents = SimpleDirectoryReader("./docs").load_data(); index = VectorStoreIndex.from_documents(documents); query_engine = index.as_query_engine(); response = query_engine.query("...") — LlamaIndex shines for complex document hierarchies and multi-document queries.'
+    ],
+    prerequisites: 'Vector Databases, Prompt Engineering',
+    task: 'Build a RAG chatbot for a real knowledge domain you care about (your company\'s internal docs, a technical book, or a dataset of research papers): implement the full pipeline using LlamaIndex (ingestion) + Qdrant (storage) + Claude API (generation), add a Gradio chat interface with source document display, implement query rewriting for improved recall, evaluate with RAGAS (target faithfulness > 0.85), and deploy publicly on Hugging Face Spaces.',
+    youtubeQuery: 'RAG tutorial from scratch LangChain LlamaIndex Chroma 2024 full guide',
+    docsUrl: 'https://python.langchain.com/docs/use_cases/question_answering/'
+  },
 
-// ─────────────────────────────────────────────────────────────
-// § 4 — RENDERING ENGINE
-// ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // SECTION 16 — AI AGENTS (EXTENDED)
+  // ─────────────────────────────────────────────
+  {
+    id: 'ai-agents-ext',
+    label: 'AI Agents Extended',
+    section: 16,
+    sectionTitle: 'AI Agents Extended',
+    isMain: true,
+    parent: null,
+    border: 'orange',
+    difficulty: 'ADVANCED',
+    time: '3–4 weeks',
+    whyMatters: 'AI agents are the next frontier of AI applications. While a simple LLM call answers a question, an agent can browse the web, write and execute code, call APIs, and iterate until a complex task is complete. Companies like Cognition (Devin), Adept, and Character AI are building multi-billion dollar companies entirely on agent architectures. Understanding how to build, orchestrate, and reliably control AI agents is the highest-value AI engineering skill of 2025.',
+    learn: [
+      'The agent loop: agents operate in a Reason → Act → Observe → Repeat cycle — the LLM reasons about what tool to call, the tool runs and returns an observation, the LLM reasons about the observation, and the loop continues until the task is complete or a stop condition is reached.',
+      'Function calling (tool use) is the mechanism by which agents take actions: you define tools as JSON schemas (name, description, parameters), the LLM decides which tool to call and with what arguments, you execute the function and return the result as a tool_result message.',
+      'Multi-agent systems decompose complex tasks across specialised sub-agents — a planner agent breaks the task into subtasks, executor agents handle each subtask, a critic agent reviews outputs, and a synthesiser agent assembles the final result. This mirrors how engineering teams operate.',
+      'Agent reliability is the hard problem: agents can get stuck in loops, hallucinate tool arguments, take irreversible actions, or fail to detect when a task is impossible. Production agent systems require step budgets, human-in-the-loop checkpoints for irreversible actions, and comprehensive logging.',
+      'Memory in agents: agents need multiple memory types — in-context memory (the current conversation), external memory (vector DB of past interactions), episodic memory (records of past task executions), and procedural memory (learned how-to guides stored and retrieved at task start).',
+      'The Model Context Protocol (MCP) is Anthropic\'s open standard for connecting LLMs to tools and data sources — it defines a standardised way for agents to discover and call tools, replacing bespoke function schemas with a universal interface.',
+      'Evaluation of agents is fundamentally harder than evaluating LLM completions — you need task-level success metrics (did the task complete?), efficiency metrics (how many steps/tokens?), and safety metrics (did the agent take any dangerous actions?) — build these evaluations before building the agent.'
+    ],
+    prerequisites: 'Working With LLMs, RAGs',
+    task: 'Build a multi-agent research assistant: a planner agent that decomposes a research question into sub-queries, a web search agent using the Serper API or Tavily, a document reader agent that uses your RAG system, a fact-checking agent that verifies claims across sources, and a synthesis agent that produces a cited report. Implement a step budget (max 20 tool calls), human approval for any write operations, and end-to-end evaluation on 20 research questions with human quality ratings.',
+    youtubeQuery: 'AI agents tutorial multi-agent framework function calling 2024',
+    docsUrl: 'https://www.anthropic.com/research/building-effective-agents'
+  },
+  {
+    id: 'agent-frameworks',
+    label: 'Agent Frameworks',
+    section: 16,
+    sectionTitle: 'AI Agents Extended',
+    isMain: false,
+    parent: 'ai-agents-ext',
+    border: 'purple',
+    difficulty: 'ADVANCED',
+    time: '2 weeks',
+    whyMatters: 'Agent frameworks abstract the orchestration complexity of multi-step LLM workflows. Without a framework, you are manually managing conversation history, tool schemas, retry logic, and state — which is hundreds of lines of plumbing. OpenAI Agents SDK and Anthropic\'s agent patterns represent the current best practices from the engineers who built the models. Understanding these frameworks lets you build agents that are reliable enough for production use.',
+    learn: [
+      'ReAct prompting is the cognitive architecture behind most agents: the prompt instructs the model to follow a Thought → Action → Observation loop, making its reasoning explicit before each tool call — this alone dramatically improves agent reliability compared to implicit reasoning.',
+      'Tool definition best practices: your tool description is as important as your system prompt — describe not just what the tool does but when to use it vs alternatives, what valid inputs look like, and what errors it might return. A bad tool description causes the model to hallucinate arguments or use the wrong tool.',
+      'OpenAI Agents SDK: from agents import Agent, Runner, function_tool; define tools with @function_tool decorator, create an Agent with instructions and tools list, run with Runner.run(agent, "your task") — it handles the agentic loop, tool calling, and conversation management automatically.',
+      'Anthropic\'s Claude tool use pattern: define tools as a JSON list in the tools parameter, check response.stop_reason == "tool_use" in the loop, extract tool_use blocks from response.content, execute tools and return results as tool_result content blocks — implement this pattern manually before using any framework.',
+      'Multi-agent orchestration with OpenAI Agents SDK: use Agent.as_tool() to turn one agent into a tool callable by another — this creates hierarchical agent architectures where a planner agent calls specialist agents as tools, passing work up and down the hierarchy.',
+      'Vertex AI Agent Builder and Google ADK (Agent Development Kit): Google\'s managed agent platform that integrates with Gemini models, provides built-in tools (Google Search, code execution, data connectors), and handles deployment, scaling, and monitoring — useful for enterprises already on GCP.',
+      'When not to use an agent: for tasks that can be solved with a single LLM call or a deterministic pipeline (data extraction, classification, summarisation), agents add unnecessary complexity and failure modes. Use the simplest architecture that solves the problem — agentic frameworks are for tasks that genuinely require iterative tool use and adaptive planning.'
+    ],
+    prerequisites: 'Context Engineering, Prompt Engineering',
+    task: 'Build a code review agent: given a GitHub PR URL, the agent should fetch the diff using the GitHub API, analyse changed files for bugs, security issues, and style violations, run the appropriate static analysis tools (pylint, bandit, mypy) via code execution, synthesise findings into a structured review, and post it as a GitHub PR comment. Handle PRs with up to 50 changed files and measure review accuracy against human code review on 20 real PRs.',
+    youtubeQuery: 'AI agent framework OpenAI Agents SDK Claude tool use multi-agent 2024',
+    docsUrl: 'https://openai.github.io/openai-agents-python/'
+  },
+  {
+    id: 'mcp',
+    label: 'Model Context Protocol',
+    section: 16,
+    sectionTitle: 'AI Agents Extended',
+    isMain: false,
+    parent: 'ai-agents-ext',
+    border: 'orange',
+    difficulty: 'ADVANCED',
+    time: '1–2 weeks',
+    whyMatters: 'MCP is rapidly becoming the USB-C of AI tool integration. Before MCP, every agent needed bespoke glue code to connect to every tool. With MCP, any MCP-compatible client (Claude Desktop, Cursor, Zed) can connect to any MCP server and immediately use its tools — one implementation works everywhere. Anthropic, Google DeepMind, and Microsoft have all adopted MCP, and it is becoming the standard for agentic tool integration across the industry.',
+    learn: [
+      'MCP architecture has three components: the Host (the application like Claude Desktop or Cursor), the Client (embedded in the host, manages connections), and the Server (a lightweight process exposing tools, resources, and prompts) — the client-server communication uses JSON-RPC 2.0 over stdio or HTTP+SSE.',
+      'MCP core primitives: Tools are callable functions the LLM can invoke (like function calling but standardised), Resources are data the server exposes for the LLM to read (files, database records, API responses), and Prompts are pre-built prompt templates the user can invoke — understanding these three primitives covers 95% of MCP use cases.',
+      'Building an MCP server in Python with the mcp SDK: from mcp.server import Server; from mcp.server.stdio import stdio_server; app = Server("my-server") then decorate tools with @app.call_tool() — the server exposes your tools over stdio and any MCP-compatible client can call them immediately.',
+      'Connecting to a local MCP server: add the server to claude_desktop_config.json under "mcpServers": {"my-server": {"command": "python", "args": ["server.py"]}} — Claude Desktop will launch the server process and connect automatically when you open it.',
+      'Remote MCP servers use HTTP with Server-Sent Events (SSE) for transport instead of stdio — this enables deploying MCP servers as web services, allowing multiple clients to connect simultaneously and enabling cloud-hosted tool integrations.',
+      'Building an MCP client: from mcp import ClientSession, StdioServerParameters; async with stdio_client(server_params) as (read, write): async with ClientSession(read, write) as session: tools = await session.list_tools(); result = await session.call_tool("tool_name", arguments={...})',
+      'MCP security model: servers declare their capabilities at connection time, clients approve which capabilities to grant — always validate tool inputs server-side (never trust arguments from the LLM), implement rate limiting on expensive operations, and use OAuth 2.0 for MCP servers that access user data.'
+    ],
+    prerequisites: 'Agent Frameworks',
+    task: 'Build a production-quality MCP server that exposes your RAG system as MCP tools: implement tools for semantic_search(query, top_k), add_document(text, metadata), and delete_document(id), expose the vector database contents as MCP Resources, write a client script that connects to the server and demonstrates all tools working with Claude, package the server with uv and publish to GitHub with a one-command Docker deployment.',
+    youtubeQuery: 'Model Context Protocol MCP tutorial build server client 2024 Anthropic',
+    docsUrl: 'https://modelcontextprotocol.io/docs'
+  },
 
-// ── Border → visual style map ──────────────────────────────────
-const AI_RM_BORDER_STYLES = {
-  green:  { border: '2px solid #10b981', bg: '#051a10', glow: 'rgba(16,185,129,0.18)',  color: '#10b981' },
-  blue:   { border: '2px solid #3b82f6', bg: '#05101a', glow: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
-  purple: { border: '2px solid #a855f7', bg: '#0f0520', glow: 'rgba(168,85,247,0.15)', color: '#a855f7' },
-  orange: { border: '2px solid #f97316', bg: '#1a0f05', glow: 'rgba(249,115,22,0.18)', color: '#f97316' },
-  dashed: { border: '2px dashed #8080a8', bg: '#0c0c20', glow: 'rgba(128,128,168,0.1)', color: '#8080a8' }
+  // ─────────────────────────────────────────────
+  // SECTION 17 — AI SAFETY & ETHICS
+  // ─────────────────────────────────────────────
+  {
+    id: 'ai-safety-17',
+    label: 'AI Safety & Ethics',
+    section: 17,
+    sectionTitle: 'AI Safety & Ethics',
+    isMain: true,
+    parent: null,
+    border: 'dashed',
+    difficulty: 'ADVANCED',
+    time: '2–3 weeks',
+    whyMatters: 'AI safety is not a compliance checkbox — it is a prerequisite for shipping AI products that do not cause harm or embarrass your company. Prompt injection attacks can exfiltrate user data from LLM applications. Biased training data causes discriminatory outputs. Poorly constrained agents can take irreversible real-world actions. The EU AI Act, FTC guidelines, and enterprise procurement requirements now mandate safety evaluation. Engineers who understand safety ship better products and avoid costly incidents.',
+    learn: [
+      'Prompt injection is the most critical security vulnerability in LLM applications — an attacker embeds instructions in user-controlled content (a document, web page, or email) that override your system prompt and cause the model to exfiltrate data, take unauthorized actions, or behave harmfully.',
+      'Defence against prompt injection: use Claude\'s XML tagging to clearly delineate system instructions from user content (<system_instructions> vs <user_input>), never include untrusted content directly in the system prompt, and implement a separate LLM-based safety classifier that analyses every response before returning it to the user.',
+      'Privacy in LLM systems: user data sent to third-party LLM APIs (OpenAI, Anthropic) may be used for training unless explicitly opted out via the API — review the data processing agreements, use the API (not the consumer product) which has stricter data retention policies, and consider self-hosting models for sensitive data.',
+      'Bias and fairness in LLM outputs: models reflect biases in their training data — test your application systematically across protected groups (race, gender, age, religion) using adversarial prompts, and implement output monitoring that flags disproportionate treatment.',
+      'Content moderation: use Anthropic\'s built-in safety training, OpenAI\'s Moderation API (openai.moderations.create), or a specialised classifier (Llama Guard, ShieldGemma) to screen both inputs and outputs for harmful content — implement input filtering before the LLM and output filtering before returning to the user.',
+      'End-user IDs in API calls: pass user IDs in API requests (the user parameter in OpenAI, or as metadata in Anthropic) — this enables the provider\'s abuse monitoring systems to detect coordinated misuse and allows you to investigate incidents tied to specific users.',
+      'Adversarial testing checklist: before deploying any LLM application, run systematic red-teaming covering prompt injection, jailbreaks, data exfiltration attempts, role-play manipulation, context confusion attacks, and denial-of-service via token exhaustion — document findings and mitigations in a security report.'
+    ],
+    prerequisites: 'AI Agents Extended, Working With LLMs',
+    task: 'Conduct a full security audit of an LLM application (your RAG chatbot or agent): attempt 20 distinct attack vectors (prompt injection, jailbreak, data exfiltration, context manipulation), document which succeed, implement mitigations (input sanitisation, output classification, Llama Guard screening), re-test to verify mitigations work, write a security report in the format used by Anthropic\'s public responsible scaling policy, and implement structured output validation to prevent injection via tool arguments.',
+    youtubeQuery: 'AI safety prompt injection security LLM red-teaming tutorial 2024',
+    docsUrl: 'https://www.anthropic.com/responsible-disclosure'
+  },
+  {
+    id: 'safety-ethics-core',
+    label: 'AI Safety and Ethics',
+    section: 17,
+    sectionTitle: 'AI Safety & Ethics',
+    isMain: false,
+    parent: 'ai-safety-ethics',
+    border: 'dashed',
+    difficulty: 'ADVANCED',
+    time: '1–2 weeks',
+    whyMatters: 'The engineers who build AI systems are the last line of defence before those systems reach users. A safety-unconscious engineer who ships a biased model, a leaky system prompt, or an agent that can take irreversible actions without confirmation is not just making a technical mistake — they are causing real harm to real people. Understanding the full safety landscape — from prompt injection to output bias to adversarial testing — makes you the kind of engineer that senior leaders trust with AI systems.',
+    learn: [
+      'Prompt injection attacks come in two forms: direct injection (the user includes malicious instructions in their own input) and indirect injection (malicious instructions are hidden in external content the LLM reads, like a web page, email, or document) — indirect injection is the harder problem and is currently an open research challenge.',
+      'Security and privacy best practices: never log full prompts in plaintext (they may contain PII), use short-lived API keys rotated every 30 days, implement output filtering before PII like SSNs or email addresses can leak through LLM responses, and audit your data retention policies with the LLM provider.',
+      'Bias assessment with LLMs: construct a test suite of prompts that probe for biased outputs across protected characteristics — for example, complete "The [job title] walked into the room and [pronoun]..." with 20 different job titles and measure pronoun distribution. LLMs commonly associate male pronouns with high-status jobs.',
+      'Output constraining: use structured outputs (JSON schema enforcement) to limit what the LLM can generate, use a separate classifier to reject outputs that violate safety policies, and implement a "constitutional" system prompt that explicitly lists prohibited output types with examples.',
+      'Know your use case: the safety measures appropriate for a children\'s education app are very different from a security research tool. Define your threat model explicitly — who are the users, what data can they access, what actions can the model take, and what are the consequences of a failure?',
+      'Constraining inputs: implement a query classifier that routes off-topic or potentially harmful queries to a safe rejection message before they reach the main LLM — this is cheaper and more reliable than trying to make the main LLM reject harmful inputs through prompting alone.',
+      'Responsible AI documentation: write an AI system card for every deployed LLM application specifying: intended use cases, prohibited use cases, known limitations and failure modes, safety measures implemented, testing performed, and a contact for reporting issues — this is increasingly required by enterprise customers and regulators.'
+    ],
+    prerequisites: 'AI Safety & Ethics main node',
+    task: 'Build a safety layer for an LLM application: implement Llama Guard as an input/output classifier that screens for 11 harm categories, build a prompt injection detector using a fine-tuned classifier on the PINT benchmark dataset, add structured output validation that rejects any response containing PII patterns (regex + ML hybrid), implement a query intent classifier that routes sensitive queries to a compliance review queue, and write a comprehensive safety documentation report.',
+    youtubeQuery: 'AI safety ethics bias content moderation LLM application 2024',
+    docsUrl: 'https://ai.meta.com/research/publications/llama-guard-llm-based-input-output-safeguard-for-human-ai-conversations/'
+  },
+
+  // ─────────────────────────────────────────────
+  // SECTION 18 — MULTIMODAL AI
+  // ─────────────────────────────────────────────
+  {
+    id: 'multimodal-ai',
+    label: 'Multimodal AI',
+    section: 18,
+    sectionTitle: 'Multimodal AI',
+    isMain: true,
+    parent: null,
+    border: 'purple',
+    difficulty: 'ADVANCED',
+    time: '2–3 weeks',
+    whyMatters: 'The next wave of AI applications is multimodal — combining text, images, audio, and video. GPT-4o can discuss a photograph, Whisper transcribes any audio, DALL-E generates images from descriptions, and Gemini 1.5 Pro can analyse an entire 2-hour video. Companies like Perplexity (image search), Runway (video generation), and ElevenLabs (voice synthesis) are building products worth billions on multimodal capabilities. Engineers who can work across modalities build more complete and compelling AI products.',
+    learn: [
+      'Multimodal models process multiple input types in the same model — GPT-4o accepts text, images, and audio natively; Claude 3.5 Sonnet accepts text and images; Gemini 1.5 Pro accepts text, images, audio, and video. The key insight is that all modalities are tokenised (vision tokens, audio tokens) and processed by the same transformer architecture.',
+      'Vision capabilities have a hierarchy: image description (narrate what is in an image), visual question answering (answer specific questions about an image), document understanding (extract text and structure from PDFs, screenshots), and visual reasoning (solve problems requiring visual and textual reasoning together).',
+      'Image generation models (DALL-E 3, Stable Diffusion XL, Flux.1) convert text prompts to images — DALL-E 3 is the highest quality and most prompt-faithful; Stable Diffusion is open-source and self-hostable; Flux.1 from Black Forest Labs represents the current state-of-the-art in open-weight image generation.',
+      'Audio processing: Whisper (OpenAI, open-source) achieves near-human accuracy on speech-to-text across 99 languages — it is the go-to for transcription tasks. For real-time speech-to-text, Deepgram and AssemblyAI offer streaming APIs with < 300ms latency.',
+      'Text-to-speech has reached human parity: ElevenLabs, OpenAI TTS API, and Play.ht can generate natural-sounding speech with voice cloning from a 1-minute audio sample. The OpenAI TTS API (tts-1 model) is the fastest to integrate and sufficient for most applications.',
+      'Video understanding is the newest frontier: Gemini 1.5 Pro can accept up to 1 hour of video directly in context — this enables summarisation, question answering, and event extraction from video without separate transcription or frame extraction pipelines.',
+      'Multimodal RAG extends standard RAG to non-text documents: index PDFs including their images with a vision model, embed page screenshots alongside text chunks, and retrieve both text and image context for queries — this unlocks retrieval from charts, diagrams, and image-heavy documents that text-only RAG cannot handle.'
+    ],
+    prerequisites: 'Working With LLMs, RAGs',
+    task: 'Build a multimodal document intelligence system: accept PDF uploads, extract both text (PyMuPDF) and page screenshots (pdf2image), embed text chunks (text-embedding-3-small) and page images (CLIP or GPT-4o vision embeddings) into separate Qdrant collections, implement a router that decides whether a query needs text retrieval, image retrieval, or both, and generate responses with GPT-4o or Claude vision that include references to specific pages with their images displayed in the UI.',
+    youtubeQuery: 'multimodal AI tutorial vision image audio LLM GPT-4o Whisper DALL-E 2024',
+    docsUrl: 'https://platform.openai.com/docs/guides/vision'
+  },
+  {
+    id: 'multimodal-core',
+    label: 'Multimodal AI',
+    section: 18,
+    sectionTitle: 'Multimodal AI',
+    isMain: false,
+    parent: 'multimodal-ai',
+    border: 'purple',
+    difficulty: 'ADVANCED',
+    time: '1 week',
+    whyMatters: 'Understanding the capabilities and limitations of each modality prevents you from reaching for the wrong tool. Engineers who understand that vision models struggle with text in images, that Whisper disfluency handling is imperfect, and that DALL-E hallucination cannot be used for medical or legal image generation build more reliable systems with appropriate fallbacks and validations.',
+    learn: [
+      'Image understanding with Claude Vision: send images as base64-encoded strings or URLs in the message content array — messages=[{"role": "user", "content": [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64_data}}, {"type": "text", "text": "Describe this image."}]}] — Claude handles images up to 5MB.',
+      'Image generation with DALL-E 3: openai_client.images.generate(model="dall-e-3", prompt="...", size="1024x1024", quality="hd", n=1) — DALL-E 3 follows complex prompts more faithfully than DALL-E 2 and automatically improves underspecified prompts via prompt rewriting (which you can suppress with response_format="b64_json").',
+      'Video understanding with Gemini: upload a video file with the Files API (genai.upload_file(path)), then reference it in a generation request — model.generate_content(["Summarise the key topics in this video:", video_file]) — Gemini can process up to 1 hour of video, outputting timestamps, summaries, and answers to specific questions.',
+      'Audio processing with Whisper API: openai_client.audio.transcriptions.create(model="whisper-1", file=audio_file, language="en", response_format="verbose_json") — the verbose_json format returns word-level timestamps, enabling subtitle generation and speaker-aligned transcripts.',
+      'Text-to-speech with OpenAI TTS: openai_client.audio.speech.create(model="tts-1-hd", voice="alloy", input="Your text here") — supports 6 voices (alloy, echo, fable, onyx, nova, shimmer) and outputs mp3 or opus. Use tts-1 for low latency, tts-1-hd for highest quality.',
+      'Speech-to-text for real-time applications: Deepgram Nova-2 and AssemblyAI Universal-1 offer streaming WebSocket APIs that return transcripts within 300ms of speech ending — use these instead of Whisper for live transcription use cases like voice agents and real-time captioning.',
+      'Multi-modal prompt engineering: when sending images to vision models, your text prompt significantly affects what the model extracts — "What objects are in this image?" produces a list; "Extract all text visible in this image as JSON" produces structured OCR output; "Identify any safety hazards in this manufacturing floor image" focuses attention on specific semantic categories.'
+    ],
+    prerequisites: 'Multimodal AI main node',
+    task: 'Build a voice-enabled AI assistant with image understanding: implement voice input with Whisper for speech-to-text, allow image uploads processed with Claude Vision, generate spoken responses with the OpenAI TTS API, stream audio to the browser using the Web Audio API, implement a conversation history that interleaves text and image turns, and build a Gradio interface that combines the mic button, image upload, and audio playback. Target end-to-end voice response latency under 3 seconds.',
+    youtubeQuery: 'multimodal AI image video audio tutorial Claude vision Whisper TTS 2024',
+    docsUrl: 'https://docs.anthropic.com/en/docs/build-with-claude/vision'
+  },
+  {
+    id: 'multimodal-tasks',
+    label: 'Multimodal AI Tasks',
+    section: 18,
+    sectionTitle: 'Multimodal AI',
+    isMain: false,
+    parent: 'multimodal-ai',
+    border: 'purple',
+    difficulty: 'ADVANCED',
+    time: '1 week',
+    whyMatters: 'Knowing which tool to use for which multimodal task — and how to combine them into pipelines — is the applied skill that hiring managers for multimodal AI roles are testing. The difference between an engineer who has read about Whisper and one who has integrated it with speaker diarisation, punctuation restoration, and hallucination filtering into a production transcription pipeline is enormous.',
+    learn: [
+      'OpenAI Vision API for document understanding: send a screenshot of a PDF page, invoice, or form, then extract structured data — {"type": "json_object"} response format combined with a JSON schema in the prompt enables reliable information extraction from visual documents that can replace complex OCR pipelines.',
+      'DALL-E API workflow for applications: generate → moderate → store — generate the image, run the result through the OpenAI Moderation API to verify it meets safety requirements, store on S3/GCS, return a CDN URL to the user. Never return DALL-E\'s temporary URL directly — it expires in 60 minutes.',
+      'Whisper API with post-processing: the base Whisper transcript needs post-processing for production use — use pyannote.audio for speaker diarisation (who said what), add punctuation and capitalisation with a language model, and implement hallucination filtering (Whisper sometimes hallucinates "Thank you" or "Subscribe" on music or silence).',
+      'Hugging Face multimodal models: from transformers import pipeline; vqa_pipe = pipeline("visual-question-answering", model="Salesforce/blip-vqa-base") — BLIP-2, InstructBLIP, and LLaVA are the leading open-source vision-language models available on the Hub for tasks where you cannot send images to external APIs.',
+      'LangChain for multimodal apps: use ChatOpenAI(model="gpt-4o") and pass HumanMessage content with both image and text items — LangChain handles the multi-content message construction and provides built-in memory, retrieval, and chain abstractions that work across modalities.',
+      'LlamaIndex for multimodal RAG: use MultiModalVectorStoreIndex to index both text and images, then SimpleMultiModalQueryEngine to retrieve context from both modalities for a query — LlamaIndex handles the complexity of dual-encoder retrieval and multi-modal context injection.',
+      'Implementing multimodal AI end-to-end: the production pattern is a preprocessing layer (standardise inputs: resize images, normalise audio, extract PDF pages) → modality router (decide which models to call) → parallel execution (call vision and text models concurrently) → result fusion (merge outputs into a coherent response) → post-processing (safety filter, format, cite).'
+    ],
+    prerequisites: 'Multimodal AI Core',
+    task: 'Build a multimodal meeting intelligence system: record audio with the browser MediaRecorder API, transcribe with Whisper (word-level timestamps + diarisation with pyannote.audio), extract screenshots from any shared-screen video at key moments using OpenCV scene detection, index both transcript segments and screenshot embeddings in Qdrant, and build a Q&A interface where users can query "What did the presenter say about Q3 revenue?" and receive an answer citing the exact transcript timestamp and relevant slide image.',
+    youtubeQuery: 'multimodal AI tasks vision DALL-E Whisper LangChain LlamaIndex tutorial 2024',
+    docsUrl: 'https://docs.llamaindex.ai/en/stable/examples/multi_modal/GPT4V_multi_modal_retrieval/'
+  },
+
+  // ─────────────────────────────────────────────
+  // SECTION 19 — DEVELOPMENT TOOLS
+  // ─────────────────────────────────────────────
+  {
+    id: 'dev-tools',
+    label: 'Development Tools',
+    section: 19,
+    sectionTitle: 'Development Tools',
+    isMain: true,
+    parent: null,
+    border: 'blue',
+    difficulty: 'ADVANCED',
+    time: '1–2 weeks',
+    whyMatters: 'AI-assisted coding tools have fundamentally changed engineering productivity. Engineers using Cursor, Claude Code, and GitHub Copilot consistently report shipping 2–4x faster than before. At companies like Shopify, Stripe, and Vercel, AI coding tool proficiency is now an explicit hiring consideration. More importantly, AI engineers who use AI tools to build AI systems have a compounding advantage — they can prototype, evaluate, and iterate faster than engineers who are not leveraging these tools.',
+    learn: [
+      'The AI coding tool landscape has converged around a few paradigms: inline completion (Copilot), chat-with-codebase (Cursor), terminal agents (Claude Code), and full-stack generation (Bolt, Lovable) — each excels at different tasks and the productive engineer uses all of them appropriately.',
+      'AI coding tools hallucinate APIs, invent function signatures, and generate plausible but incorrect code — this is the critical caveat that separates productive users from unproductive ones. Always run AI-generated code, check imports, and verify against official documentation.',
+      'The skill of prompting coding tools is genuinely different from general prompting — be extremely specific about inputs/outputs, provide relevant file context with @mentions, include error messages verbatim, and ask for tests alongside implementations to catch hallucinations immediately.',
+      'AI tools are most powerful for: boilerplate code generation, test writing (write the function, ask the AI to write 10 unit tests), documentation (write the code, ask the AI to write docstrings and README), and code explanation (paste unfamiliar code, ask "what does this do step by step?").',
+      'AI tools are weakest for: novel algorithm design requiring creative reasoning, debugging subtle logic errors in complex multi-file interactions, and performance optimisation requiring deep system knowledge — these still require human expertise.',
+      'Version control discipline becomes more important with AI tools: commit AI-generated code in small, reviewable increments; write descriptive commit messages explaining the intent (not just "AI-generated code"); and always review git diff before committing — you are responsible for every line in your codebase regardless of who generated it.',
+      'The AI engineering feedback loop: use AI to generate code → run tests → observe failures → feed failures back to AI with context → iterate — this loop can replace hours of debugging with minutes, but only if you have comprehensive tests. Invest in test coverage before relying on AI-assisted iteration.'
+    ],
+    prerequisites: 'Working With LLMs',
+    task: 'Complete an entire end-to-end AI project using AI coding tools exclusively for implementation: choose a non-trivial project (a full RAG system, a multi-agent workflow, or a computer vision pipeline), use Claude Code for architecture and large refactors, Cursor for feature implementation, and GitHub Copilot for tests and documentation. Track time spent, document every case where the AI produced incorrect code, and write a retrospective on how AI tool use changed your workflow. Target: complete in < 50% of your estimated manual time.',
+    youtubeQuery: 'AI coding tools Cursor Claude Code GitHub Copilot 2024 tutorial workflow',
+    docsUrl: 'https://docs.anthropic.com/en/docs/claude-code/overview'
+  },
+  {
+    id: 'ai-coding-tools',
+    label: 'AI Assisted Coding',
+    section: 19,
+    sectionTitle: 'Development Tools',
+    isMain: false,
+    parent: 'dev-tools',
+    border: 'blue',
+    difficulty: 'ADVANCED',
+    time: '1 week',
+    whyMatters: 'Mastering AI coding tools is itself a competitive advantage. Two engineers with the same technical knowledge but different levels of AI tool proficiency can have 3–5x different output. At the current pace of AI tool improvement, engineers who do not actively develop their AI-assisted workflow are falling behind their peers. This is not about replacing engineering judgment — it is about amplifying it.',
+    learn: [
+      'Claude Code (Anthropic): installed via npm install -g @anthropic-ai/claude-code and run with claude in your project directory — it reads your entire codebase via CLAUDE.md, plans multi-step tasks, writes and runs code, interprets test failures, and iterates autonomously. Best used for: large refactors, greenfield implementations, and complex debugging sessions where you want the AI to drive while you supervise.',
+      'Google Gemini CLI: gemini in your terminal gives you Gemini 2.5 Pro access from the command line with a 1 million token context window — this is uniquely powerful for ingesting entire codebases, comparing large files, or reasoning about architecture across hundreds of files simultaneously.',
+      'Codex (OpenAI): the model behind GitHub Copilot and the OpenAI code_completion endpoint — while Copilot is the consumer product, calling the API directly with specific prompts (e.g., "Implement the following function signature with correct error handling and type hints:") gives you more control and is useful for building AI-assisted code review tools.',
+      'Cursor workflow for feature development: (1) open the relevant file, (2) use Cmd+K to describe the change in natural language ("add Redis caching with a 5-minute TTL to this function"), (3) review the diff with Tab acceptance or rejection, (4) run tests immediately — never accept a change without running the tests. Use @-mentions to pull in related files the AI needs for context.',
+      'Windsurf (by Codeium): a Cursor alternative with a "Cascade" agentic mode that maintains awareness of changes across the conversation — useful for engineers who find Cursor\'s context management limiting. Windsurf has a generous free tier, making it accessible for students and side projects.',
+      'Replit Agent: the best choice for full-stack prototype deployment — describe the app you want, Replit Agent writes the code and deploys it to a public URL in minutes. For AI engineers, it is valuable for rapidly deploying model demos, data collection tools, and evaluation interfaces without infrastructure setup.',
+      'The meta-skill of AI tool evaluation: new AI coding tools release monthly — your ability to rapidly evaluate a new tool (set up a benchmark task, time yourself, assess output quality) and integrate the best ones into your workflow is itself a high-value skill. Follow r/LocalLLaMA, the Latent Space podcast, and TLDR AI to stay current on tool releases.'
+    ],
+    prerequisites: 'Working With LLMs, AI Models',
+    task: 'Run a structured AI coding tool shootout: implement the same non-trivial feature (a streaming RAG endpoint with Redis caching, Pydantic validation, and pytest test suite) using Claude Code, Cursor, and GitHub Copilot separately — time each implementation, evaluate code quality (type safety, test coverage, error handling), count hallucinations caught, and write a detailed comparison report with concrete recommendations for which tool to use for which task type.',
+    youtubeQuery: 'Claude Code Cursor Windsurf GitHub Copilot comparison AI coding 2024',
+    docsUrl: 'https://docs.anthropic.com/en/docs/claude-code/getting-started'
+  },
+
+]; // end NODES
+
+// ── Border styles ──
+const STYLES = {
+  green: {border:'2px solid #10b981',bg:'#051a10',color:'#10b981'},
+  blue:  {border:'2px solid #3b82f6',bg:'#05101a',color:'#3b82f6'},
+  purple:{border:'2px solid #a855f7',bg:'#0f0520',color:'#a855f7'},
+  orange:{border:'2px solid #f97316',bg:'#1a0f05',color:'#f97316'},
+  dashed:{border:'2px dashed #8080a8',bg:'#0c0c20',color:'#8080a8'},
 };
 
-const AI_RM_SECTION_TITLES = {
-  1:  'Python Foundations',
-  2:  'Mathematics for AI',
-  3:  'Data Science',
-  4:  'Machine Learning',
-  5:  'Deep Learning',
-  6:  'NLP & Transformers',
-  7:  'Computer Vision',
-  8:  'AI Agents',
-  9:  'MLOps & Production',
-  10: 'Data Engineering',
-  11: 'Specialisations',
-  12: 'Tools & Ecosystem',
-  13: 'AI Safety & Ethics',
-  14: 'AI Tools for Devs',
-  15: 'Job Ready'
-};
-
-// ── MAIN RENDER FUNCTION ───────────────────────────────────────
-function aiRmRender() {
-  const graph = document.getElementById('ai-rm-graph');
-  if (!graph) return;
-
+function render() {
+  const graph = document.getElementById('graph');
   graph.innerHTML = '';
 
+  // Group by section
   const sections = {};
-  AI_RM_NODES.forEach(node => {
-    if (!sections[node.section]) sections[node.section] = [];
-    sections[node.section].push(node);
+  NODES.forEach(n => {
+    if (!sections[n.section]) sections[n.section] = [];
+    sections[n.section].push(n);
   });
+  const secNums = Object.keys(sections).map(Number).sort((a,b) => a-b);
 
-  const sectionNums = Object.keys(sections).map(Number).sort((a, b) => a - b);
+  secNums.forEach((sNum, idx) => {
+    const nodes    = sections[sNum];
+    const main     = nodes.find(n => n.isMain);
+    const children = nodes.filter(n => !n.isMain);
+    const title    = main?.sectionTitle || `Section ${sNum}`;
 
-  sectionNums.forEach(sNum => {
-    if (aiRmExpanded[sNum] === undefined) aiRmExpanded[sNum] = true;
-  });
+    // Section label
+    const secDone = nodes.filter(n => progress[n.id]?.status === 'done').length;
+    const lbl = el('div','sec-label');
+    lbl.innerHTML = `
+      <span class="sec-num">§${String(sNum).padStart(2,'0')}</span>
+      <span class="sec-title">${title.toUpperCase()}</span>
+      <span class="sec-line"></span>
+      <span class="sec-prog">${secDone}/${nodes.length}</span>`;
+    graph.appendChild(lbl);
 
-  const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svgLayer.setAttribute('class', 'ai-rm-svg-layer');
-  svgLayer.setAttribute('id', 'ai-rm-svg-layer');
-  graph.appendChild(svgLayer);
+    const block = el('div','sec-block');
 
-  sectionNums.forEach((sNum, idx) => {
-    const sectionNodes = sections[sNum];
-    const mainNode = sectionNodes.find(n => n.isMain);
-    const children = sectionNodes.filter(n => !n.isMain);
-    const sectionTitle = mainNode?.sectionTitle || AI_RM_SECTION_TITLES[sNum] || `Section ${sNum}`;
-
-    // Section label (not for final congrats)
-    if (sNum !== 15) {
-      const labelEl = document.createElement('div');
-      labelEl.className = 'ai-rm-section-label';
-
-      const sectionDone = sectionNodes.filter(n => {
-        const p = aiRmProgress[n.id];
-        return p && p.status === 'done';
-      }).length;
-
-      labelEl.innerHTML = `
-        <span class="ai-rm-section-num">§${String(sNum).padStart(2,'0')}</span>
-        <span class="ai-rm-section-title-text">${sectionTitle.toUpperCase()}</span>
-        <span class="ai-rm-section-line"></span>
-        <span class="ai-rm-section-mini-prog">${sectionDone}/${sectionNodes.length}</span>
-      `;
-      graph.appendChild(labelEl);
-    }
-
-    // Section block
-    const block = document.createElement('div');
-    block.className = 'ai-rm-section-block';
-    block.id = `ai-rm-section-${sNum}`;
-
-    // Trunk / main node
-    if (mainNode) {
-      const hasChildren = children.length > 0;
-      const trunkEl = aiRmCreateNodeEl(mainNode, true, hasChildren, sNum);
-      block.appendChild(trunkEl);
+    // Trunk
+    if (main) {
+      const st = STYLES[main.border] || STYLES.dashed;
+      const trunk = el('div', `trunk border-${main.border}`);
+      trunk.id = `node-${main.id}`;
+      trunk.style.cssText = `background:${st.bg};border:${st.border};`;
+      trunk.innerHTML = `
+        <div class="status-badge" id="badge-${main.id}"></div>
+        <span class="trunk-label" style="color:${st.color}">${main.label}</span>
+        <span class="trunk-time">${main.time}</span>
+        ${children.length ? `
+          <div class="exp-btn">
+            <div class="exp-dot" id="exp-${sNum}">▾</div>
+            <div class="info-btn" id="info-${main.id}">ⓘ</div>
+          </div>` : ''}`;
+      bindTrunk(trunk, main, sNum, children.length > 0);
+      block.appendChild(trunk);
     }
 
     // Children grid
-    if (children.length > 0) {
-      const childrenWrap = document.createElement('div');
-      childrenWrap.className = 'ai-rm-children-wrap';
-      childrenWrap.id = `ai-rm-children-${sNum}`;
+    if (children.length) {
+      const wrap = el('div','children-wrap');
+      wrap.id = `children-${sNum}`;
+      // starts hidden (no 'open' class)
 
-      if (!aiRmExpanded[sNum]) {
-        childrenWrap.style.display = 'none';
-      }
-
-      const leftCol = document.createElement('div');
-      leftCol.className = 'ai-rm-child-col ai-rm-child-left';
-      const rightCol = document.createElement('div');
-      rightCol.className = 'ai-rm-child-col ai-rm-child-right';
+      const left  = el('div','child-col left');
+      const right = el('div','child-col right');
 
       children.forEach((child, i) => {
-        const childEl = aiRmCreateNodeEl(child, false, false, sNum);
-        if (i % 2 === 0) {
-          leftCol.appendChild(childEl);
-        } else {
-          rightCol.appendChild(childEl);
-        }
+        const st  = STYLES[child.border] || STYLES.dashed;
+        const div = el('div',`child border-${child.border}`);
+        div.id = `node-${child.id}`;
+        div.style.cssText = `background:${st.bg};border:${st.border};`;
+        div.innerHTML = `
+          <div class="status-badge" id="badge-${child.id}"></div>
+          <span class="child-label">${child.label}</span>
+          <span class="child-time">${child.time}</span>`;
+        bindChild(div, child);
+        (i % 2 === 0 ? left : right).appendChild(div);
       });
 
-      childrenWrap.appendChild(leftCol);
-      childrenWrap.appendChild(rightCol);
-      block.appendChild(childrenWrap);
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      block.appendChild(wrap);
     }
 
     graph.appendChild(block);
 
-    // Connector between sections
-    if (idx < sectionNums.length - 1) {
-      const connector = document.createElement('div');
-      connector.className = 'ai-rm-connector-wrap';
-      const vLine = document.createElement('div');
-      vLine.className = 'ai-rm-v-line';
-      vLine.style.height = '28px';
-      connector.appendChild(vLine);
-      graph.appendChild(connector);
+    if (idx < secNums.length - 1) {
+      const conn = el('div','connector');
+      conn.innerHTML = '<div class="v-line"></div>';
+      graph.appendChild(conn);
     }
   });
 
-  aiRmApplyProgress();
-
-  requestAnimationFrame(() => {
-    aiRmDrawLines();
-  });
+  applyProgress();
 }
 
-// ── Create a node DOM element ──────────────────────────────────
-function aiRmCreateNodeEl(node, isTrunk, hasChildren, sNum) {
-  const style = AI_RM_BORDER_STYLES[node.border] || AI_RM_BORDER_STYLES.dashed;
-
-  const el = document.createElement('div');
-  el.className = isTrunk ? 'ai-rm-node ai-rm-trunk' : 'ai-rm-node ai-rm-child';
-  el.id = `ai-rm-node-${node.id}`;
-  el.dataset.nodeId = node.id;
-  el.dataset.section = sNum;
-
-  if (node.special) {
-    el.classList.add('ai-rm-node-congrats');
-  }
-
-  el.style.cssText = `
-    background: ${style.bg};
-    border: ${style.border};
-    box-shadow: 0 0 0 0 ${style.glow};
-  `;
-
-  let innerHtml = '';
-  innerHtml += `<div class="ai-rm-node-status-badge" id="ai-rm-badge-${node.id}"></div>`;
-  innerHtml += `<span class="ai-rm-node-label" style="color: ${isTrunk ? style.color : 'var(--t1)'}">${node.label}</span>`;
-
-  if (isTrunk && node.time && node.time !== 'You made it') {
-    innerHtml += `<span class="ai-rm-node-time">${node.time}</span>`;
-  }
-
-  if (isTrunk && hasChildren) {
-    innerHtml += `<div class="ai-rm-expand-dot" id="ai-rm-exp-${sNum}"></div>`;
-  }
-
-  el.innerHTML = innerHtml;
-
-  el.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (isTrunk && hasChildren) {
-      aiRmToggleSection(sNum, el);
-    } else {
-      aiRmOpenSheet(node.id);
-    }
-  });
-
-  if (isTrunk) {
-    let longPressTimer = null;
-    el.addEventListener('touchstart', () => {
-      longPressTimer = setTimeout(() => {
-        aiRmOpenSheet(node.id);
-      }, 500);
-    }, { passive: true });
-    el.addEventListener('touchend', () => clearTimeout(longPressTimer), { passive: true });
-    el.addEventListener('touchmove', () => clearTimeout(longPressTimer), { passive: true });
-  }
-
-  return el;
-}
-
-// ── Toggle section expand/collapse ─────────────────────────────
-function aiRmToggleSection(sNum, trunkEl) {
-  aiRmExpanded[sNum] = !aiRmExpanded[sNum];
-  const childrenWrap = document.getElementById(`ai-rm-children-${sNum}`);
-  const expDot = document.getElementById(`ai-rm-exp-${sNum}`);
-
-  if (childrenWrap) {
-    if (aiRmExpanded[sNum]) {
-      childrenWrap.style.display = 'flex';
-      childrenWrap.style.animation = 'ai-rm-fadeIn 0.2s ease';
-      if (expDot) expDot.classList.remove('ai-rm-collapsed');
-    } else {
-      childrenWrap.style.display = 'none';
-      if (expDot) expDot.classList.add('ai-rm-collapsed');
-    }
-  }
-
-  requestAnimationFrame(() => aiRmDrawLines());
-}
-
-// ── DRAW SVG CONNECTOR LINES ───────────────────────────────────
-function aiRmDrawLines() {
-  const graph = document.getElementById('ai-rm-graph');
-  const svgLayer = document.getElementById('ai-rm-svg-layer');
-  if (!svgLayer || !graph) return;
-
-  const graphRect = graph.getBoundingClientRect();
-  const totalHeight = graph.scrollHeight;
-  svgLayer.setAttribute('width', graphRect.width);
-  svgLayer.setAttribute('height', totalHeight);
-  svgLayer.setAttribute('viewBox', `0 0 ${graphRect.width} ${totalHeight}`);
-
-  svgLayer.innerHTML = '';
-
-  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  defs.innerHTML = `
-    <marker id="ai-rm-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L6,3 z" fill="#2a3a2a"/>
-    </marker>
-    <marker id="ai-rm-arrow-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L6,3 z" fill="rgba(16,185,129,0.4)"/>
-    </marker>
-  `;
-  svgLayer.appendChild(defs);
-
-  const getNodePoints = (el) => {
-    if (!el) return null;
-    const rect = el.getBoundingClientRect();
-    const graphScrollTop = graph.scrollTop;
-    const top = rect.top - graphRect.top + graphScrollTop;
-    const left = rect.left - graphRect.left;
-    const width = rect.width;
-    const height = rect.height;
-    return {
-      top,
-      bottom: top + height,
-      left,
-      right: left + width,
-      centerX: left + width / 2,
-      centerY: top + height / 2,
-      topCenter: { x: left + width / 2, y: top },
-      bottomCenter: { x: left + width / 2, y: top + height },
-      midLeft: { x: left, y: top + height / 2 },
-      midRight: { x: left + width, y: top + height / 2 }
-    };
-  };
-
-  const makePath = (d, color = '#1a2a1a', dashArray = '') => {
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('stroke', color);
-    path.setAttribute('stroke-width', '1.5');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('marker-end', 'url(#ai-rm-arrow)');
-    if (dashArray) path.setAttribute('stroke-dasharray', dashArray);
-    return path;
-  };
-
-  const sections = {};
-  AI_RM_NODES.forEach(node => {
-    if (!sections[node.section]) sections[node.section] = [];
-    sections[node.section].push(node);
-  });
-
-  const sectionNums = Object.keys(sections).map(Number).sort((a, b) => a - b);
-
-  // Draw vertical spine between trunk nodes
-  const trunkEls = sectionNums.map(sNum => {
-    const mainNode = sections[sNum].find(n => n.isMain);
-    return mainNode ? document.getElementById(`ai-rm-node-${mainNode.id}`) : null;
-  }).filter(Boolean);
-
-  for (let i = 0; i < trunkEls.length - 1; i++) {
-    const fromPts = getNodePoints(trunkEls[i]);
-    const toPts = getNodePoints(trunkEls[i + 1]);
-    if (!fromPts || !toPts) continue;
-
-    const x = fromPts.bottomCenter.x;
-    const y1 = fromPts.bottomCenter.y;
-    const y2 = toPts.topCenter.y;
-
-    if (y2 > y1) {
-      const spineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      spineEl.setAttribute('x1', x);
-      spineEl.setAttribute('y1', y1);
-      spineEl.setAttribute('x2', x);
-      spineEl.setAttribute('y2', y2);
-      spineEl.setAttribute('stroke', 'rgba(16,185,129,0.2)');
-      spineEl.setAttribute('stroke-width', '2');
-      spineEl.setAttribute('stroke-dasharray', '4 4');
-      svgLayer.appendChild(spineEl);
-    }
-  }
-
-  // Draw child connector lines
-  sectionNums.forEach(sNum => {
-    if (!aiRmExpanded[sNum]) return;
-
-    const sectionNodes = sections[sNum];
-    const mainNode = sectionNodes.find(n => n.isMain);
-    const children = sectionNodes.filter(n => !n.isMain);
-
-    if (!mainNode || children.length === 0) return;
-
-    const trunkEl = document.getElementById(`ai-rm-node-${mainNode.id}`);
-    const trunkPts = getNodePoints(trunkEl);
-    if (!trunkPts) return;
-
-    const lineColor = '#1a2a1a';
-
-    children.forEach((child, i) => {
-      const childEl = document.getElementById(`ai-rm-node-${child.id}`);
-      if (!childEl) return;
-
-      const childPts = getNodePoints(childEl);
-      if (!childPts) return;
-
-      const isLeft = (i % 2 === 0);
-      const childBorderStyle = AI_RM_BORDER_STYLES[child.border] || AI_RM_BORDER_STYLES.dashed;
-      const connColor = childBorderStyle.color === '#10b981'
-        ? 'rgba(16,185,129,0.3)'
-        : lineColor;
-
-      const fromX = isLeft ? trunkPts.midLeft.x : trunkPts.midRight.x;
-      const fromY = trunkPts.centerY;
-      const toX = isLeft ? childPts.midRight.x : childPts.midLeft.x;
-      const toY = childPts.centerY;
-
-      const midX = (fromX + toX) / 2;
-
-      if (Math.abs(fromY - toY) > 5) {
-        const d = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`;
-        const isDashed = child.border === 'dashed';
-        svgLayer.appendChild(makePath(d, connColor, isDashed ? '5 3' : ''));
-      } else {
-        const d = `M ${fromX} ${fromY} H ${toX}`;
-        svgLayer.appendChild(makePath(d, connColor, child.border === 'dashed' ? '5 3' : ''));
-      }
-    });
-  });
-}
-
-// ── APPLY PROGRESS VISUALS ─────────────────────────────────────
-function aiRmApplyProgress() {
-  const allNodes = AI_RM_NODES;
-  let doneCount = 0;
-  const totalCount = allNodes.length;
-
-  allNodes.forEach(node => {
-    const el = document.getElementById(`ai-rm-node-${node.id}`);
-    const badge = document.getElementById(`ai-rm-badge-${node.id}`);
-    if (!el) return;
-
-    el.classList.remove('ai-rm-done', 'ai-rm-inprogress', 'ai-rm-skip');
-    if (badge) badge.innerHTML = '';
-
-    const prog = aiRmProgress[node.id];
-    if (!prog) return;
-
-    if (prog.status === 'done') {
-      doneCount++;
-      el.classList.add('ai-rm-done');
-      if (badge) badge.innerHTML = `<span class="ai-rm-done-badge">✓</span>`;
-    } else if (prog.status === 'progress') {
-      el.classList.add('ai-rm-inprogress');
-      if (badge) badge.innerHTML = `<span class="ai-rm-progress-ring"></span>`;
-    } else if (prog.status === 'skip') {
-      el.classList.add('ai-rm-skip');
-      if (badge) badge.innerHTML = `<span class="ai-rm-skip-badge">→</span>`;
-    }
-  });
-
-  const progText = document.getElementById('ai-rm-prog-text');
-  if (progText) progText.textContent = `${doneCount} / ${totalCount} done`;
-
-  const bar = document.getElementById('ai-rm-progress-bar');
-  if (bar) {
-    const pct = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
-    bar.style.width = `${pct}%`;
-  }
-}
-
-// ── Inject extra dynamic styles ────────────────────────────────
-(function aiRmInjectExtraStyles() {
-  const styleId = 'ai-rm-dynamic-styles';
-  if (document.getElementById(styleId)) return;
-  const s = document.createElement('style');
-  s.id = styleId;
-  s.textContent = `
-    .ai-rm-node-status-badge {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      z-index: 3;
-      pointer-events: none;
-    }
-    .ai-rm-done-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      background: rgba(16,185,129,0.2);
-      border: 1px solid rgba(16,185,129,0.5);
-      border-radius: 50%;
-      color: #6ee7b7;
-      font-size: 9px;
-      font-weight: 800;
-    }
-    .ai-rm-skip-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      background: rgba(128,128,168,0.12);
-      border: 1px solid rgba(128,128,168,0.3);
-      border-radius: 50%;
-      color: #8080a8;
-      font-size: 9px;
-      font-weight: 800;
-    }
-    .ai-rm-progress-ring {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(16,185,129,0.2);
-      border-top-color: #10b981;
-      border-radius: 50%;
-      animation: ai-rm-spin 1.2s linear infinite;
-    }
-    @keyframes ai-rm-spin {
-      to { transform: rotate(360deg); }
-    }
-    .ai-rm-node.ai-rm-done {
-      border-color: rgba(16,185,129,0.6) !important;
-      background: rgba(16,185,129,0.05) !important;
-    }
-    .ai-rm-node.ai-rm-inprogress {
-      box-shadow: 0 0 0 2px rgba(16,185,129,0.25), 0 0 12px rgba(16,185,129,0.12) !important;
-    }
-    .ai-rm-node.ai-rm-skip {
-      opacity: 0.45;
-      filter: saturate(0.3);
-    }
-    .ai-rm-children-wrap {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      width: 100%;
-      margin-top: 10px;
-      justify-content: center;
-      position: relative;
-      z-index: 2;
-    }
-    .ai-rm-child-col {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1;
-      max-width: calc(50% - 5px);
-    }
-    .ai-rm-child-left  { align-items: flex-end; }
-    .ai-rm-child-right { align-items: flex-start; }
-    .ai-rm-expand-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(16,185,129,0.5);
-      margin: 4px auto 0;
-      transition: transform 0.2s;
-      flex-shrink: 0;
-    }
-    .ai-rm-expand-dot.ai-rm-collapsed {
-      transform: rotate(180deg);
-      opacity: 0.35;
-    }
-    .ai-rm-node {
-      position: relative;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s, background 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    .ai-rm-node:active { transform: scale(0.97); }
-    .ai-rm-trunk {
-      padding: 10px 18px 12px;
-      min-width: 160px;
-      max-width: 260px;
-      width: auto;
-      text-align: center;
-    }
-    .ai-rm-child {
-      padding: 7px 12px;
-      min-width: 100px;
-      max-width: 160px;
-      width: 100%;
-      text-align: center;
-      border-radius: 8px;
-    }
-    .ai-rm-node-label {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      line-height: 1.3;
-      display: block;
-    }
-    .ai-rm-trunk .ai-rm-node-label {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-    .ai-rm-node-time {
-      font-size: 9px;
-      color: #4a5a4a;
-      font-family: var(--font-mono, monospace);
-      letter-spacing: 0.04em;
-    }
-    .ai-rm-node-congrats {
-      min-width: 200px;
-      max-width: 300px;
-      padding: 16px 24px 18px;
-      border-color: rgba(16,185,129,0.6) !important;
-      background: linear-gradient(135deg, #051a10, #0a1f14) !important;
-      box-shadow: 0 0 30px rgba(16,185,129,0.12), 0 0 60px rgba(16,185,129,0.06) !important;
-    }
-    .ai-rm-node-congrats .ai-rm-node-label {
-      font-size: 15px;
-      color: #10b981 !important;
-    }
-    .ai-rm-section-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0 8px;
-      margin: 4px 0 0;
-    }
-    .ai-rm-section-num {
-      font-family: var(--font-mono, monospace);
-      font-size: 9px;
-      color: #10b981;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      flex-shrink: 0;
-    }
-    .ai-rm-section-title-text {
-      font-size: 9px;
-      font-weight: 800;
-      color: #4a6a4a;
-      letter-spacing: 0.12em;
-      flex-shrink: 0;
-    }
-    .ai-rm-section-line {
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, rgba(16,185,129,0.15), transparent);
-    }
-    .ai-rm-section-mini-prog {
-      font-family: var(--font-mono, monospace);
-      font-size: 9px;
-      color: #3a5a3a;
-      flex-shrink: 0;
-    }
-    .ai-rm-section-block {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-    }
-    .ai-rm-connector-wrap {
-      display: flex;
-      justify-content: center;
-    }
-    .ai-rm-v-line {
-      width: 2px;
-      background: linear-gradient(to bottom, rgba(16,185,129,0.2), rgba(16,185,129,0.05));
-    }
-    .ai-rm-svg-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: visible;
-    }
-    @keyframes ai-rm-fadeIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .ai-rm-active-status {
-      border-color: #10b981 !important;
-      color: #10b981 !important;
-    }
-  `;
-  document.head.appendChild(s);
-})();
-
-
-// ─────────────────────────────────────────────────────────────
-// § 5 — BOTTOM SHEET LOGIC
-// ─────────────────────────────────────────────────────────────
-
-// Track the currently open node
-window._aiRmActiveNode = null;
-
-function aiRmOpenSheet(nodeId) {
-  const node = AI_RM_NODES.find(n => n.id === nodeId);
-  if (!node) return;
-
-  window._aiRmActiveNode = nodeId;
-
-  const overlay = document.getElementById('ai-rm-overlay');
-  const sheet   = document.getElementById('ai-rm-sheet');
-  if (!overlay || !sheet) return;
-
-  // ── Populate fields ──────────────────────────────────────────
-
-  // Difficulty badge
-  const diffBadge = document.getElementById('ai-rm-sheet-difficulty');
-  if (diffBadge) {
-    const diffColors = {
-      BEGINNER:     { bg: 'rgba(16,185,129,0.15)',  color: '#10b981',  border: 'rgba(16,185,129,0.3)' },
-      INTERMEDIATE: { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6',  border: 'rgba(59,130,246,0.3)' },
-      ADVANCED:     { bg: 'rgba(168,85,247,0.15)',  color: '#a855f7',  border: 'rgba(168,85,247,0.3)' },
-      OPTIONAL:     { bg: 'rgba(128,128,168,0.15)', color: '#8080a8',  border: 'rgba(128,128,168,0.3)' }
-    };
-    const dc = diffColors[node.difficulty] || diffColors.BEGINNER;
-    diffBadge.textContent = node.difficulty;
-    diffBadge.style.cssText = `
-      background: ${dc.bg};
-      color: ${dc.color};
-      border: 1px solid ${dc.border};
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      display: inline-block;
-    `;
-  }
-
-  // Title
-  const titleEl = document.getElementById('ai-rm-sheet-title');
-  if (titleEl) titleEl.textContent = node.label;
-
-  // Time badge
-  const timeEl = document.getElementById('ai-rm-sheet-time');
-  if (timeEl) timeEl.textContent = `⏱ ${node.time}`;
-
-  // Why this matters
-  const whyEl = document.getElementById('ai-rm-sheet-why');
-  if (whyEl) whyEl.textContent = node.whyMatters;
-
-  // Learn bullets
-  const learnEl = document.getElementById('ai-rm-sheet-learn');
-  if (learnEl) {
-    learnEl.innerHTML = (node.learn || [])
-      .map(item => `<li style="margin-bottom:5px; line-height:1.5;">${item}</li>`)
-      .join('');
-  }
-
-  // Prerequisites
-  const prereqEl = document.getElementById('ai-rm-sheet-prereq');
-  if (prereqEl) prereqEl.textContent = node.prerequisites || 'None';
-
-  // Practice task
-  const taskEl = document.getElementById('ai-rm-sheet-task');
-  if (taskEl) taskEl.textContent = node.task;
-
-  // YouTube button
-  const ytBtn = document.getElementById('ai-rm-sheet-youtube');
-  if (ytBtn && node.youtubeQuery) {
-    const ytUrl = `https://youtube.com/results?search_query=${encodeURIComponent(node.youtubeQuery)}`;
-    ytBtn.onclick = () => window.open(ytUrl, '_blank');
-  }
-
-  // Docs button
-  const docsBtn = document.getElementById('ai-rm-sheet-docs');
-  if (docsBtn && node.docsUrl) {
-    docsBtn.onclick = () => window.open(node.docsUrl, '_blank');
-  }
-
-  // Refresh status button highlights
-  aiRmRefreshStatusButtons(nodeId);
-
-  // Show sheet
-  overlay.classList.add('ai-rm-overlay-show');
-  sheet.classList.add('ai-rm-sheet-open');
-  document.body.style.overflow = 'hidden';
-
-  // Scroll sheet back to top
-  sheet.scrollTop = 0;
-}
-
-function aiRmCloseSheet() {
-  const overlay = document.getElementById('ai-rm-overlay');
-  const sheet   = document.getElementById('ai-rm-sheet');
-  if (overlay) overlay.classList.remove('ai-rm-overlay-show');
-  if (sheet)   sheet.classList.remove('ai-rm-sheet-open');
-  document.body.style.overflow = '';
-  window._aiRmActiveNode = null;
-}
-
-function aiRmSetStatus(nodeId, status) {
-  if (!nodeId) return;
-
-  const currentStatus = aiRmProgress[nodeId] ? aiRmProgress[nodeId].status : null;
-  const wasAlreadyThisStatus = currentStatus === status;
-
-  if (wasAlreadyThisStatus) {
-    // Toggle off
-    delete aiRmProgress[nodeId];
-  } else {
-    aiRmProgress[nodeId] = {
-      status: status,
-      doneAt: new Date().toISOString()
-    };
-  }
-
-  aiRmSaveProgress();
-  aiRmApplyProgress();
-  aiRmRefreshStatusButtons(nodeId);
-
-  if (!wasAlreadyThisStatus && status === 'done') {
-    aiRmShowToast('✓ Marked complete!');
-  } else if (wasAlreadyThisStatus && status === 'done') {
-    aiRmShowToast('↩ Unmarked');
-  }
-}
-
-// ── Refresh status button highlights ──────────────────────────
-function aiRmRefreshStatusButtons(nodeId) {
-  const prog = aiRmProgress[nodeId];
-  const currentStatus = prog ? prog.status : null;
-
-  const btnDone     = document.getElementById('ai-rm-btn-done');
-  const btnProgress = document.getElementById('ai-rm-btn-progress');
-  const btnSkip     = document.getElementById('ai-rm-btn-skip');
-
-  [btnDone, btnProgress, btnSkip].forEach(btn => {
-    if (btn) btn.classList.remove('ai-rm-active-status');
-  });
-
-  if (currentStatus === 'done'     && btnDone)     btnDone.classList.add('ai-rm-active-status');
-  if (currentStatus === 'progress' && btnProgress) btnProgress.classList.add('ai-rm-active-status');
-  if (currentStatus === 'skip'     && btnSkip)     btnSkip.classList.add('ai-rm-active-status');
-}
-
-// ── Toast notification ─────────────────────────────────────────
-function aiRmShowToast(msg) {
-  if (typeof APP !== 'undefined' && typeof APP.toast === 'function') {
-    APP.toast(msg);
+// ── Bind trunk: TAP = expand/collapse, HOLD (500ms) = open sheet ────────
+function bindTrunk(trunk, node, sNum, hasChildren) {
+  if (!hasChildren) {
+    // No children — tap or click opens sheet directly
+    bindChild(trunk, node);
     return;
   }
 
-  const toast = document.getElementById('ai-rm-toast');
-  if (!toast) return;
+  let pressTimer  = null;
+  let longFired   = false;
+  let moved       = false;
+  let touchActive = false;
+  let sx = 0, sy = 0;
 
-  toast.textContent = msg;
-  toast.classList.add('ai-rm-toast-show');
-
-  clearTimeout(toast._hideTimer);
-  toast._hideTimer = setTimeout(() => {
-    toast.classList.remove('ai-rm-toast-show');
-  }, 1800);
-}
-
-// ── Swipe-to-dismiss ──────────────────────────────────────────
-(function aiRmInitSwipe() {
-  const sheet = document.getElementById('ai-rm-sheet');
-  if (!sheet) return;
-
-  let startY       = 0;
-  let currentY     = 0;
-  let isDragging   = false;
-  let startScrollTop = 0;
-
-  sheet.addEventListener('touchstart', (e) => {
-    startScrollTop = sheet.scrollTop;
-    startY   = e.touches[0].clientY;
-    currentY = startY;
-    isDragging = true;
+  // ── Touch: hold = open sheet, tap = expand/collapse ──
+  trunk.addEventListener('touchstart', (e) => {
+    longFired   = false;
+    moved       = false;
+    touchActive = true;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    trunk.classList.add('pressing');
+    pressTimer = setTimeout(() => {
+      longFired = true;
+      trunk.classList.remove('pressing');
+      openSheet(node.id);
+    }, 500);
   }, { passive: true });
 
-  sheet.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    currentY = e.touches[0].clientY;
-    const deltaY = currentY - startY;
-    if (deltaY > 0 && startScrollTop <= 0) {
-      const resistance = Math.min(deltaY * 0.6, 200);
-      sheet.style.transform = `translateY(${resistance}px)`;
-      sheet.style.transition = 'none';
+  trunk.addEventListener('touchmove', (e) => {
+    const dx = Math.abs(e.touches[0].clientX - sx);
+    const dy = Math.abs(e.touches[0].clientY - sy);
+    if (dx > 8 || dy > 8) {
+      moved = true;
+      clearTimeout(pressTimer);
+      trunk.classList.remove('pressing');
     }
   }, { passive: true });
 
+  trunk.addEventListener('touchend', (e) => {
+    clearTimeout(pressTimer);
+    trunk.classList.remove('pressing');
+    if (!longFired && !moved) {
+      e.preventDefault();
+      toggleSection(sNum);
+    }
+    longFired = false;
+    setTimeout(() => { touchActive = false; }, 400);
+  }, { passive: false });
+
+  // ── Desktop: click = expand/collapse, mousedown hold = open sheet ──
+  trunk.addEventListener('mousedown', (e) => {
+    if (touchActive) return;
+    if (e.target.closest && e.target.closest('.info-btn')) return;
+    pressTimer = setTimeout(() => {
+      longFired = true;
+      openSheet(node.id);
+    }, 500);
+  });
+
+  trunk.addEventListener('mouseup', () => {
+    clearTimeout(pressTimer);
+  });
+
+  trunk.addEventListener('mouseleave', () => {
+    clearTimeout(pressTimer);
+    longFired = false;
+  });
+
+  trunk.addEventListener('click', (e) => {
+    if (touchActive) return;
+    if (e.target.closest && e.target.closest('.info-btn')) return;
+    if (longFired) { longFired = false; return; }
+    toggleSection(sNum);
+  });
+
+  // ⓘ info button always opens sheet (both touch and click)
+  const infoBtn = document.getElementById(`info-${node.id}`);
+  if (infoBtn) {
+    infoBtn.addEventListener('touchend', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      clearTimeout(pressTimer);
+      longFired = false;
+      trunk.classList.remove('pressing');
+      openSheet(node.id);
+    }, { passive: false });
+    infoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!touchActive) openSheet(node.id);
+    });
+  }
+}
+
+// ── Bind child: tap = open sheet ────────────────────────────────
+function bindChild(nodeEl, node) {
+  let moved = false;
+  let touchFired = false;
+  nodeEl.addEventListener('touchstart', () => { moved = false; touchFired = false; }, { passive: true });
+  nodeEl.addEventListener('touchmove',  () => { moved = true; }, { passive: true });
+  nodeEl.addEventListener('touchend', (e) => {
+    if (moved) return;
+    e.preventDefault();
+    touchFired = true;
+    openSheet(node.id);
+  }, { passive: false });
+  nodeEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (touchFired) { touchFired = false; return; }
+    openSheet(node.id);
+  });
+}
+
+// ── Toggle children ──────────────────────────────────────────────
+function toggleSection(sNum) {
+  expanded[sNum] = !expanded[sNum];
+  const wrap = document.getElementById(`children-${sNum}`);
+  const dot  = document.getElementById(`exp-${sNum}`);
+  if (!wrap) return;
+  if (expanded[sNum]) {
+    wrap.style.display = 'flex';
+    // Force reflow so animation triggers
+    wrap.getBoundingClientRect();
+    wrap.classList.add('open');
+    if (dot) dot.classList.add('open');
+  } else {
+    wrap.classList.remove('open');
+    if (dot) dot.classList.remove('open');
+    // Hide after animation completes
+    setTimeout(() => {
+      if (!expanded[sNum]) wrap.style.display = 'none';
+    }, 260);
+  }
+}
+
+// ── Open detail sheet ────────────────────────────────────────────
+function openSheet(nodeId) {
+  const node = NODES.find(n => n.id === nodeId);
+  if (!node) return;
+  activeNode = nodeId;
+
+  const DIFF_COLORS = {
+    BEGINNER:    {bg:'rgba(16,185,129,.15)',color:'#10b981',bdr:'rgba(16,185,129,.3)'},
+    INTERMEDIATE:{bg:'rgba(59,130,246,.15)',color:'#3b82f6',bdr:'rgba(59,130,246,.3)'},
+    ADVANCED:    {bg:'rgba(168,85,247,.15)',color:'#a855f7',bdr:'rgba(168,85,247,.3)'},
+    OPTIONAL:    {bg:'rgba(128,128,168,.15)',color:'#8080a8',bdr:'rgba(128,128,168,.3)'},
+  };
+  const dc = DIFF_COLORS[node.difficulty] || DIFF_COLORS.BEGINNER;
+
+  document.getElementById('s-diff').textContent = node.difficulty;
+  document.getElementById('s-diff').style.cssText =
+    `background:${dc.bg};color:${dc.color};border:1px solid ${dc.bdr};
+     padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;
+     letter-spacing:.06em;display:inline-block;font-family:var(--mono);`;
+  document.getElementById('s-title').textContent  = node.label;
+  document.getElementById('s-time').textContent   = `⏱ ${node.time}`;
+  document.getElementById('s-why').textContent    = node.whyMatters;
+  document.getElementById('s-prereq').textContent = node.prerequisites || 'None';
+  document.getElementById('s-task').textContent   = node.task;
+  document.getElementById('s-learn').innerHTML    =
+    (node.learn||[]).map(x=>`<li>${x}</li>`).join('');
+
+  const ytBtn  = document.getElementById('s-yt');
+  const docBtn = document.getElementById('s-doc');
+  ytBtn.onclick  = () => window.open(`https://youtube.com/results?search_query=${encodeURIComponent(node.youtubeQuery||node.label+' tutorial')}`, '_blank');
+  docBtn.onclick = () => window.open(node.docsUrl || 'https://google.com', '_blank');
+
+  refreshStatusBtns(nodeId);
+
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('sheet').scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('sheet').classList.remove('open');
+  document.body.style.overflow = '';
+  activeNode = null;
+}
+
+// ── Status ───────────────────────────────────────────────────────
+window.setStatus = function(status) {
+  if (!activeNode) return;
+  const cur = progress[activeNode]?.status;
+  if (cur === status) {
+    delete progress[activeNode];
+  } else {
+    progress[activeNode] = { status, doneAt: new Date().toISOString() };
+  }
+  saveProgress();
+  applyProgress();
+  refreshStatusBtns(activeNode);
+  showToast(status === 'done' ? '✓ Marked complete!' : status === 'progress' ? '⟳ In Progress' : '– Skipped');
+};
+
+function refreshStatusBtns(nodeId) {
+  const s = progress[nodeId]?.status;
+  document.getElementById('sb-done').className     = 'st-btn' + (s==='done'?'     active-done':'');
+  document.getElementById('sb-progress').className = 'st-btn' + (s==='progress'?' active-progress':'');
+  document.getElementById('sb-skip').className     = 'st-btn' + (s==='skip'?'     active-skip':'');
+}
+
+// ── Apply progress visuals ───────────────────────────────────────
+function applyProgress() {
+  let done = 0;
+  NODES.forEach(node => {
+    const el  = document.getElementById(`node-${node.id}`);
+    const bdg = document.getElementById(`badge-${node.id}`);
+    if (!el) return;
+    el.classList.remove('node-done','node-progress','node-skip');
+    if (bdg) bdg.innerHTML = '';
+    const p = progress[node.id];
+    if (!p) return;
+    if (p.status === 'done') {
+      done++;
+      el.classList.add('node-done');
+      if (bdg) bdg.innerHTML = '✓';
+      if (bdg) Object.assign(bdg.style, {background:'rgba(16,185,129,.2)',border:'1px solid rgba(16,185,129,.5)',color:'#6ee7b7',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%'});
+    } else if (p.status === 'progress') {
+      el.classList.add('node-progress');
+    } else if (p.status === 'skip') {
+      el.classList.add('node-skip');
+    }
+  });
+
+  // Update pill and bar
+  const pill = document.getElementById('hdr-pill');
+  if (pill) pill.textContent = `${done} / ${NODES.length} done`;
+  const bar = document.getElementById('prog-bar-fill');
+  if (bar) bar.style.width = `${NODES.length ? (done/NODES.length*100) : 0}%`;
+
+  // Update section labels
+  document.querySelectorAll('.sec-prog').forEach(el => {
+    // Re-compute per section
+    const secNum = parseInt(el.closest('.sec-label')?.querySelector('.sec-num')?.textContent?.replace('§','')) || 0;
+    if (!secNum) return;
+    const secNodes = NODES.filter(n => n.section === secNum);
+    const secDone  = secNodes.filter(n => progress[n.id]?.status === 'done').length;
+    el.textContent = `${secDone}/${secNodes.length}`;
+  });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function el(tag, cls) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  return e;
+}
+
+// ── Swipe sheet to dismiss ────────────────────────────────────────
+(function() {
+  const sheet = document.getElementById('sheet');
+  let sy = 0, cy = 0, dragging = false, scrollTop = 0;
+  sheet.addEventListener('touchstart', e => {
+    scrollTop = sheet.scrollTop;
+    sy = cy = e.touches[0].clientY;
+    dragging = true;
+  }, { passive: true });
+  sheet.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    cy = e.touches[0].clientY;
+    const d = cy - sy;
+    if (d > 0 && scrollTop <= 0) {
+      sheet.style.transition = 'none';
+      sheet.style.transform  = `translateY(${Math.min(d * 0.6, 180)}px)`;
+    }
+  }, { passive: true });
   sheet.addEventListener('touchend', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    const deltaY = currentY - startY;
+    dragging = false;
     sheet.style.transition = '';
-    if (deltaY > 80 && startScrollTop <= 0) {
+    if ((cy - sy) > 80 && scrollTop <= 0) {
       sheet.style.transform = '';
-      aiRmCloseSheet();
+      closeSheet();
     } else {
       sheet.style.transform = '';
     }
   }, { passive: true });
-
-  sheet.addEventListener('touchcancel', () => {
-    isDragging = false;
-    sheet.style.transform = '';
-    sheet.style.transition = '';
-  }, { passive: true });
 })();
 
-// ── Overlay click ─────────────────────────────────────────────
-(function aiRmInitOverlayClick() {
-  const overlay = document.getElementById('ai-rm-overlay');
-  if (!overlay) return;
-  overlay.addEventListener('click', aiRmCloseSheet);
+// Wire close button and overlay
+document.getElementById('sheet-close').addEventListener('click', closeSheet);
+document.getElementById('overlay').addEventListener('click', closeSheet);
+
+// ── Boot ──────────────────────────────────────────────────────────
+render();
+
 })();
-
-// ── Escape key ────────────────────────────────────────────────
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const sheet = document.getElementById('ai-rm-sheet');
-    if (sheet && sheet.classList.contains('ai-rm-sheet-open')) {
-      aiRmCloseSheet();
-    }
-  }
-});
-
-
-// ─────────────────────────────────────────────────────────────
-// § 6 — INIT FUNCTION
-// ─────────────────────────────────────────────────────────────
-
-function aiRmInit() {
-  aiRmRender();
-  aiRmDrawLines();
-  aiRmApplyProgress();
-
-  window.addEventListener('resize', () => {
-    clearTimeout(window._aiRmResizeTimer);
-    window._aiRmResizeTimer = setTimeout(aiRmDrawLines, 150);
-  });
-
-  const graph = document.getElementById('ai-rm-graph');
-  if (graph) {
-    graph.addEventListener('scroll', () => {
-      clearTimeout(window._aiRmScrollTimer);
-      window._aiRmScrollTimer = setTimeout(aiRmDrawLines, 80);
-    }, { passive: true });
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// § 7 — GLOBAL EXPOSURES
-// ─────────────────────────────────────────────────────────────
-
-window.aiRmCloseSheet = aiRmCloseSheet;
-window.aiRmOpenSheet  = aiRmOpenSheet;
-window.aiRmSetStatus  = aiRmSetStatus;
-
-if (typeof window._aiRmActiveNode === 'undefined') {
-  window._aiRmActiveNode = null;
-}
-
-// ─────────────────────────────────────────────────────────────
-// § 8 — BOOT  (DOMContentLoaded guard)
-// ─────────────────────────────────────────────────────────────
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', aiRmInit);
-} else {
-  aiRmInit();
-}
-
-})(); // end IIFE
+</script>
+</body>
+</html>
