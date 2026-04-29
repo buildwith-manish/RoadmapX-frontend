@@ -1606,9 +1606,15 @@ return { beginner, intermediate, advanced };
      PANEL SWITCHING
   ───────────────────────────────────────── */
   function showPanel(id) {
-    document.querySelectorAll('.fe-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.fe-panel').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = '';
+    });
     const el = document.getElementById(id);
-    if (el) el.classList.add('active');
+    if (el) {
+      el.style.display = '';
+      el.classList.add('active');
+    }
   }
   function setTab(name) {
     state.tab = name;

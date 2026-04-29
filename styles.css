@@ -4141,3 +4141,195 @@ canvas.mini-chart  { width:100% !important; height:80px !important; display:bloc
   .fe-wc-num-val { font-size: 14px; }
   .fe-modal-title { font-size: 18px; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DSA ROADMAP — ADDITIONS
+   Missing classes used by dsa-steps.js APP rendering
+══════════════════════════════════════════════════════════════════ */
+
+/* ── Level Summary Bar ─────────────────────────────────────── */
+.ai-level-summary-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--border-default);
+  border-radius: var(--r12); padding: 12px 14px; margin: 10px 14px 6px;
+}
+.beginner-summary .ai-sum-val     { color: var(--c5); }
+.intermediate-summary .ai-sum-val { color: var(--c4); }
+.advanced-summary .ai-sum-val     { color: var(--c3); }
+.ai-sum-prog-wrap {
+  flex: 1; min-width: 0;
+}
+.ai-sum-prog-bar {
+  height: 5px; border-radius: var(--rfull);
+  background: var(--bg4); overflow: hidden;
+}
+.ai-sum-prog-fill {
+  height: 100%; border-radius: var(--rfull);
+  transition: width 0.6s var(--ease);
+}
+
+/* ── Week Summary Bar (days screen) ────────────────────────── */
+.ai-week-summary-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--border-default);
+  border-radius: var(--r12); padding: 12px 14px; margin: 0 14px 6px;
+}
+.ai-wsum-stat  { text-align: center; }
+.ai-wsum-val   { font-size: 18px; font-weight: 900; font-family: var(--font-mono); color: var(--c2); line-height: 1; display: block; }
+.ai-wsum-lbl   { font-size: 9px; color: var(--t2); margin-top: 1px; display: block; }
+.ai-wsum-prog-wrap { flex: 1; min-width: 0; }
+.ai-wsum-prog-bar {
+  height: 5px; border-radius: var(--rfull);
+  background: var(--bg4); overflow: hidden;
+}
+.ai-wsum-prog-fill {
+  height: 100%; border-radius: var(--rfull);
+  transition: width 0.6s var(--ease);
+}
+
+/* ── Day card extras ───────────────────────────────────────── */
+.cb-checked {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: var(--c5) !important;
+  color: var(--c5) !important;
+}
+.ai-s-expand-btn {
+  font-size: 16px; color: var(--t2); transition: transform var(--dur);
+  flex-shrink: 0; padding: 0 2px;
+}
+.ai-s-day-card.s-open .ai-s-expand-btn { transform: rotate(90deg); }
+.ai-s-done-badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 7px; border-radius: var(--rfull);
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+  font-size: 9px; font-weight: 700; color: var(--c5); font-family: var(--font-mono);
+}
+.ai-s-rev-badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 7px; border-radius: var(--rfull);
+  background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25);
+  font-size: 9px; font-weight: 700; color: var(--c4); font-family: var(--font-mono);
+}
+
+/* ── Project status buttons ────────────────────────────────── */
+.ai-proj-status-btns {
+  display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap;
+}
+.dsa-proj-status-btn {
+  flex: 1; padding: 7px 10px; border-radius: var(--r8);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+  background: var(--bg3); border: 1px solid var(--border-default); color: var(--t2);
+  transition: all var(--dur); font-family: var(--font-mono);
+}
+.dsa-proj-status-btn.active,
+.dsa-proj-status-btn:active { transform: scale(0.96); }
+.dsa-proj-status-btn.spb-not-started.active  { background: rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.3); color: var(--c2); }
+.dsa-proj-status-btn.spb-in-progress.active  { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: var(--c4); }
+.dsa-proj-status-btn.spb-completed.active    { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--c5); }
+
+/* ── Inline revision panel (irp-open variant) ──────────────── */
+.inline-rev-panel.irp-open .inline-rev-arrow { transform: rotate(180deg); }
+.inline-rev-panel.irp-open .inline-rev-list  { max-height: 600px; padding-bottom: 8px; }
+.inline-rev-list {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.35s var(--ease), padding 0.35s var(--ease);
+  padding: 0 12px;
+}
+.inline-rev-title {
+  font-size: 11px; font-weight: 600; color: var(--t1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.inline-rev-date {
+  font-size: 9px; color: var(--t2); margin-top: 1px; font-weight: 600;
+}
+
+/* ── Revision card extras ──────────────────────────────────── */
+.rev-title {
+  font-size: 12px; font-weight: 600; color: var(--t1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rev-meta  { font-size: 10px; color: var(--t2); margin-top: 2px; }
+.rev-empty { font-size: 12px; color: var(--t2); text-align: center; padding: 24px 0; }
+.rev-card.rev-done { opacity: 0.55; }
+.rev-card.rev-overdue { border-color: rgba(244,63,94,0.3); }
+.rev-date-badge.rev-today {
+  background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--c5);
+}
+.rev-date-badge.rev-late {
+  background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.3); color: var(--c3);
+}
+.rev-done-btn.done {
+  background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--c5);
+}
+
+/* ── Notes cards ───────────────────────────────────────────── */
+.note-card {
+  background: var(--bg2); border: 1px solid var(--border-default);
+  border-radius: var(--r12); padding: 14px; margin-bottom: 8px;
+}
+.note-card-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.note-date {
+  font-size: 10px; font-weight: 700; color: var(--t2);
+  font-family: var(--font-mono); letter-spacing: 0.3px;
+}
+.note-del-btn {
+  width: 24px; height: 24px; border-radius: var(--r6); background: var(--bg4);
+  border: 1px solid var(--border-default); font-size: 11px; color: var(--t2);
+  display: flex; align-items: center; justify-content: center; transition: all var(--dur);
+}
+.note-del-btn:active { background: rgba(244,63,94,0.12); color: var(--c3); transform: scale(0.88); }
+.note-content {
+  font-size: 12px; color: var(--t1); line-height: 1.7;
+  white-space: pre-wrap; word-break: break-word;
+}
+.notes-empty {
+  font-size: 12px; color: var(--t2); text-align: center; padding: 24px 0;
+}
+
+/* ── Project card (enhanced) ───────────────────────────────── */
+.proj-card-header {
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;
+}
+.proj-card-title {
+  font-size: 14px; font-weight: 700; color: var(--t1); flex: 1; min-width: 0;
+}
+.proj-del-btn {
+  width: 24px; height: 24px; border-radius: var(--r6); background: var(--bg4);
+  border: 1px solid var(--border-default); font-size: 11px; color: var(--t2);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all var(--dur); margin-left: 8px;
+}
+.proj-del-btn:active { background: rgba(244,63,94,0.12); color: var(--c3); transform: scale(0.88); }
+.proj-desc {
+  font-size: 11px; color: var(--t2); line-height: 1.6; margin-bottom: 8px;
+}
+.proj-meta-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+}
+.proj-tag {
+  padding: 2px 8px; border-radius: var(--rfull);
+  background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2);
+  font-size: 9px; font-weight: 700; color: var(--c2); font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+.proj-progress {
+  padding: 2px 8px; border-radius: var(--rfull);
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);
+  font-size: 9px; font-weight: 700; color: var(--c5); font-family: var(--font-mono);
+}
+.proj-empty {
+  font-size: 12px; color: var(--t2); text-align: center; padding: 28px 0;
+}
+
+/* ── Pomo stat row (dsa-steps layout) ──────────────────────── */
+.pomo-stat-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 14px; border-bottom: 1px solid var(--border-subtle);
+}
+.pomo-stat-row:last-child { border-bottom: none; }
+.pomo-stat-label { font-size: 11px; color: var(--t2); }
+.pomo-stat-val   { font-size: 13px; font-weight: 800; color: var(--c2); font-family: var(--font-mono); }
+

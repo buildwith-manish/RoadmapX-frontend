@@ -2332,6 +2332,30 @@ self.addEventListener('fetch', e => {
   }
 
   // ═══════════════════════════════════════════════════════
+  //  AI SUB-TAB NAVIGATION (bottom nav — mirrors switchDSASub)
+  // ═══════════════════════════════════════════════════════
+  function switchAISub(sub, btn) {
+    const subs = ['roadmap','revision','pomo','notes','projects'];
+    subs.forEach(s => {
+      const el = document.getElementById('ai-sub-' + s);
+      if (el) el.style.display = s === sub ? '' : 'none';
+    });
+    // Update bottom nav items
+    document.querySelectorAll('#ai-bottom-nav .ai-nav-item').forEach(b => b.classList.remove('active'));
+    if (btn && btn.classList.contains('ai-nav-item')) {
+      btn.classList.add('active');
+    } else {
+      const b = document.getElementById('ai-nav-' + sub);
+      if (b) b.classList.add('active');
+    }
+    // Tab-specific refresh
+    if (sub === 'notes')    { try { APP.aiAutoSaveNotes && APP.aiAutoSaveNotes(); renderAINotes && renderAINotes(); } catch(e){} }
+    if (sub === 'projects') { renderSectionProjects('ai'); }
+    if (sub === 'pomo')     { updateSectionPomoDisplay('ai'); renderSectionPomoStats('ai'); }
+    if (sub === 'revision') { renderSectionRevisions('ai'); }
+  }
+
+  // ═══════════════════════════════════════════════════════
   //  AI NOTES (separate from general notes)
 
   // ═══════════════════════════════════════════════════════
@@ -2769,7 +2793,7 @@ self.addEventListener('fetch', e => {
     // Inline Revision
     markInlineRevDone,
     // Sub-tab navigation
-    switchDSASub,
+    switchDSASub, switchAISub,
     // DSA Notes
     dsaAutoSaveNotes, dsaSaveNotes, renderDSANotes, deleteDSANote,
     // Section Projects
