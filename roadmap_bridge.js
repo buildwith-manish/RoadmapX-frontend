@@ -21,7 +21,7 @@
   /* ── Config ─────────────────────────────────────────────── */
   // API base URL is set by config.js (window.RX_API).
   // Falls back to the Render URL for safety if config.js is missing.
-  window.API_BASE = window.RX_API || 'https://roadmapx-backend-3qmc.onrender.com';
+  window.API_BASE = window.RX_API;
   const API_BASE = (window.API_BASE || '').replace(/\/$/, '');
 
   /* ── State ──────────────────────────────────────────────── */
