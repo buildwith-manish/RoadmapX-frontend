@@ -230,6 +230,23 @@
                 <div class="home-card-arrow" style="color:#3b82f6;">›</div>
               </button>
 
+              <!-- Backend Roadmap (Steps) card -->
+              <button class="home-path-card" onclick="window.location.href='backend-steps.html'" style="border-color:rgba(234,88,12,0.25);">
+                <div class="home-card-ico" style="background:rgba(234,88,12,0.1);border-color:rgba(234,88,12,0.25);color:#ea580c;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+                </div>
+                <div class="home-card-body">
+                  <div class="home-card-title" style="color:#F1F5F9;">Backend Roadmap</div>
+                  <div class="home-card-desc">Node.js → Databases → Auth → Redis → Docker → Distributed Systems</div>
+                  <div class="home-card-meta">
+                    <span class="home-card-tag" style="background:rgba(234,88,12,0.12);border-color:rgba(234,88,12,0.25);color:#ea580c;">BEGINNER → PRO</span>
+                    <span class="home-card-tag" style="background:rgba(234,88,12,0.12);border-color:rgba(234,88,12,0.25);color:#ea580c;">270 DAYS</span>
+                  </div>
+                  <div class="home-card-prog"><div class="home-card-prog-fill" id="home-be-steps-prog" style="width:0%;background:#ea580c;"></div></div>
+                </div>
+                <div class="home-card-arrow" style="color:#ea580c;">›</div>
+              </button>
+
               <button class="home-path-card" onclick="window.location.href='dsa-roadmap.html'" style="border-color:rgba(99,102,241,0.25);">
                 <div class="home-card-ico" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.25);color:#6366f1;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><circle cx="6" cy="14" r="3"/><circle cx="18" cy="14" r="3"/><line x1="12" y1="13" x2="6" y2="14"/><line x1="12" y1="13" x2="18" y2="14"/></svg>
@@ -2818,6 +2835,34 @@
     }
     window.addEventListener('focus', updateBeRmPill);
     window.addEventListener('pageshow', updateBeRmPill);
+  })();
+
+  // Sync Backend Steps Roadmap progress pill from localStorage on load
+  (function() {
+    function updateBeStepsPill() {
+      try {
+        // backend-steps.js stores progress as 'backend_struct_beginner', 'backend_struct_intermediate', 'backend_struct_advanced'
+        let done = 0, total = 0;
+        ['beginner','intermediate','advanced'].forEach(function(level) {
+          const prog = JSON.parse(localStorage.getItem('backend_struct_' + level) || '{}');
+          Object.values(prog).forEach(function(v) {
+            if (v && typeof v === 'object') {
+              total++;
+              if (v.done) done++;
+            }
+          });
+        });
+        const bar = document.getElementById('home-be-steps-prog');
+        if (bar && total > 0) bar.style.width = Math.round((done / total) * 100) + '%';
+      } catch(e) {}
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateBeStepsPill);
+    } else {
+      updateBeStepsPill();
+    }
+    window.addEventListener('focus', updateBeStepsPill);
+    window.addEventListener('pageshow', updateBeStepsPill);
   })();
   </script>
 

@@ -2877,24 +2877,41 @@ const XP = (function() {
   ];
 
   function getStats() {
-    const aiProg  = lsGet('roadmapAI', {});
-    const dsaProg = lsGet('roadmapDSA', {});
     const pomStats= lsGet('pomodoroStats', {ai:0,dsa:0,projects:0,extra:0});
     const streaks = lsGet('streaks', {});
     const notes   = lsGet('extraNotes', []);
     const projects= lsGet('projects', []);
     const att     = lsGet('attendance', {});
-    // FIX: revisions are stored as a flat array with .done flags under 'revisions' key.
+    // Revisions stored as flat array with .done flags under 'revisions' key.
     const revData = lsGet('revisions', []);
     const revDone = Array.isArray(revData)
       ? revData.filter(r => r && r.done).length
       : Object.values(revData).flat().filter(r => r && r.done).length;
 
-    const aiDone  = Object.values(aiProg).filter(v=>v.done).length;
-    const dsaAllT = typeof DSA_WEEK_DATA !== 'undefined' ? DSA_WEEK_DATA.reduce((a,w)=>a.concat(w.topics),[]) : [];
-    const dsaDone = dsaAllT.filter(t=>dsaProg['t'+t.id]?.done).length;
+    // FIX Bug 1: AI structured roadmap saves to 'ai_struct_<level>', not 'roadmapAI'.
+    // Aggregate completed days across all three levels.
+    const aiDone = ['beginner', 'intermediate', 'advanced'].reduce((sum, lvl) => {
+      const prog = lsGet('ai_struct_' + lvl, {});
+      return sum + Object.values(prog).filter(v => v && v.done).length;
+    }, 0);
+
+    // FIX Bug 2: DSA structured roadmap saves to 'dsa_struct_<level>', not 'roadmapDSA'.
+    // Aggregate completed days across all three levels.
+    const dsaDone = ['beginner', 'intermediate', 'advanced'].reduce((sum, lvl) => {
+      const prog = lsGet('dsa_struct_' + lvl, {});
+      return sum + Object.values(prog).filter(v => v && v.done).length;
+    }, 0);
+
     const totalPomo = (pomStats.ai||0)+(pomStats.dsa||0)+(pomStats.projects||0)+(pomStats.extra||0);
-    const maxStreak = Math.max(streaks.ai?.longest || 0, streaks.dsa?.longest || 0, streaks.ai?.current || 0, streaks.dsa?.current || 0);
+
+    // FIX Bug 3: dsa-steps.js saves max streak as .max, not .longest. Check both.
+    const maxStreak = Math.max(
+      streaks.ai?.longest || 0,
+      streaks.ai?.current || 0,
+      streaks.dsa?.longest || 0,
+      streaks.dsa?.max     || 0,
+      streaks.dsa?.current || 0
+    );
     const notesSaved = Array.isArray(notes) ? notes.length : 0;
     const projCount  = Array.isArray(projects) ? projects.length : 0;
 
