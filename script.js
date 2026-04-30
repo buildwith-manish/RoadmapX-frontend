@@ -2055,101 +2055,136 @@ self.addEventListener('fetch', e => {
   }
 
   // ═══════════════════════════════════════════════════════
-  //  AI / DSA SUB-TAB SWITCHING
+  //  UNIFIED ROADMAP SUB-TAB SWITCHING
+  //  One function handles ai / dsa / frontend / backend.
+  //  HTML calls: APP.switchRoadmapSub('ai','notes',this)
+  //  Legacy shims keep old onclick="APP.switchAISub(...)" working.
+  // ═══════════════════════════════════════════════════════
 
-  function switchDSASub(sub, btn) {
+  // Each roadmap section can have its own notes timer in state
+  // (avoids a separate variable per roadmap)
+  if (!state._notesTimers) state._notesTimers = {};
+
+  function switchRoadmapSub(roadmap, sub, btn) {
     const subs = ['roadmap','revision','pomo','notes','projects'];
     subs.forEach(s => {
-      const el = document.getElementById('dsa-sub-' + s);
+      const el = document.getElementById(roadmap + '-sub-' + s);
       if (el) el.style.display = s === sub ? '' : 'none';
     });
-    document.querySelectorAll('#dsa-subtab-bar .section-subtab').forEach(b => b.classList.remove('active'));
+    // Active class — subtab bar uses id="${roadmap}-subtab-bar"
+    const bar = document.getElementById(roadmap + '-subtab-bar');
+    if (bar) bar.querySelectorAll('.section-subtab').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     else {
-      const b = document.getElementById('dsa-subtab-' + sub);
+      const b = document.getElementById(roadmap + '-subtab-' + sub);
       if (b) b.classList.add('active');
     }
-    if (sub === 'notes')    { renderDSANotes(); }
-    if (sub === 'projects') { renderSectionProjects('dsa'); }
-    if (sub === 'pomo')     { updateSectionPomoDisplay('dsa'); renderSectionPomoStats('dsa'); }
-    if (sub === 'revision') { renderSectionRevisions('dsa'); }
+    // Per-sub refresh
+    if (sub === 'notes')    { renderSectionNotes(roadmap); }
+    if (sub === 'projects') { renderSectionProjects(roadmap); }
+    if (sub === 'pomo')     { updateSectionPomoDisplay(roadmap); renderSectionPomoStats(roadmap); }
+    if (sub === 'revision') { renderSectionRevisions(roadmap); }
   }
 
-  // ═══════════════════════════════════════════════════════
-  //  AI SUB-TAB NAVIGATION (bottom nav — mirrors switchDSASub)
-  // ═══════════════════════════════════════════════════════
-  function switchAISub(sub, btn) {
-    const subs = ['roadmap','revision','pomo','notes','projects'];
-    subs.forEach(s => {
-      const el = document.getElementById('ai-sub-' + s);
-      if (el) el.style.display = s === sub ? '' : 'none';
-    });
-    // Update bottom nav items
-    document.querySelectorAll('#ai-bottom-nav .ai-nav-item').forEach(b => b.classList.remove('active'));
-    if (btn && btn.classList.contains('ai-nav-item')) {
-      btn.classList.add('active');
-    } else {
-      const b = document.getElementById('ai-nav-' + sub);
-      if (b) b.classList.add('active');
-    }
-    // Tab-specific refresh
-    if (sub === 'notes')    { try { APP.aiAutoSaveNotes && APP.aiAutoSaveNotes(); renderAINotes && renderAINotes(); } catch(e){} }
-    if (sub === 'projects') { renderSectionProjects('ai'); }
-    if (sub === 'pomo')     { updateSectionPomoDisplay('ai'); renderSectionPomoStats('ai'); }
-    if (sub === 'revision') { renderSectionRevisions('ai'); }
-  }
+  // Legacy shims — keep old HTML onclick attributes working without any HTML edits
+  function switchDSASub(sub, btn)      { switchRoadmapSub('dsa',      sub, btn); }
+  function switchAISub(sub, btn)       { switchRoadmapSub('ai',       sub, btn); }
+  function switchFrontendSub(sub, btn) { switchRoadmapSub('frontend', sub, btn); }
+  function switchBackendSub(sub, btn)  { switchRoadmapSub('backend',  sub, btn); }
 
   // ═══════════════════════════════════════════════════════
-  //  AI NOTES (separate from general notes)
+  //  UNIFIED SECTION NOTES  (ai / dsa / frontend / backend)
+  //  Storage key map — add new roadmaps here only.
+  // ═══════════════════════════════════════════════════════
 
-  // ═══════════════════════════════════════════════════════
-  //  DSA NOTES (separate state)
-  // ═══════════════════════════════════════════════════════
-  function dsaAutoSaveNotes() {
-    const ta = document.getElementById('dsa-notes-ta');
+  const SECTION_NOTES_KEY = {
+    ai:       'aiNotes',
+    dsa:      'dsaNotes',
+    frontend: 'feNotes',
+    backend:  'beNotes',
+  };
+
+  const SECTION_POMO_KEY = {
+    ai:       'ai',
+    dsa:      'dsa',
+    frontend: 'extra',   // maps into the existing pomodoroStats bucket
+    backend:  'extra',
+  };
+
+  const SECTION_LABEL = {
+    ai:       'AI',
+    dsa:      'DSA',
+    frontend: 'Frontend',
+    backend:  'Backend',
+  };
+
+  const SECTION_PLACEHOLDER = {
+    ai:       'Write what you studied in AI today...\n\n• Concepts learned\n• Model results\n• Code snippets\n• Papers to revisit',
+    dsa:      'Write what you practiced in DSA today...\n\n• Problems solved\n• Patterns recognized\n• Time complexity notes\n• Edge cases to remember',
+    frontend: 'Write what you built in Frontend today...\n\n• Components made\n• CSS tricks\n• Browser quirks\n• Frameworks explored',
+    backend:  'Write what you built in Backend today...\n\n• APIs designed\n• DB queries\n• Auth flows\n• Performance notes',
+  };
+
+  function sectionNotesAutoSave(roadmap) {
+    const key = SECTION_NOTES_KEY[roadmap];
+    if (!key) return;
+    const ta = document.getElementById(roadmap + '-notes-ta');
     if (!ta) return;
     const wc = ta.value.trim().split(/\s+/).filter(Boolean).length;
-    const wcEl = document.getElementById('dsa-notes-wc');
+    const wcEl = document.getElementById(roadmap + '-notes-wc');
     if (wcEl) wcEl.textContent = wc + ' words';
-    clearTimeout(state._dsaNotesTimer);
-    state._dsaNotesTimer = setTimeout(() => {
-      const draft = load(KEYS.DSA_NOTES, {});
+    clearTimeout(state._notesTimers[roadmap]);
+    state._notesTimers[roadmap] = setTimeout(() => {
+      const draft = load(key, {});
       draft._draft = ta.value;
-      save(KEYS.DSA_NOTES, draft);
+      save(key, draft);
     }, 800);
   }
 
-  function dsaSaveNotes() {
-    const ta = document.getElementById('dsa-notes-ta');
+  function sectionNotesSave(roadmap) {
+    const key = SECTION_NOTES_KEY[roadmap];
+    if (!key) return;
+    const label = SECTION_LABEL[roadmap] || roadmap.toUpperCase();
+    const ta = document.getElementById(roadmap + '-notes-ta');
     if (!ta || !ta.value.trim()) { toast('⚠️ Nothing to save', 'error'); return; }
-    const data = load(KEYS.DSA_NOTES, {});
+    const data = load(key, {});
     if (!data.entries) data.entries = [];
+    const pomKey = SECTION_POMO_KEY[roadmap] || roadmap;
     const pomStats = load(KEYS.POMO_STATS, {});
     data.entries.unshift({
       id: Date.now().toString(),
       text: ta.value.trim(),
       date: today(),
-      pomoCount: pomStats.dsa || 0,
+      pomoCount: pomStats[pomKey] || 0,
     });
     if (data.entries.length > 100) data.entries = data.entries.slice(0,100);
     data._draft = '';
-    save(KEYS.DSA_NOTES, data);
+    save(key, data);
     ta.value = '';
-    const wcEl = document.getElementById('dsa-notes-wc');
+    const wcEl = document.getElementById(roadmap + '-notes-wc');
     if (wcEl) wcEl.textContent = '0 words';
-    renderDSANotes();
-    toast('📝 DSA note saved!', 'success');
+    renderSectionNotes(roadmap);
+    toast(`📝 ${label} note saved!`, 'success');
   }
 
-  function renderDSANotes() {
-    const data = load(KEYS.DSA_NOTES, {});
-    const ta = document.getElementById('dsa-notes-ta');
-    if (ta && data._draft && !ta.value) ta.value = data._draft;
-    const listEl = document.getElementById('dsa-notes-list');
+  function renderSectionNotes(roadmap) {
+    const key = SECTION_NOTES_KEY[roadmap];
+    if (!key) return;
+    const label = SECTION_LABEL[roadmap] || roadmap.toUpperCase();
+    const data = load(key, {});
+    const ta = document.getElementById(roadmap + '-notes-ta');
+    if (ta) {
+      if (data._draft && !ta.value) ta.value = data._draft;
+      // Set placeholder if not already set
+      if (!ta.placeholder && SECTION_PLACEHOLDER[roadmap]) {
+        ta.placeholder = SECTION_PLACEHOLDER[roadmap];
+      }
+    }
+    const listEl = document.getElementById(roadmap + '-notes-list');
     if (!listEl) return;
     const entries = data.entries || [];
     if (!entries.length) {
-      listEl.innerHTML = '<div class="empty-state"><div class="empty-ico">📝</div><div class="empty-title">No DSA notes yet</div><div class="empty-sub">Save your first DSA study note above</div></div>';
+      listEl.innerHTML = `<div class="empty-state"><div class="empty-ico">📝</div><div class="empty-title">No ${label} notes yet</div><div class="empty-sub">Save your first ${label} study note above</div></div>`;
       return;
     }
     listEl.innerHTML = entries.slice(0,30).map(e => `
@@ -2160,25 +2195,38 @@ self.addEventListener('fetch', e => {
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span class="card-badge badge-done">🍅 ${e.pomoCount||0}</span>
-            <button onclick="APP.deleteDSANote('${e.id}')" style="font-size:12px;color:var(--c3);padding:2px 6px;border-radius:6px;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.2)">✕</button>
+            <button onclick="APP.deleteSectionNote('${roadmap}','${e.id}')" style="font-size:12px;color:var(--c3);padding:2px 6px;border-radius:6px;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.2)">✕</button>
           </div>
         </div>
         <div style="font-size:12px;color:var(--t2);line-height:1.7;white-space:pre-wrap">${esc(e.text.slice(0,200))}${e.text.length>200?'<span style="color:var(--t3c)"> …</span>':''}</div>
       </div>`).join('');
   }
 
-  function deleteDSANote(id) {
-    const data = load(KEYS.DSA_NOTES, {});
+  function deleteSectionNote(roadmap, id) {
+    const key = SECTION_NOTES_KEY[roadmap];
+    if (!key) return;
+    const label = SECTION_LABEL[roadmap] || roadmap.toUpperCase();
+    const data = load(key, {});
     data.entries = (data.entries || []).filter(e => e.id !== id);
-    save(KEYS.DSA_NOTES, data);
-    renderDSANotes();
-    toast('🗑️ DSA note deleted', 'info');
+    save(key, data);
+    renderSectionNotes(roadmap);
+    toast(`🗑️ ${label} note deleted`, 'info');
   }
 
+  // Legacy shims for old HTML onclicks — map to unified functions
+  function dsaAutoSaveNotes()  { sectionNotesAutoSave('dsa'); }
+  function dsaSaveNotes()      { sectionNotesSave('dsa'); }
+  function renderDSANotes()    { renderSectionNotes('dsa'); }
+  function deleteDSANote(id)   { deleteSectionNote('dsa', id); }
+  function aiAutoSaveNotes()   { sectionNotesAutoSave('ai'); }
+  function aiSaveNotes()       { sectionNotesSave('ai'); }
+  function renderAINotes()     { renderSectionNotes('ai'); }
+  function deleteAINote(id)    { deleteSectionNote('ai', id); }
+
   // ═══════════════════════════════════════════════════════
-  //  SECTION REVISION SYSTEM (AI & DSA dedicated revision panels)
+  //  SECTION REVISION SYSTEM (all roadmaps)
   // ═══════════════════════════════════════════════════════
-  const _sectionRevState = { ai: 'all', dsa: 'all' };
+  const _sectionRevState = { ai: 'all', dsa: 'all', frontend: 'all', backend: 'all' };
 
   function renderSectionRevisions(source) {
     const listEl = document.getElementById(source + '-revision-list');
@@ -2283,12 +2331,16 @@ self.addEventListener('fetch', e => {
     toast(revs[idx].done ? '✅ Revision marked complete!' : '↩️ Revision unmarked', 'success');
   }
 
-  function setDSARevFilter(f, btn) {
-    _sectionRevState.dsa = f;
-    document.querySelectorAll('#dsa-sub-revision .filter-row .filter-chip').forEach(c => c.classList.remove('active'));
+  function setSectionRevFilter(roadmap, f, btn) {
+    _sectionRevState[roadmap] = f;
+    const container = document.getElementById(roadmap + '-sub-revision');
+    if (container) container.querySelectorAll('.filter-row .filter-chip').forEach(c => c.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    renderSectionRevisions('dsa');
+    renderSectionRevisions(roadmap);
   }
+  // Legacy shim
+  function setDSARevFilter(f, btn) { setSectionRevFilter('dsa', f, btn); }
+  function setAIRevFilter(f, btn)  { setSectionRevFilter('ai',  f, btn); }
 
   // ═══════════════════════════════════════════════════════
   //  SECTION PROJECTS (AI / DSA filtered views)
@@ -2297,17 +2349,19 @@ self.addEventListener('fetch', e => {
     const listEl = document.getElementById(section + '-projects-list');
     if (!listEl) return;
     const projects = load(KEYS.PROJECTS, []).filter(p => p.source === section);
+    const _sectionEmoji = { ai:'🤖', dsa:'💻', frontend:'🎨', backend:'⚙️' };
     if (!projects.length) {
-      const label = section === 'ai' ? 'AI' : 'DSA';
+      const label = SECTION_LABEL[section] || section.toUpperCase();
       listEl.innerHTML = `<div class="empty-state"><div class="empty-ico">🚀</div><div class="empty-title">No ${label} projects yet</div><div class="empty-sub">Add your first ${label} project above</div></div>`;
       return;
     }
     listEl.innerHTML = projects.map(p => {
       const progressPct = Math.min(100, Math.round(p.progressPct || 0));
+      const sectionEmoji = _sectionEmoji[section] || '📁';
       return `
       <div class="proj-card">
         <div class="flex items-center gap6" style="margin-bottom:6px">
-          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(0,245,212,.1),rgba(123,47,255,.1));border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${section==='ai'?'🤖':'💻'}</div>
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(0,245,212,.1),rgba(123,47,255,.1));border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${sectionEmoji}</div>
           <div style="flex:1;min-width:0">
             <div class="proj-name">${esc(p.name)}</div>
             <div class="proj-meta">Created ${fmtDate(p.createdAt)}</div>
@@ -2326,9 +2380,22 @@ self.addEventListener('fetch', e => {
   }
 
   // ═══════════════════════════════════════════════════════
-  //  SECTION POMODORO (independent AI & DSA timers)
+  //  SECTION POMODORO (ai / dsa / frontend / backend — independent timers)
+  //  Add a new roadmap key here to get a free timer for it.
   // ═══════════════════════════════════════════════════════
   const SECTION_BREAK = 5 * 60;
+
+  function _makeSectionPomoState(duration) {
+    return { running:false, isBreak:false, alarmRinging:false,
+             seconds: duration*60, duration,
+             interval:null, alarmAudio:null, alarmInterval:null };
+  }
+  const _sectionPomoState = {
+    ai:       _makeSectionPomoState(load(KEYS.POMO_DURATION, 25) || 25),
+    dsa:      _makeSectionPomoState(load(KEYS.POMO_DURATION, 25) || 25),
+    frontend: _makeSectionPomoState(25),
+    backend:  _makeSectionPomoState(25),
+  };
 
   function _sectionPlayAlarm(section) {
     _sectionStopAlarmRaw(section);
@@ -2465,7 +2532,7 @@ self.addEventListener('fetch', e => {
             s.alarmRinging = true;
             _sectionPlayAlarm(section);
             _updateSectionMode(section, '⏰ DONE!', '🔔 Stop Alarm');
-            toast(`⏰ ${section === 'ai' ? 'AI' : 'DSA'} session complete! Stop alarm to start break.`, 'success');
+            toast(`⏰ ${(SECTION_LABEL[section]||section.toUpperCase())} session complete! Stop alarm to start break.`, 'success');
           } else {
             s.isBreak = false;
             s.seconds = s.duration * 60;
@@ -2537,9 +2604,12 @@ self.addEventListener('fetch', e => {
     // Inline Revision
     markInlineRevDone,
     // Sub-tab navigation
-    switchDSASub, switchAISub,
-    // DSA Notes
+    switchRoadmapSub, switchDSASub, switchAISub, switchFrontendSub, switchBackendSub,
+    // Section Notes (unified — works for all roadmaps)
+    sectionNotesAutoSave, sectionNotesSave, renderSectionNotes, deleteSectionNote,
+    // Legacy note shims (old HTML onclick attributes)
     dsaAutoSaveNotes, dsaSaveNotes, renderDSANotes, deleteDSANote,
+    aiAutoSaveNotes, aiSaveNotes, renderAINotes, deleteAINote,
     // Section Projects
     renderSectionProjects,
     // Section Pomodoro
@@ -2547,7 +2617,8 @@ self.addEventListener('fetch', e => {
     setSectionPomoDuration, stopSectionAlarm,
     updateSectionPomoDisplay, renderSectionPomoStats,
     // Section Revision
-    renderSectionRevisions, markSectionRevDone, setDSARevFilter,
+    renderSectionRevisions, markSectionRevDone,
+    setSectionRevFilter, setDSARevFilter, setAIRevFilter,
         // Revision scheduling (used by roadmap_bridge and SpacedRep)
     scheduleRevisions,
     // Direct screen navigation (used by nav stack)

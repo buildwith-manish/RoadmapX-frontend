@@ -1152,15 +1152,188 @@
 
         <!-- ──────── TAB: FRONTEND ROADMAP ──────── -->
         <div class="tab-panel" id="tab-fe" style="flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
-          <iframe
-            src="frontend-roadmap.html"
-            id="fe-rm-iframe"
-            style="width:100%;height:100%;border:none;display:block;flex:1;"
-            loading="lazy"
-            title="Frontend Visual Roadmap"
-          ></iframe>
+
+          <!-- Subtab bar -->
+          <div class="section-subtab-bar" id="frontend-subtab-bar" style="display:flex;gap:4px;padding:8px 12px 0;background:var(--bg1);flex-shrink:0;overflow-x:auto;">
+            <button class="section-subtab active" id="frontend-subtab-roadmap" onclick="APP.switchRoadmapSub('frontend','roadmap',this)">🗺 Roadmap</button>
+            <button class="section-subtab" id="frontend-subtab-pomo"     onclick="APP.switchRoadmapSub('frontend','pomo',this)">⏱ Pomo</button>
+            <button class="section-subtab" id="frontend-subtab-notes"    onclick="APP.switchRoadmapSub('frontend','notes',this)">📝 Notes</button>
+            <button class="section-subtab" id="frontend-subtab-revision" onclick="APP.switchRoadmapSub('frontend','revision',this)">🔁 Revision</button>
+            <button class="section-subtab" id="frontend-subtab-projects" onclick="APP.switchRoadmapSub('frontend','projects',this)">🚀 Projects</button>
+          </div>
+
+          <!-- Roadmap iframe (default visible) -->
+          <div id="frontend-sub-roadmap" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <iframe
+              src="frontend-roadmap.html"
+              id="fe-rm-iframe"
+              style="width:100%;height:100%;border:none;display:block;flex:1;"
+              loading="lazy"
+              title="Frontend Visual Roadmap"
+            ></iframe>
+          </div>
+
+          <!-- Pomodoro -->
+          <div id="frontend-sub-pomo" style="display:none;overflow-y:auto;padding:12px;">
+            <div class="pomo-dur-row">
+              <label class="pomo-dur-label">Focus (min)</label>
+              <input class="pomo-dur-input" id="frontend-pomo-dur-input" type="number" value="25" min="1" max="120" />
+              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('frontend')">Set</button>
+              <button class="pomo-alarm-btn" id="frontend-pomo-alarm-stop" onclick="APP.stopSectionAlarm('frontend')" style="display:none">Stop</button>
+            </div>
+            <div class="pomo-ring" id="frontend-pomo-ring">
+              <div class="pomo-ring-inner">
+                <div class="pomo-time" id="frontend-pomo-time">25:00</div>
+                <div class="pomo-mode" id="frontend-pomo-mode">FOCUS</div>
+              </div>
+            </div>
+            <div class="pomo-session-count" id="frontend-pomo-dots"></div>
+            <div class="pomo-btn-row">
+              <button class="pomo-btn start" id="frontend-pomo-start-btn" onclick="APP.sectionPomoToggle('frontend')">▶ Start</button>
+              <button class="pomo-btn reset" onclick="APP.sectionPomoReset('frontend')">↺ Reset</button>
+              <button class="pomo-btn stop"  onclick="APP.sectionPomoSkip('frontend')">⏭ Skip</button>
+            </div>
+            <div class="pomo-stats-row">
+              <div class="focus-hours-box"><div class="focus-hours-label">Focus Hours</div><div class="focus-hours-val" id="frontend-pomo-focus-hours">0.0</div></div>
+              <div class="pomo-stat"><div class="pomo-stat-val" id="frontend-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
+              <div class="pomo-stat"><div class="pomo-stat-val" id="frontend-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
+              <div class="pomo-stat"><div class="pomo-stat-val" id="frontend-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div id="frontend-sub-notes" style="display:none;overflow-y:auto;padding:12px;">
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header">
+                <div class="card-title">Today's Notes</div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="card-badge badge-done" id="frontend-notes-pomo-badge">0 pomos</span>
+                </div>
+              </div>
+              <textarea class="notes-ta" id="frontend-notes-ta"
+                placeholder="Write what you built in Frontend today...&#10;&#10;• Components made&#10;• CSS tricks&#10;• Browser quirks&#10;• Frameworks explored"
+                oninput="APP.sectionNotesAutoSave('frontend')"></textarea>
+              <div class="notes-footer">
+                <span id="frontend-notes-wc">0 words</span>
+                <button class="notes-save-btn" onclick="APP.sectionNotesSave('frontend')">Save</button>
+              </div>
+            </div>
+            <div id="frontend-notes-list"></div>
+          </div>
+
+          <!-- Revision -->
+          <div id="frontend-sub-revision" style="display:none;overflow-y:auto;padding:12px;">
+            <div class="filter-row" style="padding-bottom:8px">
+              <button class="filter-chip active" onclick="APP.setSectionRevFilter('frontend','all',this)">All</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','due',this)">Due Today</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','overdue',this)">Overdue</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','pending',this)">Pending</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','done',this)">Done</button>
+            </div>
+            <div class="section" style="padding-top:8px"><div id="frontend-revision-list"></div></div>
+          </div>
+
+          <!-- Projects -->
+          <div id="frontend-sub-projects" style="display:none;overflow-y:auto;padding:12px;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+              <button class="add-btn" onclick="APP.openProjectModal(null,'frontend')">+ Add Project</button>
+            </div>
+            <div id="frontend-projects-list"></div>
+          </div>
+
         </div>
         <!-- /tab-fe -->
+
+        <!-- ──────── TAB: BACKEND ROADMAP (subtabs) ──────── -->
+        <div class="tab-panel" id="tab-backend" style="flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
+
+          <!-- Subtab bar -->
+          <div class="section-subtab-bar" id="backend-subtab-bar" style="display:flex;gap:4px;padding:8px 12px 0;background:var(--bg1);flex-shrink:0;overflow-x:auto;">
+            <button class="section-subtab active" id="backend-subtab-roadmap" onclick="APP.switchRoadmapSub('backend','roadmap',this)">🗺 Roadmap</button>
+            <button class="section-subtab" id="backend-subtab-pomo"     onclick="APP.switchRoadmapSub('backend','pomo',this)">⏱ Pomo</button>
+            <button class="section-subtab" id="backend-subtab-notes"    onclick="APP.switchRoadmapSub('backend','notes',this)">📝 Notes</button>
+            <button class="section-subtab" id="backend-subtab-revision" onclick="APP.switchRoadmapSub('backend','revision',this)">🔁 Revision</button>
+            <button class="section-subtab" id="backend-subtab-projects" onclick="APP.switchRoadmapSub('backend','projects',this)">🚀 Projects</button>
+          </div>
+
+          <!-- Roadmap link (no iframe — backend roadmap is a separate page) -->
+          <div id="backend-sub-roadmap" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;">
+            <div style="font-size:40px">⚙️</div>
+            <div style="font-size:15px;font-weight:700;color:var(--t1)">Backend Roadmap</div>
+            <div style="font-size:12px;color:var(--t2);text-align:center">Opens in its own page with full step tracking</div>
+            <a href="backend-steps.html" style="padding:10px 20px;background:var(--c6);color:#fff;border-radius:var(--r10);font-size:13px;font-weight:700;text-decoration:none;">Open Backend Roadmap →</a>
+          </div>
+
+          <!-- Pomodoro -->
+          <div id="backend-sub-pomo" style="display:none;overflow-y:auto;padding:12px;">
+            <div class="pomo-dur-row">
+              <label class="pomo-dur-label">Focus (min)</label>
+              <input class="pomo-dur-input" id="backend-pomo-dur-input" type="number" value="25" min="1" max="120" />
+              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('backend')">Set</button>
+              <button class="pomo-alarm-btn" id="backend-pomo-alarm-stop" onclick="APP.stopSectionAlarm('backend')" style="display:none">Stop</button>
+            </div>
+            <div class="pomo-ring" id="backend-pomo-ring">
+              <div class="pomo-ring-inner">
+                <div class="pomo-time" id="backend-pomo-time">25:00</div>
+                <div class="pomo-mode" id="backend-pomo-mode">FOCUS</div>
+              </div>
+            </div>
+            <div class="pomo-session-count" id="backend-pomo-dots"></div>
+            <div class="pomo-btn-row">
+              <button class="pomo-btn start" id="backend-pomo-start-btn" onclick="APP.sectionPomoToggle('backend')">▶ Start</button>
+              <button class="pomo-btn reset" onclick="APP.sectionPomoReset('backend')">↺ Reset</button>
+              <button class="pomo-btn stop"  onclick="APP.sectionPomoSkip('backend')">⏭ Skip</button>
+            </div>
+            <div class="pomo-stats-row">
+              <div class="focus-hours-box"><div class="focus-hours-label">Focus Hours</div><div class="focus-hours-val" id="backend-pomo-focus-hours">0.0</div></div>
+              <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
+              <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
+              <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div id="backend-sub-notes" style="display:none;overflow-y:auto;padding:12px;">
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header">
+                <div class="card-title">Today's Notes</div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="card-badge badge-done" id="backend-notes-pomo-badge">0 pomos</span>
+                </div>
+              </div>
+              <textarea class="notes-ta" id="backend-notes-ta"
+                placeholder="Write what you built in Backend today...&#10;&#10;• APIs designed&#10;• DB queries&#10;• Auth flows&#10;• Performance notes"
+                oninput="APP.sectionNotesAutoSave('backend')"></textarea>
+              <div class="notes-footer">
+                <span id="backend-notes-wc">0 words</span>
+                <button class="notes-save-btn" onclick="APP.sectionNotesSave('backend')">Save</button>
+              </div>
+            </div>
+            <div id="backend-notes-list"></div>
+          </div>
+
+          <!-- Revision -->
+          <div id="backend-sub-revision" style="display:none;overflow-y:auto;padding:12px;">
+            <div class="filter-row" style="padding-bottom:8px">
+              <button class="filter-chip active" onclick="APP.setSectionRevFilter('backend','all',this)">All</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','due',this)">Due Today</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','overdue',this)">Overdue</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','pending',this)">Pending</button>
+              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','done',this)">Done</button>
+            </div>
+            <div class="section" style="padding-top:8px"><div id="backend-revision-list"></div></div>
+          </div>
+
+          <!-- Projects -->
+          <div id="backend-sub-projects" style="display:none;overflow-y:auto;padding:12px;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+              <button class="add-btn" onclick="APP.openProjectModal(null,'backend')">+ Add Project</button>
+            </div>
+            <div id="backend-projects-list"></div>
+          </div>
+
+        </div>
+        <!-- /tab-backend -->
         <div class="tab-panel" id="tab-revision">
           <div class="filter-row" style="padding-top:12px">
             <button class="filter-chip active" onclick="APP.setRevFilter('all',this)">All</button>
@@ -2020,6 +2193,289 @@
     </div>
   </div>
 
+  <script>
+  // ═══════════════════════════════════════════════
+  //  MY ROADMAPS FEATURE — injected into APP
+  // ═══════════════════════════════════════════════
+  (function() {
+    const API = 'https://roadmapx-backend-3qmc.onrender.com';
+
+    let _roadmaps       = [];
+    let _steps          = [];
+    let _currentRoadmap = null;
+    let _addStepOpen    = false;
+
+    // ── helpers ─────────────────────────────────
+    function uid() {
+      try { return localStorage.getItem('rx_user') || sessionStorage.getItem('rx_user') || ''; } catch(e) { return ''; }
+    }
+
+    function toast(msg) {
+      // reuse existing app toast if present, else console
+      if (window.APP && APP.showToast) { APP.showToast(msg); return; }
+      const el = document.getElementById('toast') || document.getElementById('snackbar');
+      if (el) { el.textContent = msg; el.className = (el.className||'') + ' show'; setTimeout(()=>el.classList.remove('show'),2200); }
+    }
+
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function setBtn(id, disabled, label) {
+      const b = document.getElementById(id);
+      if (!b) return;
+      b.disabled = disabled;
+      b.textContent = label;
+    }
+
+    // ── panel open/close ─────────────────────────
+    function openMyRoadmaps() {
+      document.getElementById('myrm-panel').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      showListView();
+      loadRoadmaps();
+    }
+
+    function closeMyRoadmaps() {
+      document.getElementById('myrm-panel').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function showListView() {
+      document.getElementById('myrm-view-list').style.display = 'block';
+      document.getElementById('myrm-view-detail').style.display = 'none';
+      document.getElementById('myrm-hdr-title').textContent = 'My Roadmaps';
+      _currentRoadmap = null;
+    }
+
+    function showDetailView(rm) {
+      _currentRoadmap = rm;
+      document.getElementById('myrm-view-list').style.display = 'none';
+      document.getElementById('myrm-view-detail').style.display = 'block';
+      document.getElementById('myrm-hdr-title').textContent = rm.title;
+      document.getElementById('myrm-detail-title').textContent = rm.title;
+      document.getElementById('myrm-detail-desc').textContent = rm.description || 'No description.';
+      closeAddStepForm();
+      document.getElementById('myrm-step-title').value = '';
+      document.getElementById('myrm-step-desc').value  = '';
+      loadSteps(rm._id);
+    }
+
+    // ── roadmaps ─────────────────────────────────
+    async function loadRoadmaps() {
+      document.getElementById('myrm-list-loader').style.display = 'flex';
+      document.getElementById('myrm-list-content').style.display = 'none';
+      try {
+        const userId = uid();
+        const url = `${API}/api/roadmaps${userId ? '?userId='+encodeURIComponent(userId) : ''}`;
+        const r = await fetch(url, { credentials: 'include' });
+        const d = await r.json();
+        _roadmaps = d.success ? (d.data || []) : [];
+      } catch(e) { _roadmaps = []; toast('Could not load roadmaps.'); }
+      renderRoadmaps();
+      document.getElementById('myrm-list-loader').style.display = 'none';
+      document.getElementById('myrm-list-content').style.display = 'block';
+    }
+
+    function renderRoadmaps() {
+      const container = document.getElementById('myrm-cards');
+      const empty     = document.getElementById('myrm-empty');
+      document.getElementById('myrm-list-label').textContent =
+        `${_roadmaps.length} roadmap${_roadmaps.length !== 1 ? 's' : ''}`;
+
+      if (_roadmaps.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      container.innerHTML = _roadmaps.map((rm, i) => {
+        const total = rm._stepCount || 0;
+        const done  = rm._completedCount || 0;
+        const pct   = total > 0 ? Math.round(done/total*100) : 0;
+        return `
+          <div onclick="window._myRm.openDetail('${rm._id}')" style="background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden;transition:border-color 0.15s,background 0.15s;" onmouseover="this.style.borderColor='rgba(124,58,237,0.3)';this.style.background='var(--bg3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='var(--bg2)'">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+              <div style="font-size:14px;font-weight:600;color:var(--t1);line-height:1.3;">${escH(rm.title)}</div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            ${rm.description ? `<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px;">${escH(rm.description)}</div>` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);font-family:var(--font-mono);margin-bottom:5px;">
+              <span>${done} / ${total} steps</span><span>${pct}%</span>
+            </div>
+            <div style="height:3px;background:var(--bg5);border-radius:2px;overflow:hidden;">
+              <div style="height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:2px;width:${pct}%;transition:width 0.4s;"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── create roadmap ───────────────────────────
+    function openCreate() {
+      document.getElementById('myrm-create-title').value = '';
+      document.getElementById('myrm-create-desc').value  = '';
+      const m = document.getElementById('myrm-modal');
+      m.style.display = 'flex';
+      setTimeout(() => document.getElementById('myrm-create-title').focus(), 100);
+    }
+
+    function closeCreate() {
+      document.getElementById('myrm-modal').style.display = 'none';
+    }
+
+    async function createRoadmap() {
+      const title  = document.getElementById('myrm-create-title').value.trim();
+      const desc   = document.getElementById('myrm-create-desc').value.trim();
+      const userId = uid();
+      if (!title) { toast('Title is required.'); return; }
+      if (!userId) { toast('Please log in first.'); return; }
+      setBtn('myrm-btn-create', true, 'Creating...');
+      try {
+        const r = await fetch(`${API}/api/roadmaps`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, title, description: desc }),
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+        closeCreate();
+        toast('Roadmap created.');
+        await loadRoadmaps();
+      } catch(e) { toast('Could not create roadmap.'); }
+      finally { setBtn('myrm-btn-create', false, 'Create'); }
+    }
+
+    // ── steps ────────────────────────────────────
+    async function loadSteps(roadmapId) {
+      const loader = document.getElementById('myrm-steps-loader');
+      loader.style.display = 'flex';
+      document.getElementById('myrm-steps-list').innerHTML = '';
+      document.getElementById('myrm-steps-empty').style.display = 'none';
+      try {
+        const r = await fetch(`${API}/api/steps/${roadmapId}`, { credentials: 'include' });
+        const d = await r.json();
+        _steps = d.success ? (d.data || []) : [];
+      } catch(e) { _steps = []; toast('Could not load steps.'); }
+      loader.style.display = 'none';
+      renderSteps();
+    }
+
+    function renderSteps() {
+      const container = document.getElementById('myrm-steps-list');
+      const empty     = document.getElementById('myrm-steps-empty');
+      const done      = _steps.filter(s => s.completed).length;
+      const total     = _steps.length;
+      const pct       = total > 0 ? Math.round(done/total*100) : 0;
+
+      document.getElementById('myrm-steps-count').textContent  = `${total} step${total!==1?'s':''}`;
+      document.getElementById('myrm-steps-label').textContent  = `${done} / ${total} steps`;
+      document.getElementById('myrm-pct-label').textContent    = `${pct}%`;
+      document.getElementById('myrm-prog-fill').style.width    = `${pct}%`;
+      document.getElementById('myrm-detail-pct-tag').textContent = `${pct}%`;
+
+      if (total === 0) { container.innerHTML=''; empty.style.display='block'; return; }
+      empty.style.display = 'none';
+
+      container.innerHTML = _steps.map(s => `
+        <div id="myrm-step-${s._id}" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;margin-bottom:8px;opacity:${s.completed?'0.55':'1'};transition:opacity 0.2s;">
+          <div onclick="window._myRm.toggleStep('${s._id}',${s.completed})" style="width:18px;height:18px;border-radius:5px;border:1.5px solid ${s.completed?'transparent':'rgba(255,255,255,0.12)'};background:${s.completed?'linear-gradient(135deg,var(--c1),var(--c2))':'var(--bg3)'};flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:background 0.15s;">
+            ${s.completed ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--t1);line-height:1.3;${s.completed?'text-decoration:line-through;color:var(--t2);':''}">${escH(s.title)}</div>
+            ${s.description ? `<div style="font-size:11px;color:var(--t2);margin-top:3px;line-height:1.5;">${escH(s.description)}</div>` : ''}
+          </div>
+        </div>`).join('');
+    }
+
+    async function toggleStep(stepId, currentlyDone) {
+      if (currentlyDone) return;
+      const idx = _steps.findIndex(s => s._id === stepId);
+      if (idx === -1) return;
+      _steps[idx].completed   = true;
+      _steps[idx].completedAt = new Date().toISOString();
+      renderSteps();
+      try {
+        const r = await fetch(`${API}/api/steps/${stepId}`, {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+        toast('Step completed.');
+      } catch(e) {
+        _steps[idx].completed = false;
+        _steps[idx].completedAt = null;
+        renderSteps();
+        toast('Could not update step.');
+      }
+    }
+
+    function toggleAddStepForm() {
+      _addStepOpen = !_addStepOpen;
+      document.getElementById('myrm-add-form').style.display = _addStepOpen ? 'block' : 'none';
+      document.getElementById('myrm-btn-add-step').textContent = _addStepOpen ? '- Cancel' : '+ Add Step';
+      if (_addStepOpen) setTimeout(() => document.getElementById('myrm-step-title').focus(), 80);
+    }
+
+    function closeAddStepForm() {
+      _addStepOpen = false;
+      document.getElementById('myrm-add-form').style.display = 'none';
+      document.getElementById('myrm-btn-add-step').textContent = '+ Add Step';
+    }
+
+    async function saveStep() {
+      const title = document.getElementById('myrm-step-title').value.trim();
+      const desc  = document.getElementById('myrm-step-desc').value.trim();
+      if (!title) { toast('Step title is required.'); return; }
+      if (!_currentRoadmap) return;
+      setBtn('myrm-btn-save-step', true, 'Saving...');
+      try {
+        const r = await fetch(`${API}/api/steps`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roadmapId: _currentRoadmap._id, title, description: desc }),
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.message);
+        _steps.push(d.data);
+        document.getElementById('myrm-step-title').value = '';
+        document.getElementById('myrm-step-desc').value  = '';
+        closeAddStepForm();
+        renderSteps();
+        toast('Step added.');
+      } catch(e) { toast('Could not add step.'); }
+      finally { setBtn('myrm-btn-save-step', false, 'Save Step'); }
+    }
+
+    // ── expose to window ─────────────────────────
+    window._myRm = {
+      openDetail: (id) => {
+        const rm = _roadmaps.find(r => r._id === id);
+        if (rm) showDetailView(rm);
+      },
+      toggleStep,
+    };
+
+    // ── attach to APP ────────────────────────────
+    Object.assign(APP, {
+      openMyRoadmaps:      openMyRoadmaps,
+      closeMyRoadmaps:     closeMyRoadmaps,
+      myRmOpenCreate:      openCreate,
+      myRmCloseCreate:     closeCreate,
+      myRmCreate:          createRoadmap,
+      myRmToggleAddStep:   toggleAddStepForm,
+      myRmSaveStep:        saveStep,
+    });
+
+    // enter key shortcuts
+    document.getElementById('myrm-create-title').addEventListener('keydown', e => { if(e.key==='Enter') createRoadmap(); });
+    document.getElementById('myrm-step-title').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey) saveStep(); });
+    // close modal on backdrop click
+    document.getElementById('myrm-modal').addEventListener('click', e => { if(e.target===document.getElementById('myrm-modal')) closeCreate(); });
+
+  })();
+  </script>
   <script>
 (function() {
   const _prevSwitchTab = APP.switchTab.bind(APP);
