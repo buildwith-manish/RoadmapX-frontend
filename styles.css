@@ -114,7 +114,7 @@ body::before {
 /* ── LAYOUT ── */
 #app {
   display: flex; flex-direction: column; height: 100vh;
-  overflow: hidden; position: relative; z-index: 1;
+  position: relative; z-index: 1;
 }
 
 /* ── HEADER ── */
@@ -167,12 +167,8 @@ body::before {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }
-.tab-panel { display: none; animation: panelIn 0.25s var(--ease) both; }
-.tab-panel.active { display: block; }
-@keyframes panelIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; opacity: 1; transform: none; visibility: visible; }
 
 /* ── BOTTOM NAV ── */
 #bottom-nav {

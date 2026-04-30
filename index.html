@@ -148,59 +148,6 @@
   color: #8080a8; letter-spacing: .5px;
 }
     </style>
-  <!-- ══ MISSING STYLES FIX: goal rings, badge earned, calendar dots ══ -->
-  <style>
-    /* ── Goal ring card (used by Goals.render()) ── */
-    .goal-card-title {
-      font-size: 11px; font-weight: 700; color: var(--t2);
-      text-transform: uppercase; letter-spacing: 0.8px;
-      font-family: var(--font-mono); margin-bottom: 8px;
-    }
-    .goal-ring-wrap {
-      position: relative; display: flex; align-items: center;
-      justify-content: center; margin: 4px auto 8px; width: 72px; height: 72px;
-    }
-    .goal-ring-svg { transform: rotate(-90deg); }
-    .goal-ring-bg  { fill: none; stroke: var(--bg4); stroke-width: 6; }
-    .goal-ring-fill {
-      fill: none; stroke-width: 6; stroke-linecap: round;
-      transition: stroke-dashoffset 0.8s ease;
-    }
-    .goal-ring-text {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800; font-family: var(--font-mono);
-    }
-    .goal-card-val {
-      font-size: 11px; font-weight: 600; color: var(--t2);
-      font-family: var(--font-mono); margin-top: 2px;
-    }
-    .goal-card.on-track  { border-color: rgba(0,245,212,0.3); }
-    .goal-card.partial   { border-color: rgba(245,158,11,0.3); }
-    .goal-card.off-track { border-color: rgba(244,63,94,0.25); }
-
-    /* ── Badge earned state ── */
-    .badge-item.earned {
-      border-color: rgba(0,229,200,0.3);
-      background: linear-gradient(135deg,rgba(0,229,200,0.06),rgba(124,58,237,0.06));
-      box-shadow: 0 0 12px rgba(0,229,200,0.1);
-    }
-    .badge-item.earned .badge-ico { filter: drop-shadow(0 0 6px rgba(0,229,200,0.5)); }
-
-    /* ── Calendar dot indicators ── */
-    .cal-day-num { font-size: 11px; font-family: var(--font-mono); line-height: 1; }
-    .cal-dots { display: flex; gap: 2px; justify-content: center; margin-top: 2px; }
-    .cal-dot  { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
-    .dot-done { background: #10b981; }
-    .dot-rev  { background: #7c3aed; }
-
-    /* ── Streak card base ── */
-    .streak-card {
-      border: 1px solid rgba(255,255,255,0.08);
-      background: var(--bg2); border-radius: var(--r12); padding: 14px;
-    }
-  </style>
-
   </head>
   <body>
     <div id="app">
@@ -1886,40 +1833,67 @@
     </div>
     <!-- /app -->
 
-    <!-- Stub missing external scripts so the app runs standalone -->
-    <script>
-      // config.js stub
-      window.APP_CONFIG = window.APP_CONFIG || {};
-      // hybrid_data.js stub
-      window.HybridData = window.HybridData || {
-        isLoggedIn: () => false,
-        saveUserData: () => {},
-        loadUserData: () => Promise.resolve(null)
-      };
-      // auth_guard.js stub — just show guest banner, no blocking
-      window.AUTH_GUARD_STUBBED = true;
-    </script>
-
+    <script src="config.js"></script>
+    <script src="auth_guard.js"></script>
+    <script src="hybrid_data.js"></script>
     <script src="script.js"></script>
+    <script src="roadmap_bridge.js"></script>
+    <script src="notes_storage.js"></script>
 
-    <!-- CRITICAL FIX: const APP is not on window — expose it globally so
-         all inline onclick="APP.xxx()" handlers can find it -->
+    <!-- ═══ CORE FIX: expose APP + fix blank tab content ═══ -->
     <script>
-      if (typeof APP !== 'undefined' && !window.APP) {
-        window.APP = APP;
-      }
-    </script>
+    (function() {
+      // ── 1. Inject missing CSS (goal rings, badges earned, calendar dots) ──
+      var s = document.createElement('style');
+      s.textContent =
+        /* Force active panels to always be visible — fixes animation stuck at opacity:0 */
+        '.tab-panel.active{display:block!important;opacity:1!important;transform:none!important;animation:none!important;}' +
+        /* Goal ring classes (used by Goals.render, missing from styles.css) */
+        '.goal-card-title{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;font-family:var(--font-mono);margin-bottom:8px}' +
+        '.goal-ring-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin:4px auto 8px;width:72px;height:72px}' +
+        '.goal-ring-svg{transform:rotate(-90deg)}' +
+        '.goal-ring-bg{fill:none;stroke:var(--bg4);stroke-width:6}' +
+        '.goal-ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s ease}' +
+        '.goal-ring-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:var(--font-mono)}' +
+        '.goal-card.on-track{border-color:rgba(0,245,212,.3)}' +
+        '.goal-card.partial{border-color:rgba(245,158,11,.3)}' +
+        '.goal-card.off-track{border-color:rgba(244,63,94,.25)}' +
+        /* Badge earned */
+        '.badge-item.earned{border-color:rgba(0,229,200,.3);background:linear-gradient(135deg,rgba(0,229,200,.06),rgba(124,58,237,.06));box-shadow:0 0 12px rgba(0,229,200,.1)}' +
+        '.badge-item.earned .badge-ico{filter:drop-shadow(0 0 6px rgba(0,229,200,.5))}' +
+        /* Calendar dots */
+        '.cal-day-num{font-size:11px;font-family:var(--font-mono);line-height:1}' +
+        '.cal-dots{display:flex;gap:2px;justify-content:center;margin-top:2px}' +
+        '.cal-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}' +
+        '.dot-done{background:#10b981}.dot-rev{background:#7c3aed}' +
+        /* Streak card base */
+        '.streak-card{border:1px solid rgba(255,255,255,.08);background:var(--bg2);border-radius:var(--r12);padding:14px}';
+      document.head.appendChild(s);
 
-    <!-- roadmap_bridge.js stub -->
-    <script>
-      window.feRmApplyProgress  = window.feRmApplyProgress  || function(){};
-      window.dsaRmApplyProgress = window.dsaRmApplyProgress || function(){};
-      window.aiRmApplyProgress  = window.aiRmApplyProgress  || function(){};
-    </script>
+      // ── 2. After all scripts load, fix APP on window + patch switchTab ──
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          // Expose APP globally (const is not on window)
+          if (typeof APP !== 'undefined') window.APP = APP;
 
-    <!-- notes_storage.js stub -->
-    <script>
-      window.NoteStorage = window.NoteStorage || {};
+          if (!window.APP) return;
+
+          // Wrap switchTab to guarantee panel visibility
+          var _origSwitch = APP.switchTab.bind(APP);
+          APP.switchTab = function(name) {
+            try { _origSwitch(name); } catch(e) { console.error('[switchTab]', e); }
+            // Force the active panel visible regardless of animation state
+            requestAnimationFrame(function() {
+              document.querySelectorAll('.tab-panel').forEach(function(p) {
+                if (p.classList.contains('active')) {
+                  p.style.cssText += ';display:block!important;opacity:1!important;transform:none!important';
+                }
+              });
+            });
+          };
+        }, 800);
+      });
+    })();
     </script>
     <script>
       // Initialise Lucide icons after DOM is ready
@@ -2989,6 +2963,161 @@
   <!-- ============================================================ -->
   <!-- END FLOATING ACTION BUTTON                                    -->
   <!-- ============================================================ -->
+
+  <!-- ============================================================ -->
+  <!-- NAV FIX: Robust tab switching that works even if APP fails   -->
+  <!-- ============================================================ -->
+  <script>
+  (function() {
+    'use strict';
+
+    // Fix 1: Remove the stuck animation from tab panels immediately
+    var style = document.createElement('style');
+    style.textContent = [
+      /* Kill the panelIn animation that gets stuck at opacity:0 */
+      '.tab-panel { animation: none !important; }',
+      /* Ensure active panels are always fully visible */
+      '.tab-panel.active { display: block !important; opacity: 1 !important; transform: none !important; visibility: visible !important; }',
+      /* Ensure nav is always above content and clickable */
+      '#bottom-nav { z-index: 9990 !important; pointer-events: all !important; position: fixed !important; }',
+      '#bottom-nav * { pointer-events: all !important; }',
+      '.nav-item { cursor: pointer !important; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }',
+      /* Content area must NOT overlap nav */
+      '#content { padding-bottom: calc(var(--nav, 60px) + 24px) !important; }',
+      /* Ensure #app doesn't clip the nav */
+      '#app { overflow: visible !important; }',
+    ].join('\n');
+    document.head.appendChild(style);
+
+    // Fix 2: Standalone switchTab — works WITHOUT APP being defined
+    function standaloneSwitch(name) {
+      // Deactivate all panels
+      document.querySelectorAll('.tab-panel').forEach(function(p) {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      });
+      // Deactivate all nav buttons
+      document.querySelectorAll('.nav-item').forEach(function(n) {
+        n.classList.remove('active');
+      });
+
+      // Activate the target panel
+      var panel = document.getElementById('tab-' + name);
+      if (panel) {
+        panel.classList.add('active');
+        panel.style.display = 'block';
+        panel.style.opacity = '1';
+        panel.style.transform = 'none';
+      }
+
+      // Activate nav button
+      var navBtn = document.getElementById('nav-' + name);
+      if (navBtn) {
+        navBtn.classList.add('active');
+        navBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } else {
+        // Fallback: mark Home active
+        var homeNav = document.getElementById('nav-home');
+        if (homeNav) homeNav.classList.add('active');
+      }
+
+      // Try to call APP.switchTab for data rendering side-effects
+      try {
+        if (window.APP && typeof window.APP.switchTab === 'function') {
+          // Call original for data callbacks (streak render, goals render etc.)
+          // But we've already handled panel visibility above
+          var _orig = window.APP._origSwitchTabData;
+          if (typeof _orig === 'function') _orig(name);
+          else {
+            // Trigger tab-specific renders
+            if (name === 'home' && window.APP.renderHome) window.APP.renderHome();
+            if (name === 'streak' && window.APP.renderStreaks) window.APP.renderStreaks();
+            if (name === 'files' && window.APP.renderFiles) window.APP.renderFiles();
+            if (name === 'calendar' && window.APP.calRender) window.APP.calRender();
+            if (name === 'goals' && window.APP.renderGoals) window.APP.renderGoals();
+            if (name === 'badges' && window.APP.renderBadges) window.APP.renderBadges();
+          }
+        }
+      } catch(e) { console.warn('[navFix] APP render error:', e); }
+    }
+
+    // Fix 3: Override ALL nav button onclick handlers with robust versions
+    // (This runs after DOM is ready so buttons exist)
+    function patchNavButtons() {
+      var navMap = {
+        'nav-home':     'home',
+        'nav-streak':   'streak',
+        'nav-files':    'files',
+        'nav-calendar': 'calendar',
+        'nav-goals':    'goals',
+        'nav-badges':   'badges',
+      };
+
+      Object.keys(navMap).forEach(function(navId) {
+        var tabName = navMap[navId];
+        var btn = document.getElementById(navId);
+        if (!btn) return;
+
+        // Remove existing onclick
+        btn.removeAttribute('onclick');
+        btn.onclick = null;
+
+        // Add both touch and click handlers
+        btn.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          standaloneSwitch(tabName);
+        }, { passive: false });
+
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          standaloneSwitch(tabName);
+        });
+      });
+
+      // Also patch APP.switchTab so future calls use our version
+      function waitForAPP(attempts) {
+        if (attempts <= 0) return;
+        if (window.APP && typeof window.APP.switchTab === 'function') {
+          // Save original data callbacks
+          var _origAPPSwitch = window.APP.switchTab.bind(window.APP);
+          window.APP._origSwitchTabData = function(name) {
+            // Call the original for side effects but override display logic
+            try { _origAPPSwitch(name); } catch(e) {}
+            // Force correct display state
+            requestAnimationFrame(function() {
+              document.querySelectorAll('.tab-panel').forEach(function(p) {
+                if (p.classList.contains('active')) {
+                  p.style.display = 'block';
+                  p.style.opacity = '1';
+                  p.style.transform = 'none';
+                } else {
+                  p.style.display = 'none';
+                }
+              });
+            });
+          };
+          // Replace APP.switchTab with our robust version
+          window.APP.switchTab = standaloneSwitch;
+          window.APP.switchTab._patched = true;
+        } else {
+          setTimeout(function() { waitForAPP(attempts - 1); }, 300);
+        }
+      }
+      waitForAPP(20);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', patchNavButtons);
+    } else {
+      patchNavButtons();
+    }
+
+    // Also expose standaloneSwitch globally as a fallback
+    window._navSwitch = standaloneSwitch;
+
+  })();
+  </script>
 
   <script>
   // Sync AI Visual Roadmap progress pill from localStorage on load
