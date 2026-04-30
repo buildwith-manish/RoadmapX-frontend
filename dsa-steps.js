@@ -2076,10 +2076,7 @@ const APP = (function() {
 
   // ── Header ────────────────────────────────────────────────
   function updateHeader() {
-    const streaks = load(KEYS.STREAKS, {});
-    const streak = streaks.dsa?.current || 0;
-    const el = document.getElementById('hdr-streak');
-    if (el) el.textContent = '🔥 ' + streak;
+    // streak display removed — shown only on home page
   }
 
   // ── AI Modal stubs (for HTML compatibility) ───────────────

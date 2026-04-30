@@ -141,12 +141,12 @@ const APP = (function() {
     } catch(e) {}
 
     // Stats strip
-    const maxStreak = Math.max(streaks.ai?.current || 0, streaks.dsa?.current || 0);
+    const globalStreak = streaks.global?.current || 0;
     const revisions = load(KEYS.REVISIONS, []);
     const revDue = revisions.filter(r => !r.done && r.date <= today()).length;
     if (el('home-stat-ai'))     el('home-stat-ai').textContent     = aiDone;
     if (el('home-stat-dsa'))    el('home-stat-dsa').textContent    = dsaDone;
-    if (el('home-stat-streak')) el('home-stat-streak').textContent = maxStreak + '🔥';
+    if (el('home-stat-streak')) el('home-stat-streak').textContent = globalStreak + '🔥';
     if (el('home-stat-rev'))    el('home-stat-rev').textContent    = revDue;
 
     // Continue last session button
@@ -1263,79 +1263,154 @@ const APP = (function() {
   }
 
   // ═══════════════════════════════════════════════════════
-  //  STREAK SYSTEM
+  //  STREAK SYSTEM — single global streak, part-by-part
   // ═══════════════════════════════════════════════════════
+
+  // Each call to updateStreak (from any roadmap / pomo / project)
+  // records one "part" for today in the global streak.
+  // A new calendar day with ≥1 part extends the streak by 1.
   function updateStreak(type, studied) {
-    if (!type) return;
+    // type is kept as a parameter for backwards-compat but is no longer used
+    // to split the streak — everything feeds one global streak.
+    if (!studied) return;
     const streaks = load(KEYS.STREAKS, {});
-    if (!streaks[type]) streaks[type] = {current:0, longest:0, lastDate:null, history:[]};
-    const s = streaks[type];
+    // Migrate legacy per-type data on first run
+    if (!streaks.global) {
+      // Seed global streak from the best existing streak so users don't lose progress
+      const legacy = Math.max(
+        streaks.ai?.current  || 0,
+        streaks.dsa?.current || 0,
+        streaks.proj?.current|| 0
+      );
+      const legacyLong = Math.max(
+        streaks.ai?.longest  || 0,
+        streaks.dsa?.longest || 0,
+        streaks.proj?.longest|| 0
+      );
+      const legacyHistory = [
+        ...(streaks.ai?.history  || []),
+        ...(streaks.dsa?.history || []),
+        ...(streaks.proj?.history|| []),
+      ].filter((d,i,a)=>a.indexOf(d)===i).sort();
+      streaks.global = {
+        current:  legacy,
+        longest:  legacyLong,
+        lastDate: streaks.ai?.lastDate || streaks.dsa?.lastDate || null,
+        history:  legacyHistory,
+        // parts: map of date -> count of distinct study actions that day
+        parts:    {},
+      };
+    }
+
+    const s = streaks.global;
     const todayStr = today();
-    // If already studied today, don't increment again — just update header
-    if (s.lastDate === todayStr && studied) { updateHeader(); return; }
-    if (!studied && s.lastDate === todayStr) { save(KEYS.STREAKS, streaks); return; }
-    if (studied) {
+
+    // Record a part for today regardless of streak logic
+    if (!s.parts) s.parts = {};
+    s.parts[todayStr] = (s.parts[todayStr] || 0) + 1;
+    // Trim parts older than 60 days to keep storage small
+    const cutoff = addDays(todayStr, -60);
+    Object.keys(s.parts).forEach(d => { if (d < cutoff) delete s.parts[d]; });
+
+    // Extend streak only once per calendar day
+    if (s.lastDate !== todayStr) {
       const yesterday = addDays(todayStr, -1);
-      if (s.lastDate === yesterday) s.current++;
-      else s.current = 1;
+      s.current = (s.lastDate === yesterday) ? s.current + 1 : 1;
       s.longest = Math.max(s.longest, s.current);
       s.lastDate = todayStr;
       if (!s.history) s.history = [];
       s.history.push(todayStr);
-      if (s.history.length > 30) s.history = s.history.slice(-30);
+      if (s.history.length > 90) s.history = s.history.slice(-90);
     }
+
     save(KEYS.STREAKS, streaks);
     updateHeader();
   }
 
   function renderStreaks() {
     const streaks = load(KEYS.STREAKS, {});
-    const types = [
-      {key:'ai', name:'AI Roadmap', icon:'🤖', color:'var(--c1)'},
-      {key:'dsa', name:'DSA Practice', icon:'💻', color:'var(--c2)'},
-      {key:'proj', name:'Projects', icon:'🚀', color:'var(--c4)'},
-    ];
     const container = document.getElementById('streak-cards');
     if (!container) return;
     const todayStr = today();
 
-    container.innerHTML = types.map(t => {
-      const s = streaks[t.key] || {current:0,longest:0,lastDate:null,history:[]};
-      const isActiveToday = s.lastDate === todayStr;
-      const history = s.history || [];
-      // Get last 7 days
-      const last7 = Array(7).fill(0).map((_,i) => addDays(todayStr, -(6-i)));
-      const weekDots = last7.map(d => {
-        const done = history.includes(d);
-        const isToday = d === todayStr;
-        return `<div class="week-dot ${done?'done':''} ${isToday?'today':''}"></div>`;
-      }).join('');
+    // Ensure global exists (lazy-init for users who haven't studied yet)
+    const s = streaks.global || {current:0, longest:0, lastDate:null, history:[], parts:{}};
+    const parts = s.parts || {};
+    const isActiveToday = s.lastDate === todayStr;
 
-      return `
-      <div class="streak-card" style="border-color:${isActiveToday?'rgba(0,245,212,.2)':''}">
-        <div class="streak-top">
-          <div>
-            <div class="streak-name" style="color:${t.color}">${t.icon} ${t.name}</div>
-            <div style="font-size:10px;color:var(--t2);margin-top:2px">${isActiveToday ? '✅ Studied today!' : '⚠️ Study today to keep streak!'}</div>
-          </div>
-          <div class="streak-flame" style="${s.current > 0 ? '' : 'opacity:.3'}">${s.current > 6 ? '🔥' : s.current > 2 ? '🔥' : '💤'}</div>
-        </div>
-        <div class="streak-nums">
-          <div class="streak-num"><div class="streak-num-val" style="color:${t.color}">${s.current}</div><div class="streak-num-lbl">Current</div></div>
-          <div class="streak-num"><div class="streak-num-val" style="color:var(--c4)">${s.longest}</div><div class="streak-num-lbl">Longest</div></div>
-          <div class="streak-num"><div class="streak-num-val" style="color:var(--c5)">${history.length}</div><div class="streak-num-lbl">Total Days</div></div>
-        </div>
-        <div class="week-dots">${weekDots}</div>
-        <div style="font-size:9px;color:var(--t3c);margin-top:4px;text-align:center">Last 7 days activity</div>
-        ${!isActiveToday ? `<button class="streak-action" style="margin-top:10px" onclick="APP.markStudiedToday('${t.key}')">✅ Mark ${t.name} as Studied Today</button>` : '<div style="margin-top:10px;text-align:center;font-size:12px;color:var(--c5);font-weight:600">🎯 Keep it up!</div>'}
-      </div>`;
+    // Build last-14-days part grid
+    const last14 = Array(14).fill(0).map((_,i) => addDays(todayStr, -(13-i)));
+    const partDots = last14.map(d => {
+      const count = parts[d] || 0;
+      const isToday = d === todayStr;
+      const intensity = count === 0 ? '' : count < 3 ? 'done-low' : count < 6 ? 'done-mid' : 'done-high';
+      const label = d.slice(5); // MM-DD
+      return `<div class="week-dot ${intensity} ${isToday?'today':''}" title="${label}: ${count} part${count!==1?'s':''}"></div>`;
     }).join('');
+
+    // Parts completed today
+    const todayParts = parts[todayStr] || 0;
+
+    container.innerHTML = `
+    <div class="streak-card" style="border-color:${isActiveToday?'rgba(0,245,212,.2)':''}">
+      <div class="streak-top">
+        <div>
+          <div class="streak-name" style="color:var(--c1)">🔥 Study Streak</div>
+          <div style="font-size:10px;color:var(--t2);margin-top:2px">
+            ${isActiveToday
+              ? `✅ Studied today! (${todayParts} part${todayParts!==1?'s':''} completed)`
+              : '⚠️ Study any part today to keep your streak!'}
+          </div>
+        </div>
+        <div class="streak-flame" style="${s.current > 0 ? '' : 'opacity:.3'}">
+          ${s.current > 6 ? '🔥' : s.current > 2 ? '🔥' : '💤'}
+        </div>
+      </div>
+
+      <div class="streak-nums">
+        <div class="streak-num">
+          <div class="streak-num-val" style="color:var(--c1)">${s.current}</div>
+          <div class="streak-num-lbl">Current</div>
+        </div>
+        <div class="streak-num">
+          <div class="streak-num-val" style="color:var(--c4)">${s.longest}</div>
+          <div class="streak-num-lbl">Longest</div>
+        </div>
+        <div class="streak-num">
+          <div class="streak-num-val" style="color:var(--c5)">${(s.history||[]).length}</div>
+          <div class="streak-num-lbl">Total Days</div>
+        </div>
+        <div class="streak-num">
+          <div class="streak-num-val" style="color:var(--c2)">${todayParts}</div>
+          <div class="streak-num-lbl">Parts Today</div>
+        </div>
+      </div>
+
+      <div class="week-dots" style="grid-template-columns:repeat(14,1fr)">${partDots}</div>
+      <div style="font-size:9px;color:var(--t3c);margin-top:4px;text-align:center">Last 14 days · darker = more parts studied</div>
+
+      <div style="margin-top:14px">
+        <div style="font-size:11px;color:var(--t2);margin-bottom:8px;font-weight:600">📚 Parts that count toward your streak</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--t2)">
+          <div>🤖 AI Roadmap topics</div>
+          <div>💻 DSA topics</div>
+          <div>🖥️ Frontend topics</div>
+          <div>⚙️ Backend topics</div>
+          <div>🍅 Pomodoro sessions</div>
+          <div>🚀 Project milestones</div>
+        </div>
+      </div>
+
+      ${!isActiveToday
+        ? `<button class="streak-action" style="margin-top:12px" onclick="APP.markStudiedToday()">✅ Mark Today as Studied</button>`
+        : '<div style="margin-top:12px;text-align:center;font-size:12px;color:var(--c5);font-weight:600">🎯 Keep it up!</div>'}
+    </div>`;
   }
 
-  function markStudiedToday(type) {
-    updateStreak(type, true);
+  function markStudiedToday() {
+    updateStreak('manual', true);
     renderStreaks();
-    toast('🔥 Streak updated for ' + type.toUpperCase() + '!', 'success');
+    toast('🔥 Streak updated! Keep going!', 'success');
   }
 
   // ═══════════════════════════════════════════════════════
@@ -1653,8 +1728,7 @@ const APP = (function() {
     const aiDone = Object.values(aiProg).filter(v => v.done).length;
     const dsaAllTopics2 = typeof DSA_WEEK_DATA !== 'undefined' ? DSA_WEEK_DATA.reduce((a,w)=>a.concat(w.topics),[]) : [];
     const dsaDone = dsaAllTopics2.filter(t => dsaProg['t'+t.id]?.done).length;
-    const aiStreak = streaks.ai?.current || 0;
-    const dsaStreak = streaks.dsa?.current || 0;
+    const globalStreak = streaks.global?.current || 0;
     const total = (pomStats.ai||0) + (pomStats.dsa||0) + (pomStats.projects||0) + (pomStats.extra||0);
     const focusHrs = ((total * pomoDurMins) / 60).toFixed(1);
 
@@ -1667,8 +1741,8 @@ const APP = (function() {
     set('p-dsa-done', dsaDone);
     set('p-proj-count', projects.length);
     set('p-notes-count', notes.length);
-    set('p-ai-streak', aiStreak);
-    set('p-dsa-streak', dsaStreak);
+    set('p-ai-streak', globalStreak);
+    set('p-dsa-streak', globalStreak);
     set('p-pom-ai', pomStats.ai || 0);
     set('p-pom-dsa', pomStats.dsa || 0);
     set('p-pom-proj', pomStats.projects || 0);
@@ -1823,9 +1897,9 @@ const APP = (function() {
 
     // Graph 1: Daily study consistency (last 14 days)
     const last14 = Array(14).fill(0).map((_,i) => addDays(todayStr, -(13-i)));
-    const aiHistory = (streaks.ai?.history) || [];
-    const dsaHistory = (streaks.dsa?.history) || [];
-    const consistencyVals = last14.map(d => (aiHistory.includes(d) ? 1 : 0) + (dsaHistory.includes(d) ? 1 : 0));
+    const aiHistory = (streaks.global?.history) || [];
+    const parts = streaks.global?.parts || {};
+    const consistencyVals = last14.map(d => parts[d] || (aiHistory.includes(d) ? 1 : 0));
     const consistencyLabels = last14.map(d => { const parts = d.split('-'); return parts[2]; });
     drawMiniChart('chart-consistency', consistencyLabels, consistencyVals, '#00f5d4', 'rgba(0,245,212,0.08)');
 
@@ -1868,9 +1942,9 @@ const APP = (function() {
     const hdrSub = document.getElementById('hdr-sub');
     if (hdrSub) hdrSub.textContent = ``;
     const streaks = load(KEYS.STREAKS, {});
-    const maxStreak = Math.max(streaks.ai?.current || 0, streaks.dsa?.current || 0);
+    const globalStreak = streaks.global?.current || 0;
     const hdrStreak = document.getElementById('hdr-streak');
-    if (hdrStreak) hdrStreak.textContent = '🔥 ' + maxStreak;
+    if (hdrStreak) hdrStreak.textContent = '🔥 ' + globalStreak;
 
     // Revision due badge removed (revision is now inline in roadmaps)
   }
@@ -2489,7 +2563,7 @@ self.addEventListener('fetch', e => {
     const s = _sectionPomoState[section];
     const hrs = ((sessions * s.duration) / 60).toFixed(1);
     const streaks = load(KEYS.STREAKS, {});
-    const streak = streaks[section]?.current || 0;
+    const streak = streaks.global?.current || 0;
     const sessEl = document.getElementById(section + '-ps-sessions');
     const hrsEl  = document.getElementById(section + '-ps-hours');
     const strEl  = document.getElementById(section + '-ps-streak');
@@ -2719,12 +2793,14 @@ const XP = (function() {
 
     const totalPomo = (pomStats.ai||0)+(pomStats.dsa||0)+(pomStats.projects||0)+(pomStats.extra||0);
 
-    // FIX Bug 3: dsa-steps.js saves max streak as .max, not .longest. Check both.
+    // Use global streak — single source of truth
     const maxStreak = Math.max(
-      streaks.ai?.longest || 0,
-      streaks.ai?.current || 0,
+      streaks.global?.longest  || 0,
+      streaks.global?.current  || 0,
+      // Legacy fallback for users who had per-type streaks before migration
+      streaks.ai?.longest  || 0,
+      streaks.ai?.current  || 0,
       streaks.dsa?.longest || 0,
-      streaks.dsa?.max     || 0,
       streaks.dsa?.current || 0
     );
     const notesSaved = Array.isArray(notes) ? notes.length : 0;

@@ -75,7 +75,6 @@
           <div class="hdr-sub" id="hdr-sub">AI Roadmap</div>
         </div>
         <div class="hdr-right">
-          <div class="hdr-streak" id="hdr-streak">🔥 0</div>
           <button class="hdr-btn" title="Stats" onclick="window.location.href='stats.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </button>
@@ -93,6 +92,12 @@
           <!-- SUB: Roadmap -->
           <div id="ai-sub-roadmap">
             <div id="ai-screen-levels">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="window.location.href='index.html'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
+                </button>
+                <span class="back-home-title">AI Roadmap</span>
+              </div>
               <div class="section" style="padding-top:10px">
                 <div class="section-title">Choose Your Level</div>
                 <div class="ai-level-subtitle">Select the right starting point for your AI journey</div>
@@ -191,48 +196,8 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="ai-revision-list"></div></div>
           </div>
-
-          <!-- SUB: AI Pomo -->
-          <div id="ai-sub-pomo" style="display:none">
-            <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
-              </button>
-              <span class="back-home-title">AI Focus Timer</span>
-            </div>
-            <div class="pomo-dur-row">
-              <span class="pomo-dur-label">Focus:</span>
-              <input class="pomo-dur-input" id="ai-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <span class="pomo-dur-label">min</span>
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('ai')">Set</button>
-              <button class="pomo-alarm-btn" id="ai-pomo-alarm-stop" onclick="APP.stopSectionAlarm('ai')" style="display:none">Stop</button>
-            </div>
-            <div class="pomo-ring-wrap">
-              <div class="pomo-ring" id="ai-pomo-ring">
-                <div class="pomo-center">
-                  <div class="pomo-time" id="ai-pomo-time">25:00</div>
-                  <div class="pomo-mode" id="ai-pomo-mode">FOCUS</div>
-                </div>
               </div>
-              <div class="pomo-session-count" id="ai-pomo-dots"></div>
-              <div class="pomo-controls">
-                <button class="pomo-btn start" id="ai-pomo-start-btn" onclick="APP.sectionPomoToggle('ai')">▶ Start</button>
-                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('ai')">↺ Reset</button>
-                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('ai')">⏭ Skip</button>
-              </div>
-            </div>
-            <div class="section" style="padding-top:0">
-              <div class="focus-hours-card">
-                <div class="focus-hours-val" id="ai-pomo-focus-hours">0.0</div>
-                <div class="focus-hours-lbl">AI Focus Hours</div>
-              </div>
-              <div class="section-title">AI Sessions</div>
-              <div class="pomo-stats-row">
-                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-              </div>
-            </div>
+          </div>
           </div>
 
           <!-- SUB: AI Notes -->
@@ -298,12 +263,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           </div>
           <span class="ai-nav-lbl">Revision</span>
-        </button>
-        <button class="ai-nav-item" id="ai-nav-pomo" onclick="APP.switchAISub('pomo', this)">
-          <div class="ai-nav-ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <span class="ai-nav-lbl">Pomo</span>
         </button>
         <button class="ai-nav-item" id="ai-nav-notes" onclick="APP.switchAISub('notes', this)">
           <div class="ai-nav-ico">

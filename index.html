@@ -126,12 +126,81 @@
 #fab-pomo-reset { background: rgba(239,68,68,.12); color: #ef4444; }
 #fab-pomo-reset:active { background: rgba(239,68,68,.3); }
 
+
+/* Focus hours row inside FAB */
+#fab-focus-row {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 6px 0 2px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+#fab-focus-val {
+  font-family: var(--font-mono,monospace); font-size: 15px; font-weight: 800;
+  color: var(--c1,#00e5c8); letter-spacing: 1px;
+}
+#fab-focus-lbl {
+  font-family: var(--font-mono,monospace); font-size: 9px; font-weight: 600;
+  color: #8080a8; letter-spacing: 1px; text-transform: uppercase;
+}
+
 /* Session label */
 #fab-pomo-session {
   font-family: var(--font-mono,monospace); font-size: 9px;
   color: #8080a8; letter-spacing: .5px;
 }
     </style>
+  <!-- ══ MISSING STYLES FIX: goal rings, badge earned, calendar dots ══ -->
+  <style>
+    /* ── Goal ring card (used by Goals.render()) ── */
+    .goal-card-title {
+      font-size: 11px; font-weight: 700; color: var(--t2);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      font-family: var(--font-mono); margin-bottom: 8px;
+    }
+    .goal-ring-wrap {
+      position: relative; display: flex; align-items: center;
+      justify-content: center; margin: 4px auto 8px; width: 72px; height: 72px;
+    }
+    .goal-ring-svg { transform: rotate(-90deg); }
+    .goal-ring-bg  { fill: none; stroke: var(--bg4); stroke-width: 6; }
+    .goal-ring-fill {
+      fill: none; stroke-width: 6; stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s ease;
+    }
+    .goal-ring-text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; font-family: var(--font-mono);
+    }
+    .goal-card-val {
+      font-size: 11px; font-weight: 600; color: var(--t2);
+      font-family: var(--font-mono); margin-top: 2px;
+    }
+    .goal-card.on-track  { border-color: rgba(0,245,212,0.3); }
+    .goal-card.partial   { border-color: rgba(245,158,11,0.3); }
+    .goal-card.off-track { border-color: rgba(244,63,94,0.25); }
+
+    /* ── Badge earned state ── */
+    .badge-item.earned {
+      border-color: rgba(0,229,200,0.3);
+      background: linear-gradient(135deg,rgba(0,229,200,0.06),rgba(124,58,237,0.06));
+      box-shadow: 0 0 12px rgba(0,229,200,0.1);
+    }
+    .badge-item.earned .badge-ico { filter: drop-shadow(0 0 6px rgba(0,229,200,0.5)); }
+
+    /* ── Calendar dot indicators ── */
+    .cal-day-num { font-size: 11px; font-family: var(--font-mono); line-height: 1; }
+    .cal-dots { display: flex; gap: 2px; justify-content: center; margin-top: 2px; }
+    .cal-dot  { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+    .dot-done { background: #10b981; }
+    .dot-rev  { background: #7c3aed; }
+
+    /* ── Streak card base ── */
+    .streak-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--bg2); border-radius: var(--r12); padding: 14px;
+    }
+  </style>
+
   </head>
   <body>
     <div id="app">
@@ -328,10 +397,6 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
               Revision
             </button>
-            <button class="section-subtab" id="ai-subtab-pomo" onclick="APP.switchAISub('pomo',this)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Pomo
-            </button>
             <button class="section-subtab" id="ai-subtab-notes" onclick="APP.switchAISub('notes',this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Notes
@@ -455,49 +520,7 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="ai-revision-list"></div></div>
           </div>
-
-          <!-- SUB: AI Pomo -->
-          <div id="ai-sub-pomo" style="display:none">
-            <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
-              </button>
-              <span class="back-home-title">AI Focus Timer</span>
-            </div>
-            <div class="pomo-dur-row">
-              <span class="pomo-dur-label">Focus:</span>
-              <input class="pomo-dur-input" id="ai-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <span class="pomo-dur-label">min</span>
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('ai')">Set</button>
-              <button class="pomo-alarm-btn" id="ai-pomo-alarm-stop" onclick="APP.stopSectionAlarm('ai')" style="display:none">Stop</button>
-            </div>
-            <div class="pomo-ring-wrap">
-              <div class="pomo-ring" id="ai-pomo-ring">
-                <div class="pomo-center">
-                  <div class="pomo-time" id="ai-pomo-time">25:00</div>
-                  <div class="pomo-mode" id="ai-pomo-mode">FOCUS</div>
-                </div>
-              </div>
-              <div class="pomo-session-count" id="ai-pomo-dots"></div>
-              <div class="pomo-controls">
-                <button class="pomo-btn start" id="ai-pomo-start-btn" onclick="APP.sectionPomoToggle('ai')">▶ Start</button>
-                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('ai')">↺ Reset</button>
-                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('ai')">⏭ Skip</button>
-              </div>
-            </div>
-            <div class="section" style="padding-top:0">
-              <div class="focus-hours-card">
-                <div class="focus-hours-val" id="ai-pomo-focus-hours">0.0</div>
-                <div class="focus-hours-lbl">AI Focus Hours</div>
-              </div>
-              <div class="section-title">AI Sessions</div>
-              <div class="pomo-stats-row">
-                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-              </div>
-            </div>
-          </div>
+          
 
           <!-- SUB: AI Notes -->
           <div id="ai-sub-notes" style="display:none">
@@ -968,10 +991,6 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
               Revision
             </button>
-            <button class="section-subtab" id="dsa-subtab-pomo" onclick="APP.switchDSASub('pomo',this)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Pomo
-            </button>
             <button class="section-subtab" id="dsa-subtab-notes" onclick="APP.switchDSASub('notes',this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Notes
@@ -1048,49 +1067,7 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="dsa-revision-list"></div></div>
           </div>
-
-          <!-- SUB: DSA Pomo -->
-          <div id="dsa-sub-pomo" style="display:none">
-            <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
-              </button>
-              <span class="back-home-title">DSA Focus Timer</span>
-            </div>
-            <div class="pomo-dur-row">
-              <span class="pomo-dur-label">Focus:</span>
-              <input class="pomo-dur-input" id="dsa-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <span class="pomo-dur-label">min</span>
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('dsa')">Set</button>
-              <button class="pomo-alarm-btn" id="dsa-pomo-alarm-stop" onclick="APP.stopSectionAlarm('dsa')" style="display:none">Stop</button>
-            </div>
-            <div class="pomo-ring-wrap">
-              <div class="pomo-ring" id="dsa-pomo-ring">
-                <div class="pomo-center">
-                  <div class="pomo-time" id="dsa-pomo-time">25:00</div>
-                  <div class="pomo-mode" id="dsa-pomo-mode">FOCUS</div>
-                </div>
-              </div>
-              <div class="pomo-session-count" id="dsa-pomo-dots"></div>
-              <div class="pomo-controls">
-                <button class="pomo-btn start" id="dsa-pomo-start-btn" onclick="APP.sectionPomoToggle('dsa')">▶ Start</button>
-                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('dsa')">↺ Reset</button>
-                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('dsa')">⏭ Skip</button>
-              </div>
-            </div>
-            <div class="section" style="padding-top:0">
-              <div class="focus-hours-card">
-                <div class="focus-hours-val" id="dsa-pomo-focus-hours">0.0</div>
-                <div class="focus-hours-lbl">DSA Focus Hours</div>
-              </div>
-              <div class="section-title">DSA Sessions</div>
-              <div class="pomo-stats-row">
-                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-              </div>
-            </div>
-          </div>
+          
 
           <!-- SUB: DSA Notes -->
           <div id="dsa-sub-notes" style="display:none">
@@ -1156,7 +1133,6 @@
           <!-- Subtab bar -->
           <div class="section-subtab-bar" id="frontend-subtab-bar" style="display:flex;gap:4px;padding:8px 12px 0;background:var(--bg1);flex-shrink:0;overflow-x:auto;">
             <button class="section-subtab active" id="frontend-subtab-roadmap" onclick="APP.switchRoadmapSub('frontend','roadmap',this)">🗺 Roadmap</button>
-            <button class="section-subtab" id="frontend-subtab-pomo"     onclick="APP.switchRoadmapSub('frontend','pomo',this)">⏱ Pomo</button>
             <button class="section-subtab" id="frontend-subtab-notes"    onclick="APP.switchRoadmapSub('frontend','notes',this)">📝 Notes</button>
             <button class="section-subtab" id="frontend-subtab-revision" onclick="APP.switchRoadmapSub('frontend','revision',this)">🔁 Revision</button>
             <button class="section-subtab" id="frontend-subtab-projects" onclick="APP.switchRoadmapSub('frontend','projects',this)">🚀 Projects</button>
@@ -1172,15 +1148,6 @@
               title="Frontend Visual Roadmap"
             ></iframe>
           </div>
-
-          <!-- Pomodoro -->
-          <div id="frontend-sub-pomo" style="display:none;overflow-y:auto;padding:12px;">
-            <div class="pomo-dur-row">
-              <label class="pomo-dur-label">Focus (min)</label>
-              <input class="pomo-dur-input" id="frontend-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('frontend')">Set</button>
-              <button class="pomo-alarm-btn" id="frontend-pomo-alarm-stop" onclick="APP.stopSectionAlarm('frontend')" style="display:none">Stop</button>
-            </div>
             <div class="pomo-ring" id="frontend-pomo-ring">
               <div class="pomo-ring-inner">
                 <div class="pomo-time" id="frontend-pomo-time">25:00</div>
@@ -1250,7 +1217,6 @@
           <!-- Subtab bar -->
           <div class="section-subtab-bar" id="backend-subtab-bar" style="display:flex;gap:4px;padding:8px 12px 0;background:var(--bg1);flex-shrink:0;overflow-x:auto;">
             <button class="section-subtab active" id="backend-subtab-roadmap" onclick="APP.switchRoadmapSub('backend','roadmap',this)">🗺 Roadmap</button>
-            <button class="section-subtab" id="backend-subtab-pomo"     onclick="APP.switchRoadmapSub('backend','pomo',this)">⏱ Pomo</button>
             <button class="section-subtab" id="backend-subtab-notes"    onclick="APP.switchRoadmapSub('backend','notes',this)">📝 Notes</button>
             <button class="section-subtab" id="backend-subtab-revision" onclick="APP.switchRoadmapSub('backend','revision',this)">🔁 Revision</button>
             <button class="section-subtab" id="backend-subtab-projects" onclick="APP.switchRoadmapSub('backend','projects',this)">🚀 Projects</button>
@@ -1263,15 +1229,6 @@
             <div style="font-size:12px;color:var(--t2);text-align:center">Opens in its own page with full step tracking</div>
             <a href="backend-steps.html" style="padding:10px 20px;background:var(--c6);color:#fff;border-radius:var(--r10);font-size:13px;font-weight:700;text-decoration:none;">Open Backend Roadmap →</a>
           </div>
-
-          <!-- Pomodoro -->
-          <div id="backend-sub-pomo" style="display:none;overflow-y:auto;padding:12px;">
-            <div class="pomo-dur-row">
-              <label class="pomo-dur-label">Focus (min)</label>
-              <input class="pomo-dur-input" id="backend-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('backend')">Set</button>
-              <button class="pomo-alarm-btn" id="backend-pomo-alarm-stop" onclick="APP.stopSectionAlarm('backend')" style="display:none">Stop</button>
-            </div>
             <div class="pomo-ring" id="backend-pomo-ring">
               <div class="pomo-ring-inner">
                 <div class="pomo-time" id="backend-pomo-time">25:00</div>
@@ -1929,12 +1886,41 @@
     </div>
     <!-- /app -->
 
-    <script src="config.js"></script>
-    <script src="auth_guard.js"></script>
-    <script src="hybrid_data.js"></script>
+    <!-- Stub missing external scripts so the app runs standalone -->
+    <script>
+      // config.js stub
+      window.APP_CONFIG = window.APP_CONFIG || {};
+      // hybrid_data.js stub
+      window.HybridData = window.HybridData || {
+        isLoggedIn: () => false,
+        saveUserData: () => {},
+        loadUserData: () => Promise.resolve(null)
+      };
+      // auth_guard.js stub — just show guest banner, no blocking
+      window.AUTH_GUARD_STUBBED = true;
+    </script>
+
     <script src="script.js"></script>
-    <script src="roadmap_bridge.js"></script>
-    <script src="notes_storage.js"></script>
+
+    <!-- CRITICAL FIX: const APP is not on window — expose it globally so
+         all inline onclick="APP.xxx()" handlers can find it -->
+    <script>
+      if (typeof APP !== 'undefined' && !window.APP) {
+        window.APP = APP;
+      }
+    </script>
+
+    <!-- roadmap_bridge.js stub -->
+    <script>
+      window.feRmApplyProgress  = window.feRmApplyProgress  || function(){};
+      window.dsaRmApplyProgress = window.dsaRmApplyProgress || function(){};
+      window.aiRmApplyProgress  = window.aiRmApplyProgress  || function(){};
+    </script>
+
+    <!-- notes_storage.js stub -->
+    <script>
+      window.NoteStorage = window.NoteStorage || {};
+    </script>
     <script>
       // Initialise Lucide icons after DOM is ready
       if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -2586,6 +2572,12 @@
         </div>
       </div>
 
+      <!-- Focus Hours row -->
+      <div id="fab-focus-row">
+        <div id="fab-focus-val">0.0</div>
+        <div id="fab-focus-lbl">Focus Hrs</div>
+      </div>
+
       <!-- Presets -->
       <div id="fab-presets">
         <button class="fab-preset" data-m="15">15m</button>
@@ -2676,6 +2668,19 @@
       } catch(e){}
 
       restorePos();
+
+      // Load and display total focus hours across all roadmaps in FAB
+      (function loadFabFocusHours() {
+        var FOCUS_VAL = document.getElementById('fab-focus-val');
+        if (!FOCUS_VAL) return;
+        var keys = ['pomo_focus_ai','pomo_focus_backend','pomo_focus_dsa','pomo_focus_fe'];
+        var total = 0;
+        keys.forEach(function(k) {
+          try { total += parseFloat(localStorage.getItem(k) || '0') || 0; } catch(e) {}
+        });
+        FOCUS_VAL.textContent = Math.round(total * 10) / 10;
+      })();
+
       setupDrag();
       setupPanel();
       setupPomo();
@@ -2890,12 +2895,32 @@
       pomo.seconds--;
       renderUI();
     }
+    function addFocusHoursToFAB(mins) {
+      var FOCUS_KEYS = ['pomo_focus_ai','pomo_focus_backend','pomo_focus_dsa','pomo_focus_fe'];
+      // We can't know which page we're on in index.html, so we track a generic key
+      var LS_INDEX_FOCUS = 'pomo_focus_index';
+      try {
+        var cur = parseFloat(localStorage.getItem(LS_INDEX_FOCUS) || '0') || 0;
+        cur = Math.round((cur + mins / 60) * 10) / 10;
+        localStorage.setItem(LS_INDEX_FOCUS, cur);
+      } catch(e) {}
+      // Recalculate total for display
+      var total = 0;
+      FOCUS_KEYS.concat(['pomo_focus_index']).forEach(function(k) {
+        try { total += parseFloat(localStorage.getItem(k) || '0') || 0; } catch(e) {}
+      });
+      total = Math.round(total * 10) / 10;
+      var el = document.getElementById('fab-focus-val');
+      if (el) el.textContent = total.toFixed(1);
+    }
+
     function onEnd() {
       START_BTN.style.display = 'flex';
       PAUSE_BTN.style.display = 'none';
       beep();
       openPanel();
       if (!pomo.isBreak) {
+        addFocusHoursToFAB(pomo.workMins);
         pomo.isBreak = true;
         var longBreak = pomo.session >= 4;
         pomo.breakMins = longBreak ? 15 : DEFAULT_BREAK;

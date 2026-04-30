@@ -8,10 +8,61 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
-      /* ── Backend accent colour (orange) ── */
-      :root { --c6: #ea580c; }
-      /* Content clears the bottom nav */
-      #content { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important; }
+      /* ── Backend Bottom Nav (mirrors AI nav pattern exactly) ── */
+      #backend-bottom-nav {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 60px;
+        background: var(--bg2, #0d0d1a);
+        border-top: 1px solid rgba(255,255,255,0.07);
+        display: flex;
+        align-items: stretch;
+        z-index: 100;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .backend-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--t3, #555);
+        padding: 6px 4px;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .backend-nav-item.active {
+        color: var(--c6, #ea580c);
+      }
+      .backend-nav-item.active svg {
+        filter: drop-shadow(0 0 4px rgba(234,88,12,0.4));
+      }
+      .backend-nav-ico {
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .backend-nav-ico svg {
+        width: 20px;
+        height: 20px;
+      }
+      .backend-nav-lbl {
+        font-size: 10px;
+        font-weight: 600;
+        font-family: var(--font-mono, monospace);
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+      }
+      /* Give content bottom padding so nav doesn't cover it */
+      #content {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+      }
     </style>
   </head>
   <body>
@@ -27,7 +78,6 @@
           <div class="hdr-sub" id="hdr-sub">Backend Roadmap</div>
         </div>
         <div class="hdr-right">
-          <div class="hdr-streak" id="hdr-streak">🔥 0</div>
           <button class="hdr-btn" title="Stats" onclick="window.location.href='stats.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </button>
@@ -40,20 +90,17 @@
         <!-- ──────── TAB: BACKEND ROADMAP ──────── -->
         <div class="tab-panel active" id="tab-backend">
 
-          <!-- Back to Home bar -->
-          <div class="back-home-bar" style="border-bottom:1px solid rgba(255,255,255,0.06);">
-            <button class="back-home-btn" onclick="window.location.href='index.html'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-              Home
-            </button>
-            <span class="back-home-title">Backend Roadmap</span>
-          </div>
-
           <!-- ── SUB: Roadmap ── -->
           <div id="backend-sub-roadmap">
 
             <!-- SCREEN 1: Level select -->
             <div id="backend-screen-levels">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="window.location.href='index.html'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
+                </button>
+                <span class="back-home-title">Backend Roadmap</span>
+              </div>
               <div class="section" style="padding-top:10px">
                 <div class="section-title">Choose Your Level</div>
                 <div class="ai-level-subtitle">Select your Backend starting point</div>
@@ -149,7 +196,7 @@
           <!-- ── SUB: Revision ── -->
           <div id="backend-sub-revision" style="display:none">
             <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
+              <button class="back-home-btn" onclick="APP.backendGoBack()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
               </button>
               <span class="back-home-title">Backend Revision Schedule</span>
@@ -163,54 +210,14 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="backend-revision-list"></div></div>
           </div>
-
-          <!-- ── SUB: Pomo ── -->
-          <div id="backend-sub-pomo" style="display:none">
-            <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
-              </button>
-              <span class="back-home-title">Backend Focus Timer</span>
-            </div>
-            <div class="pomo-dur-row">
-              <span class="pomo-dur-label">Focus:</span>
-              <input class="pomo-dur-input" id="backend-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <span class="pomo-dur-label">min</span>
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('backend')">Set</button>
-              <button class="pomo-alarm-btn" id="backend-pomo-alarm-stop" onclick="APP.stopSectionAlarm('backend')" style="display:none">Stop</button>
-            </div>
-            <div class="pomo-ring-wrap">
-              <div class="pomo-ring" id="backend-pomo-ring">
-                <div class="pomo-center">
-                  <div class="pomo-time" id="backend-pomo-time">25:00</div>
-                  <div class="pomo-mode" id="backend-pomo-mode">FOCUS</div>
-                </div>
               </div>
-              <div class="pomo-session-count" id="backend-pomo-dots"></div>
-              <div class="pomo-controls">
-                <button class="pomo-btn start" id="backend-pomo-start-btn" onclick="APP.sectionPomoToggle('backend')">▶ Start</button>
-                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('backend')">↺ Reset</button>
-                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('backend')">⏭ Skip</button>
-              </div>
-            </div>
-            <div class="section" style="padding-top:0">
-              <div class="focus-hours-card">
-                <div class="focus-hours-val" id="backend-pomo-focus-hours">0.0</div>
-                <div class="focus-hours-lbl">Backend Focus Hours</div>
-              </div>
-              <div class="section-title">Backend Sessions</div>
-              <div class="pomo-stats-row">
-                <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-              </div>
-            </div>
+          </div>
           </div>
 
           <!-- ── SUB: Notes ── -->
           <div id="backend-sub-notes" style="display:none">
             <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
+              <button class="back-home-btn" onclick="APP.backendGoBack()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
               </button>
               <span class="back-home-title">Backend Study Notes</span>
@@ -236,7 +243,7 @@
           <!-- ── SUB: Projects ── -->
           <div id="backend-sub-projects" style="display:none">
             <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
+              <button class="back-home-btn" onclick="APP.backendGoBack()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
               </button>
               <span class="back-home-title">Backend Projects</span>
@@ -256,6 +263,40 @@
 
       </div>
       <!-- /content -->
+
+      <!-- ══════════════════ BOTTOM NAV ══════════════════ -->
+      <nav id="backend-bottom-nav">
+        <button class="backend-nav-item active" id="backend-nav-roadmap" onclick="APP.switchBackendSub('roadmap', this)">
+          <div class="backend-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <span class="backend-nav-lbl">Roadmap</span>
+        </button>
+        <button class="backend-nav-item" id="backend-nav-revision" onclick="APP.switchBackendSub('revision', this)">
+          <div class="backend-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span class="backend-nav-lbl">Revision</span>
+        </button>
+        <button class="backend-nav-item" id="backend-nav-notes" onclick="APP.switchBackendSub('notes', this)">
+          <div class="backend-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <span class="backend-nav-lbl">Notes</span>
+        </button>
+        <button class="backend-nav-item" id="backend-nav-projects" onclick="APP.switchBackendSub('projects', this)">
+          <div class="backend-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="backend-nav-lbl">Projects</span>
+        </button>
+        <button class="backend-nav-item" id="backend-nav-visual" onclick="window.location.href='backend-roadmap.html'">
+          <div class="backend-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><circle cx="6" cy="14" r="3"/><circle cx="18" cy="14" r="3"/><line x1="12" y1="13" x2="6" y2="14"/><line x1="12" y1="13" x2="18" y2="14"/></svg>
+          </div>
+          <span class="backend-nav-lbl">Visual</span>
+        </button>
+      </nav>
 
       <!-- ══════════════════ MODALS ══════════════════ -->
 
@@ -335,100 +376,13 @@
     </div>
     <!-- /app -->
 
-    <!-- ══════════════════ BACKEND BOTTOM NAV ══════════════════ -->
-    <nav id="backend-bottom-nav" style="
-      position:fixed; bottom:0; left:0; right:0;
-      display:flex; align-items:stretch;
-      background:#0a0a1a;
-      border-top:1px solid rgba(255,255,255,0.07);
-      z-index:900;
-      padding-bottom:env(safe-area-inset-bottom,0px);
-      height:calc(60px + env(safe-area-inset-bottom,0px));
-    ">
-      <button class="backend-nav-item active" id="backend-nav-roadmap" onclick="APP.switchBackendSub('roadmap', document.getElementById('backend-nav-roadmap'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-        </div>
-        <span>Roadmap</span>
-      </button>
-
-      <button class="backend-nav-item" id="backend-nav-revision" onclick="APP.switchBackendSub('revision', document.getElementById('backend-nav-revision'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <span>Revision</span>
-      </button>
-
-      <button class="backend-nav-item" id="backend-nav-pomo" onclick="APP.switchBackendSub('pomo', document.getElementById('backend-nav-pomo'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <span>Pomo</span>
-      </button>
-
-      <button class="backend-nav-item" id="backend-nav-notes" onclick="APP.switchBackendSub('notes', document.getElementById('backend-nav-notes'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        </div>
-        <span>Notes</span>
-      </button>
-
-      <button class="backend-nav-item" id="backend-nav-projects" onclick="APP.switchBackendSub('projects', document.getElementById('backend-nav-projects'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        </div>
-        <span>Projects</span>
-      </button>
-    </nav>
-
-    <style>
-      /* Active state for Backend bottom nav */
-      #backend-bottom-nav .backend-nav-item.active {
-        color: var(--c6, #ea580c) !important;
-      }
-      #backend-bottom-nav .backend-nav-item.active svg {
-        filter: drop-shadow(0 0 4px rgba(234,88,12,0.5));
-      }
-    </style>
-
-    <!-- Load backend logic first so APP is defined before the inline wrapper runs -->
     <script src="backend-steps.js"></script>
 
     <script>
+    // Wrap switchBackendSub to keep bottom nav active state in sync
     document.addEventListener('DOMContentLoaded', function() {
-      // Wrap switchBackendSub to also update bottom nav active state
       var _orig = (typeof APP !== 'undefined' && APP.switchBackendSub) ? APP.switchBackendSub.bind(APP) : null;
-      var wrapped = function(sub, btn) {
+      APP.switchBackendSub = function(sub, btn) {
         document.querySelectorAll('#backend-bottom-nav .backend-nav-item').forEach(function(b) {
           b.classList.remove('active');
         });
@@ -436,8 +390,6 @@
         if (navBtn) navBtn.classList.add('active');
         if (_orig) _orig(sub, null);
       };
-      if (typeof APP !== 'undefined') APP.switchBackendSub = wrapped;
-      if (typeof BACKEND_APP !== 'undefined') BACKEND_APP.switchBackendSub = wrapped;
     });
     </script>
 

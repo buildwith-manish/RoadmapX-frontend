@@ -1620,10 +1620,7 @@ const BACKEND_APP = (function() {
 
   // ── Header ────────────────────────────────────────────────
   function updateHeader() {
-    var streaks   = load(KEYS.STREAKS, {});
-    var streak    = streaks.backend ? (streaks.backend.current || 0) : 0;
-    var hdrStreak = document.getElementById('hdr-streak');
-    if (hdrStreak) hdrStreak.textContent = '🔥 ' + streak;
+    // streak display removed — shown only on home page
   }
 
   // ── Pomodoro ──────────────────────────────────────────────
@@ -1710,16 +1707,12 @@ const BACKEND_APP = (function() {
     var stats    = load(KEYS.POMO_STATS, { backend: 0 });
     var sessions = stats.backend || 0;
     var hrs      = ((sessions * _backendPomoState.duration) / 60).toFixed(1);
-    var streaks  = load(KEYS.STREAKS, {});
-    var streak   = (streaks.backend && streaks.backend.current) || 0;
     var sessEl = document.getElementById('backend-ps-sessions');
     var hrsEl  = document.getElementById('backend-ps-hours');
-    var strEl  = document.getElementById('backend-ps-streak');
     var focEl  = document.getElementById('backend-pomo-focus-hours');
     var dotsEl = document.getElementById('backend-pomo-dots');
     if (sessEl) sessEl.textContent = sessions;
     if (hrsEl)  hrsEl.textContent  = hrs;
-    if (strEl)  strEl.textContent  = streak;
     if (focEl)  focEl.textContent  = hrs;
     if (dotsEl) {
       var dots = sessions % 4 || (sessions > 0 ? 4 : 0);

@@ -3657,12 +3657,7 @@ if (prog[key].done) {
     const done = Object.values(aiProg).filter(v => v.done).length;
     const hdrSub = document.getElementById('hdr-sub');
     if (hdrSub) hdrSub.textContent = ``;
-    const streaks = load(KEYS.STREAKS, {});
-    const maxStreak = Math.max(streaks.ai?.current || 0, streaks.dsa?.current || 0);
-    const hdrStreak = document.getElementById('hdr-streak');
-    if (hdrStreak) hdrStreak.textContent = '🔥 ' + maxStreak;
-
-    // Revision due badge removed (revision is now inline in roadmaps)
+    // streak display removed — shown only on home page
   }
 
   // Theme is permanently dark — toggleTheme removed
@@ -4282,16 +4277,12 @@ self.addEventListener('fetch', e => {
     const sessions = stats[section] || 0;
     const s = _sectionPomoState[section];
     const hrs = ((sessions * s.duration) / 60).toFixed(1);
-    const streaks = load(KEYS.STREAKS, {});
-    const streak = streaks[section]?.current || 0;
     const sessEl = document.getElementById(section + '-ps-sessions');
     const hrsEl  = document.getElementById(section + '-ps-hours');
-    const strEl  = document.getElementById(section + '-ps-streak');
     const focEl  = document.getElementById(section + '-pomo-focus-hours');
     const dotsEl = document.getElementById(section + '-pomo-dots');
     if (sessEl) sessEl.textContent = sessions;
     if (hrsEl)  hrsEl.textContent  = hrs;
-    if (strEl)  strEl.textContent  = streak;
     if (focEl)  focEl.textContent  = hrs;
     if (dotsEl) {
       const dots = sessions % 4 || (sessions > 0 ? 4 : 0);

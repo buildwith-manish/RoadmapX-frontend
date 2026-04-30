@@ -7,6 +7,63 @@
     <title>DSA Roadmap — RoadmapX</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+      /* ── DSA Bottom Nav (mirrors AI nav pattern exactly) ── */
+      #dsa-bottom-nav {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 60px;
+        background: var(--bg2, #0d0d1a);
+        border-top: 1px solid rgba(255,255,255,0.07);
+        display: flex;
+        align-items: stretch;
+        z-index: 100;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .dsa-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--t3, #555);
+        padding: 6px 4px;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .dsa-nav-item.active {
+        color: var(--c1, #00e5c8);
+      }
+      .dsa-nav-item.active svg {
+        filter: drop-shadow(0 0 4px rgba(0,229,200,0.4));
+      }
+      .dsa-nav-ico {
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dsa-nav-ico svg {
+        width: 20px;
+        height: 20px;
+      }
+      .dsa-nav-lbl {
+        font-size: 10px;
+        font-weight: 600;
+        font-family: var(--font-mono, monospace);
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+      }
+      /* Give content bottom padding so nav doesn't cover it */
+      #content {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+      }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -21,7 +78,6 @@
           <div class="hdr-sub" id="hdr-sub">DSA Roadmap</div>
         </div>
         <div class="hdr-right">
-          <div class="hdr-streak" id="hdr-streak">🔥 0</div>
           <button class="hdr-btn" title="Stats" onclick="window.location.href='stats.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </button>
@@ -31,25 +87,20 @@
       <!-- ══════════════════ CONTENT ══════════════════ -->
       <div id="content">
 
-        <!-- ──────── TAB: DSA ROADMAP (only tab on this page) ──────── -->
+        <!-- ──────── TAB: DSA ROADMAP ──────── -->
         <div class="tab-panel active" id="tab-dsa">
-
-          <!-- Back to Home bar -->
-          <div class="back-home-bar" style="border-bottom:1px solid rgba(255,255,255,0.06);">
-            <button class="back-home-btn" onclick="window.location.href='index.html'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-              Home
-            </button>
-            <span class="back-home-title">DSA Roadmap</span>
-          </div>
-
-
 
           <!-- ── SUB: Roadmap ── -->
           <div id="dsa-sub-roadmap">
 
             <!-- SCREEN 1: Level select -->
             <div id="dsa-screen-levels">
+              <div class="back-home-bar">
+                <button class="back-home-btn" onclick="window.location.href='index.html'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
+                </button>
+                <span class="back-home-title">DSA Roadmap</span>
+              </div>
               <div class="section" style="padding-top:10px">
                 <div class="section-title">Choose Your Level</div>
                 <div class="ai-level-subtitle">Select your DSA starting point</div>
@@ -145,7 +196,7 @@
           <!-- ── SUB: Revision ── -->
           <div id="dsa-sub-revision" style="display:none">
             <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
+              <button class="back-home-btn" onclick="APP.dsaGoBack()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
               </button>
               <span class="back-home-title">DSA Revision Schedule</span>
@@ -159,54 +210,14 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="dsa-revision-list"></div></div>
           </div>
-
-          <!-- ── SUB: Pomo ── -->
-          <div id="dsa-sub-pomo" style="display:none">
-            <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
-              </button>
-              <span class="back-home-title">DSA Focus Timer</span>
-            </div>
-            <div class="pomo-dur-row">
-              <span class="pomo-dur-label">Focus:</span>
-              <input class="pomo-dur-input" id="dsa-pomo-dur-input" type="number" value="25" min="1" max="120" />
-              <span class="pomo-dur-label">min</span>
-              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('dsa')">Set</button>
-              <button class="pomo-alarm-btn" id="dsa-pomo-alarm-stop" onclick="APP.stopSectionAlarm('dsa')" style="display:none">Stop</button>
-            </div>
-            <div class="pomo-ring-wrap">
-              <div class="pomo-ring" id="dsa-pomo-ring">
-                <div class="pomo-center">
-                  <div class="pomo-time" id="dsa-pomo-time">25:00</div>
-                  <div class="pomo-mode" id="dsa-pomo-mode">FOCUS</div>
-                </div>
               </div>
-              <div class="pomo-session-count" id="dsa-pomo-dots"></div>
-              <div class="pomo-controls">
-                <button class="pomo-btn start" id="dsa-pomo-start-btn" onclick="APP.sectionPomoToggle('dsa')">▶ Start</button>
-                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('dsa')">↺ Reset</button>
-                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('dsa')">⏭ Skip</button>
-              </div>
-            </div>
-            <div class="section" style="padding-top:0">
-              <div class="focus-hours-card">
-                <div class="focus-hours-val" id="dsa-pomo-focus-hours">0.0</div>
-                <div class="focus-hours-lbl">DSA Focus Hours</div>
-              </div>
-              <div class="section-title">DSA Sessions</div>
-              <div class="pomo-stats-row">
-                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-              </div>
-            </div>
+          </div>
           </div>
 
           <!-- ── SUB: Notes ── -->
           <div id="dsa-sub-notes" style="display:none">
             <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
+              <button class="back-home-btn" onclick="APP.dsaGoBack()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
               </button>
               <span class="back-home-title">DSA Study Notes</span>
@@ -232,7 +243,7 @@
           <!-- ── SUB: Projects ── -->
           <div id="dsa-sub-projects" style="display:none">
             <div class="back-home-bar">
-              <button class="back-home-btn" onclick="APP.goBack()">
+              <button class="back-home-btn" onclick="APP.dsaGoBack()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
               </button>
               <span class="back-home-title">DSA Projects</span>
@@ -252,6 +263,40 @@
 
       </div>
       <!-- /content -->
+
+      <!-- ══════════════════ BOTTOM NAV ══════════════════ -->
+      <nav id="dsa-bottom-nav">
+        <button class="dsa-nav-item active" id="dsa-nav-roadmap" onclick="APP.switchDSASub('roadmap', this)">
+          <div class="dsa-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <span class="dsa-nav-lbl">Roadmap</span>
+        </button>
+        <button class="dsa-nav-item" id="dsa-nav-revision" onclick="APP.switchDSASub('revision', this)">
+          <div class="dsa-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span class="dsa-nav-lbl">Revision</span>
+        </button>
+        <button class="dsa-nav-item" id="dsa-nav-notes" onclick="APP.switchDSASub('notes', this)">
+          <div class="dsa-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <span class="dsa-nav-lbl">Notes</span>
+        </button>
+        <button class="dsa-nav-item" id="dsa-nav-projects" onclick="APP.switchDSASub('projects', this)">
+          <div class="dsa-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="dsa-nav-lbl">Projects</span>
+        </button>
+        <button class="dsa-nav-item" id="dsa-nav-visual" onclick="window.location.href='dsa-roadmap.html'">
+          <div class="dsa-nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><circle cx="6" cy="14" r="3"/><circle cx="18" cy="14" r="3"/><line x1="12" y1="13" x2="6" y2="14"/><line x1="12" y1="13" x2="18" y2="14"/></svg>
+          </div>
+          <span class="dsa-nav-lbl">Visual</span>
+        </button>
+      </nav>
 
       <!-- ══════════════════ MODALS ══════════════════ -->
 
@@ -331,126 +376,22 @@
     </div>
     <!-- /app -->
 
-    <!-- ══════════════════ DSA BOTTOM NAV ══════════════════ -->
-    <nav id="dsa-bottom-nav" style="
-      position:fixed; bottom:0; left:0; right:0;
-      display:flex; align-items:stretch;
-      background:#0a0a1a;
-      border-top:1px solid rgba(255,255,255,0.07);
-      z-index:900;
-      padding-bottom:env(safe-area-inset-bottom,0px);
-      height:calc(60px + env(safe-area-inset-bottom,0px));
-    ">
-      <button class="dsa-nav-item active" id="dsa-nav-roadmap" onclick="APP.switchDSASub('roadmap', document.getElementById('dsa-nav-roadmap'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-        </div>
-        <span>Roadmap</span>
-      </button>
-
-      <button class="dsa-nav-item" id="dsa-nav-revision" onclick="APP.switchDSASub('revision', document.getElementById('dsa-nav-revision'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <span>Revision</span>
-      </button>
-
-      <button class="dsa-nav-item" id="dsa-nav-pomo" onclick="APP.switchDSASub('pomo', document.getElementById('dsa-nav-pomo'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <span>Pomo</span>
-      </button>
-
-      <button class="dsa-nav-item" id="dsa-nav-notes" onclick="APP.switchDSASub('notes', document.getElementById('dsa-nav-notes'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        </div>
-        <span>Notes</span>
-      </button>
-
-      <button class="dsa-nav-item" id="dsa-nav-projects" onclick="APP.switchDSASub('projects', document.getElementById('dsa-nav-projects'))" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        </div>
-        <span>Projects</span>
-      </button>
-
-      <button class="dsa-nav-item" id="dsa-nav-visual" onclick="window.location.href='dsa-roadmap.html'" style="
-        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-        background:none; border:none; gap:4px; cursor:pointer; color:#5a5a8a;
-        font-family:var(--font-mono,monospace); font-size:9px; font-weight:700;
-        letter-spacing:.5px; padding:8px 4px 6px; transition:color .18s;
-        -webkit-tap-highlight-color:transparent;
-      ">
-        <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><circle cx="6" cy="14" r="3"/><circle cx="18" cy="14" r="3"/><line x1="12" y1="13" x2="6" y2="14"/><line x1="12" y1="13" x2="18" y2="14"/></svg>
-        </div>
-        <span>Visual</span>
-      </button>
-    </nav>
-
-    <style>
-      /* Active state for DSA bottom nav */
-      #dsa-bottom-nav .dsa-nav-item.active {
-        color: var(--c1, #00e5c8) !important;
-      }
-      #dsa-bottom-nav .dsa-nav-item.active svg {
-        filter: drop-shadow(0 0 4px rgba(0,229,200,0.5));
-      }
-      /* Content padding is already handled by --nav in styles.css */
-    </style>
+    <script src="dsa-steps.js"></script>
 
     <script>
-    // Bridge: make switchDSASub update bottom nav active states
-    // (runs after dsa-steps.js loads)
+    // Wrap switchDSASub to keep bottom nav active state in sync
     document.addEventListener('DOMContentLoaded', function() {
       var _orig = APP.switchDSASub ? APP.switchDSASub.bind(APP) : null;
       APP.switchDSASub = function(sub, btn) {
-        // Update bottom nav active classes
         document.querySelectorAll('#dsa-bottom-nav .dsa-nav-item').forEach(function(b) {
           b.classList.remove('active');
         });
         var navBtn = document.getElementById('dsa-nav-' + sub);
         if (navBtn) navBtn.classList.add('active');
-        // Call original (handles panel show/hide + renders)
         if (_orig) _orig(sub, null);
       };
-      // Also remove old subtab-bar reference from original fn (already deleted from HTML)
     });
     </script>
-
-    <script src="dsa-steps.js"></script>
 
   </body>
 </html>

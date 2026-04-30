@@ -551,7 +551,7 @@ body::before {
 .streak-name { font-size: 14px; font-weight: 700; }
 .streak-flame { display: flex; align-items: center; color: var(--c3); }
 .streak-flame svg { width: 28px; height: 28px; }
-.streak-nums { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.streak-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
 .streak-num { text-align: center; }
 .streak-num-val { font-size: 22px; font-weight: 800; font-family: var(--font-mono); }
 .streak-num-lbl { font-size: 9px; color: var(--t2); letter-spacing: 0.3px; margin-top: 1px; }
@@ -563,7 +563,10 @@ body::before {
 .week-dots { display: flex; gap: 5px; margin-top: 8px; }
 .week-dot { flex: 1; height: 5px; border-radius: 3px; background: var(--bg4); }
 .week-dot.done { background: var(--c5); }
-.week-dot.today { background: var(--c4); }
+.week-dot.done-low { background: rgba(0,245,212,0.35); }
+.week-dot.done-mid { background: rgba(0,245,212,0.65); }
+.week-dot.done-high { background: var(--c1); box-shadow: 0 0 4px rgba(0,245,212,.5); }
+.week-dot.today { outline: 2px solid var(--c4); outline-offset: 1px; }
 
 /* ── REVISION ── */
 .rev-card {

@@ -1569,8 +1569,7 @@ return { beginner, intermediate, advanced };
     renderStreak();
   }
   function renderStreak() {
-    const el = document.getElementById('fe-streak-val');
-    if (el) el.textContent = '🔥 ' + (state.streak.count || 0);
+    // streak display removed — shown only on home page
   }
 
   /* ─────────────────────────────────────────
