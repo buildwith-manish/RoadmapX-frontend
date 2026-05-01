@@ -3866,6 +3866,25 @@ const ProjectEnhancer = (function() {
 
 // Store originals
 const _origSwitchTab     = APP.switchTab.bind(APP);
+window._origSwitchTab    = _origSwitchTab;  // expose for standaloneSwitch in index.html
+
+// ── Expose all render functions globally for standaloneSwitch ──
+// These are private to the APP IIFE so we expose them here at top level
+window._rxRender = {
+  home:     function() { try { _origSwitchTab('home');     } catch(e){} },
+  streak:   function() { try { _origSwitchTab('streak');   } catch(e){} },
+  files:    function() { try { _origSwitchTab('files');    } catch(e){} },
+  calendar: function() { try { _origSwitchTab('calendar'); } catch(e){} },
+  goals:    function() { try { _origSwitchTab('goals');    } catch(e){} },
+  badges:   function() { try { _origSwitchTab('badges');   } catch(e){} },
+  revision: function() { try { _origSwitchTab('revision'); } catch(e){} },
+  pomo:     function() { try { _origSwitchTab('pomo');     } catch(e){} },
+  projects: function() { try { _origSwitchTab('projects'); } catch(e){} },
+  profile:  function() { try { _origSwitchTab('profile');  } catch(e){} },
+  dsa:      function() { try { _origSwitchTab('dsa');      } catch(e){} },
+  ai:       function() { try { _origSwitchTab('ai');       } catch(e){} },
+  extra:    function() { try { _origSwitchTab('extra');    } catch(e){} },
+};
 const _origInit          = APP.init.bind(APP);
 const _origSaveProject   = APP.saveProject.bind(APP);
 const _origOpenProjModal = APP.openProjectModal.bind(APP);

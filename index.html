@@ -126,22 +126,6 @@
 #fab-pomo-reset { background: rgba(239,68,68,.12); color: #ef4444; }
 #fab-pomo-reset:active { background: rgba(239,68,68,.3); }
 
-
-/* Focus hours row inside FAB */
-#fab-focus-row {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; padding: 6px 0 2px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-#fab-focus-val {
-  font-family: var(--font-mono,monospace); font-size: 15px; font-weight: 800;
-  color: var(--c1,#00e5c8); letter-spacing: 1px;
-}
-#fab-focus-lbl {
-  font-family: var(--font-mono,monospace); font-size: 9px; font-weight: 600;
-  color: #8080a8; letter-spacing: 1px; text-transform: uppercase;
-}
-
 /* Session label */
 #fab-pomo-session {
   font-family: var(--font-mono,monospace); font-size: 9px;
@@ -344,6 +328,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
               Revision
             </button>
+            <button class="section-subtab" id="ai-subtab-pomo" onclick="APP.switchAISub('pomo',this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Pomo
+            </button>
             <button class="section-subtab" id="ai-subtab-notes" onclick="APP.switchAISub('notes',this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Notes
@@ -467,7 +455,49 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="ai-revision-list"></div></div>
           </div>
-          
+
+          <!-- SUB: AI Pomo -->
+          <div id="ai-sub-pomo" style="display:none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
+              </button>
+              <span class="back-home-title">AI Focus Timer</span>
+            </div>
+            <div class="pomo-dur-row">
+              <span class="pomo-dur-label">Focus:</span>
+              <input class="pomo-dur-input" id="ai-pomo-dur-input" type="number" value="25" min="1" max="120" />
+              <span class="pomo-dur-label">min</span>
+              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('ai')">Set</button>
+              <button class="pomo-alarm-btn" id="ai-pomo-alarm-stop" onclick="APP.stopSectionAlarm('ai')" style="display:none">Stop</button>
+            </div>
+            <div class="pomo-ring-wrap">
+              <div class="pomo-ring" id="ai-pomo-ring">
+                <div class="pomo-center">
+                  <div class="pomo-time" id="ai-pomo-time">25:00</div>
+                  <div class="pomo-mode" id="ai-pomo-mode">FOCUS</div>
+                </div>
+              </div>
+              <div class="pomo-session-count" id="ai-pomo-dots"></div>
+              <div class="pomo-controls">
+                <button class="pomo-btn start" id="ai-pomo-start-btn" onclick="APP.sectionPomoToggle('ai')">▶ Start</button>
+                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('ai')">↺ Reset</button>
+                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('ai')">⏭ Skip</button>
+              </div>
+            </div>
+            <div class="section" style="padding-top:0">
+              <div class="focus-hours-card">
+                <div class="focus-hours-val" id="ai-pomo-focus-hours">0.0</div>
+                <div class="focus-hours-lbl">AI Focus Hours</div>
+              </div>
+              <div class="section-title">AI Sessions</div>
+              <div class="pomo-stats-row">
+                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
+                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
+                <div class="pomo-stat"><div class="pomo-stat-val" id="ai-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
+              </div>
+            </div>
+          </div>
 
           <!-- SUB: AI Notes -->
           <div id="ai-sub-notes" style="display:none">
@@ -938,6 +968,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.67"/></svg>
               Revision
             </button>
+            <button class="section-subtab" id="dsa-subtab-pomo" onclick="APP.switchDSASub('pomo',this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Pomo
+            </button>
             <button class="section-subtab" id="dsa-subtab-notes" onclick="APP.switchDSASub('notes',this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Notes
@@ -1014,7 +1048,49 @@
             </div>
             <div class="section" style="padding-top:8px"><div id="dsa-revision-list"></div></div>
           </div>
-          
+
+          <!-- SUB: DSA Pomo -->
+          <div id="dsa-sub-pomo" style="display:none">
+            <div class="back-home-bar">
+              <button class="back-home-btn" onclick="APP.goBack()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Home
+              </button>
+              <span class="back-home-title">DSA Focus Timer</span>
+            </div>
+            <div class="pomo-dur-row">
+              <span class="pomo-dur-label">Focus:</span>
+              <input class="pomo-dur-input" id="dsa-pomo-dur-input" type="number" value="25" min="1" max="120" />
+              <span class="pomo-dur-label">min</span>
+              <button class="pomo-dur-btn" onclick="APP.setSectionPomoDuration('dsa')">Set</button>
+              <button class="pomo-alarm-btn" id="dsa-pomo-alarm-stop" onclick="APP.stopSectionAlarm('dsa')" style="display:none">Stop</button>
+            </div>
+            <div class="pomo-ring-wrap">
+              <div class="pomo-ring" id="dsa-pomo-ring">
+                <div class="pomo-center">
+                  <div class="pomo-time" id="dsa-pomo-time">25:00</div>
+                  <div class="pomo-mode" id="dsa-pomo-mode">FOCUS</div>
+                </div>
+              </div>
+              <div class="pomo-session-count" id="dsa-pomo-dots"></div>
+              <div class="pomo-controls">
+                <button class="pomo-btn start" id="dsa-pomo-start-btn" onclick="APP.sectionPomoToggle('dsa')">▶ Start</button>
+                <button class="pomo-btn reset" onclick="APP.sectionPomoReset('dsa')">↺ Reset</button>
+                <button class="pomo-btn stop" onclick="APP.sectionPomoSkip('dsa')">⏭ Skip</button>
+              </div>
+            </div>
+            <div class="section" style="padding-top:0">
+              <div class="focus-hours-card">
+                <div class="focus-hours-val" id="dsa-pomo-focus-hours">0.0</div>
+                <div class="focus-hours-lbl">DSA Focus Hours</div>
+              </div>
+              <div class="section-title">DSA Sessions</div>
+              <div class="pomo-stats-row">
+                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
+                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
+                <div class="pomo-stat"><div class="pomo-stat-val" id="dsa-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
+              </div>
+            </div>
+          </div>
 
           <!-- SUB: DSA Notes -->
           <div id="dsa-sub-notes" style="display:none">
@@ -1063,7 +1139,7 @@
         <!-- /tab-dsa -->
 
         <!-- ──────── TAB: DSA VISUAL ROADMAP ──────── -->
-        <div class="tab-panel" id="tab-dsa-rm" style="display:none;flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
+        <div class="tab-panel" id="tab-dsa-rm" style="flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
           <iframe
             src="dsa-roadmap.html"
             id="dsa-rm-iframe"
@@ -1076,168 +1152,15 @@
 
         <!-- ──────── TAB: FRONTEND ROADMAP ──────── -->
         <div class="tab-panel" id="tab-fe" style="flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
-
-          <!-- Subtab bar -->
-          <div class="section-subtab-bar" id="frontend-subtab-bar" style="display:flex;gap:4px;padding:8px 12px 0;background:var(--bg1);flex-shrink:0;overflow-x:auto;">
-            <button class="section-subtab active" id="frontend-subtab-roadmap" onclick="APP.switchRoadmapSub('frontend','roadmap',this)">🗺 Roadmap</button>
-            <button class="section-subtab" id="frontend-subtab-notes"    onclick="APP.switchRoadmapSub('frontend','notes',this)">📝 Notes</button>
-            <button class="section-subtab" id="frontend-subtab-revision" onclick="APP.switchRoadmapSub('frontend','revision',this)">🔁 Revision</button>
-            <button class="section-subtab" id="frontend-subtab-projects" onclick="APP.switchRoadmapSub('frontend','projects',this)">🚀 Projects</button>
-          </div>
-
-          <!-- Roadmap iframe (default visible) -->
-          <div id="frontend-sub-roadmap" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
-            <iframe
-              src="frontend-roadmap.html"
-              id="fe-rm-iframe"
-              style="width:100%;height:100%;border:none;display:block;flex:1;"
-              loading="lazy"
-              title="Frontend Visual Roadmap"
-            ></iframe>
-          </div>
-            <div class="pomo-ring" id="frontend-pomo-ring">
-              <div class="pomo-ring-inner">
-                <div class="pomo-time" id="frontend-pomo-time">25:00</div>
-                <div class="pomo-mode" id="frontend-pomo-mode">FOCUS</div>
-              </div>
-            </div>
-            <div class="pomo-session-count" id="frontend-pomo-dots"></div>
-            <div class="pomo-btn-row">
-              <button class="pomo-btn start" id="frontend-pomo-start-btn" onclick="APP.sectionPomoToggle('frontend')">▶ Start</button>
-              <button class="pomo-btn reset" onclick="APP.sectionPomoReset('frontend')">↺ Reset</button>
-              <button class="pomo-btn stop"  onclick="APP.sectionPomoSkip('frontend')">⏭ Skip</button>
-            </div>
-            <div class="pomo-stats-row">
-              <div class="focus-hours-box"><div class="focus-hours-label">Focus Hours</div><div class="focus-hours-val" id="frontend-pomo-focus-hours">0.0</div></div>
-              <div class="pomo-stat"><div class="pomo-stat-val" id="frontend-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-              <div class="pomo-stat"><div class="pomo-stat-val" id="frontend-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-              <div class="pomo-stat"><div class="pomo-stat-val" id="frontend-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          <div id="frontend-sub-notes" style="display:none;overflow-y:auto;padding:12px;">
-            <div class="card" style="margin-bottom:12px">
-              <div class="card-header">
-                <div class="card-title">Today's Notes</div>
-                <div style="display:flex;gap:6px;align-items:center">
-                  <span class="card-badge badge-done" id="frontend-notes-pomo-badge">0 pomos</span>
-                </div>
-              </div>
-              <textarea class="notes-ta" id="frontend-notes-ta"
-                placeholder="Write what you built in Frontend today...&#10;&#10;• Components made&#10;• CSS tricks&#10;• Browser quirks&#10;• Frameworks explored"
-                oninput="APP.sectionNotesAutoSave('frontend')"></textarea>
-              <div class="notes-footer">
-                <span id="frontend-notes-wc">0 words</span>
-                <button class="notes-save-btn" onclick="APP.sectionNotesSave('frontend')">Save</button>
-              </div>
-            </div>
-            <div id="frontend-notes-list"></div>
-          </div>
-
-          <!-- Revision -->
-          <div id="frontend-sub-revision" style="display:none;overflow-y:auto;padding:12px;">
-            <div class="filter-row" style="padding-bottom:8px">
-              <button class="filter-chip active" onclick="APP.setSectionRevFilter('frontend','all',this)">All</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','due',this)">Due Today</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','overdue',this)">Overdue</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','pending',this)">Pending</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('frontend','done',this)">Done</button>
-            </div>
-            <div class="section" style="padding-top:8px"><div id="frontend-revision-list"></div></div>
-          </div>
-
-          <!-- Projects -->
-          <div id="frontend-sub-projects" style="display:none;overflow-y:auto;padding:12px;">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-              <button class="add-btn" onclick="APP.openProjectModal(null,'frontend')">+ Add Project</button>
-            </div>
-            <div id="frontend-projects-list"></div>
-          </div>
-
+          <iframe
+            src="frontend-roadmap.html"
+            id="fe-rm-iframe"
+            style="width:100%;height:100%;border:none;display:block;flex:1;"
+            loading="lazy"
+            title="Frontend Visual Roadmap"
+          ></iframe>
         </div>
         <!-- /tab-fe -->
-
-        <!-- ──────── TAB: BACKEND ROADMAP (subtabs) ──────── -->
-        <div class="tab-panel" id="tab-backend" style="flex-direction:column;height:100%;background:#05050f;overflow:hidden;">
-
-          <!-- Subtab bar -->
-          <div class="section-subtab-bar" id="backend-subtab-bar" style="display:flex;gap:4px;padding:8px 12px 0;background:var(--bg1);flex-shrink:0;overflow-x:auto;">
-            <button class="section-subtab active" id="backend-subtab-roadmap" onclick="APP.switchRoadmapSub('backend','roadmap',this)">🗺 Roadmap</button>
-            <button class="section-subtab" id="backend-subtab-notes"    onclick="APP.switchRoadmapSub('backend','notes',this)">📝 Notes</button>
-            <button class="section-subtab" id="backend-subtab-revision" onclick="APP.switchRoadmapSub('backend','revision',this)">🔁 Revision</button>
-            <button class="section-subtab" id="backend-subtab-projects" onclick="APP.switchRoadmapSub('backend','projects',this)">🚀 Projects</button>
-          </div>
-
-          <!-- Roadmap link (no iframe — backend roadmap is a separate page) -->
-          <div id="backend-sub-roadmap" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;">
-            <div style="font-size:40px">⚙️</div>
-            <div style="font-size:15px;font-weight:700;color:var(--t1)">Backend Roadmap</div>
-            <div style="font-size:12px;color:var(--t2);text-align:center">Opens in its own page with full step tracking</div>
-            <a href="backend-steps.html" style="padding:10px 20px;background:var(--c6);color:#fff;border-radius:var(--r10);font-size:13px;font-weight:700;text-decoration:none;">Open Backend Roadmap →</a>
-          </div>
-            <div class="pomo-ring" id="backend-pomo-ring">
-              <div class="pomo-ring-inner">
-                <div class="pomo-time" id="backend-pomo-time">25:00</div>
-                <div class="pomo-mode" id="backend-pomo-mode">FOCUS</div>
-              </div>
-            </div>
-            <div class="pomo-session-count" id="backend-pomo-dots"></div>
-            <div class="pomo-btn-row">
-              <button class="pomo-btn start" id="backend-pomo-start-btn" onclick="APP.sectionPomoToggle('backend')">▶ Start</button>
-              <button class="pomo-btn reset" onclick="APP.sectionPomoReset('backend')">↺ Reset</button>
-              <button class="pomo-btn stop"  onclick="APP.sectionPomoSkip('backend')">⏭ Skip</button>
-            </div>
-            <div class="pomo-stats-row">
-              <div class="focus-hours-box"><div class="focus-hours-label">Focus Hours</div><div class="focus-hours-val" id="backend-pomo-focus-hours">0.0</div></div>
-              <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-sessions">0</div><div class="pomo-stat-lbl">Sessions</div></div>
-              <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-hours">0.0</div><div class="pomo-stat-lbl">Hours</div></div>
-              <div class="pomo-stat"><div class="pomo-stat-val" id="backend-ps-streak">0</div><div class="pomo-stat-lbl">Streak</div></div>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          <div id="backend-sub-notes" style="display:none;overflow-y:auto;padding:12px;">
-            <div class="card" style="margin-bottom:12px">
-              <div class="card-header">
-                <div class="card-title">Today's Notes</div>
-                <div style="display:flex;gap:6px;align-items:center">
-                  <span class="card-badge badge-done" id="backend-notes-pomo-badge">0 pomos</span>
-                </div>
-              </div>
-              <textarea class="notes-ta" id="backend-notes-ta"
-                placeholder="Write what you built in Backend today...&#10;&#10;• APIs designed&#10;• DB queries&#10;• Auth flows&#10;• Performance notes"
-                oninput="APP.sectionNotesAutoSave('backend')"></textarea>
-              <div class="notes-footer">
-                <span id="backend-notes-wc">0 words</span>
-                <button class="notes-save-btn" onclick="APP.sectionNotesSave('backend')">Save</button>
-              </div>
-            </div>
-            <div id="backend-notes-list"></div>
-          </div>
-
-          <!-- Revision -->
-          <div id="backend-sub-revision" style="display:none;overflow-y:auto;padding:12px;">
-            <div class="filter-row" style="padding-bottom:8px">
-              <button class="filter-chip active" onclick="APP.setSectionRevFilter('backend','all',this)">All</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','due',this)">Due Today</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','overdue',this)">Overdue</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','pending',this)">Pending</button>
-              <button class="filter-chip" onclick="APP.setSectionRevFilter('backend','done',this)">Done</button>
-            </div>
-            <div class="section" style="padding-top:8px"><div id="backend-revision-list"></div></div>
-          </div>
-
-          <!-- Projects -->
-          <div id="backend-sub-projects" style="display:none;overflow-y:auto;padding:12px;">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-              <button class="add-btn" onclick="APP.openProjectModal(null,'backend')">+ Add Project</button>
-            </div>
-            <div id="backend-projects-list"></div>
-          </div>
-
-        </div>
-        <!-- /tab-backend -->
         <div class="tab-panel" id="tab-revision">
           <div class="filter-row" style="padding-top:12px">
             <button class="filter-chip active" onclick="APP.setRevFilter('all',this)">All</button>
@@ -1839,62 +1762,6 @@
     <script src="script.js"></script>
     <script src="roadmap_bridge.js"></script>
     <script src="notes_storage.js"></script>
-
-    <!-- ═══ CORE FIX: expose APP + fix blank tab content ═══ -->
-    <script>
-    (function() {
-      // ── 1. Inject missing CSS (goal rings, badges earned, calendar dots) ──
-      var s = document.createElement('style');
-      s.textContent =
-        /* Force active panels to always be visible — fixes animation stuck at opacity:0 */
-        '.tab-panel.active{display:block!important;opacity:1!important;transform:none!important;animation:none!important;}' +
-        /* Goal ring classes (used by Goals.render, missing from styles.css) */
-        '.goal-card-title{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;font-family:var(--font-mono);margin-bottom:8px}' +
-        '.goal-ring-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin:4px auto 8px;width:72px;height:72px}' +
-        '.goal-ring-svg{transform:rotate(-90deg)}' +
-        '.goal-ring-bg{fill:none;stroke:var(--bg4);stroke-width:6}' +
-        '.goal-ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s ease}' +
-        '.goal-ring-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:var(--font-mono)}' +
-        '.goal-card.on-track{border-color:rgba(0,245,212,.3)}' +
-        '.goal-card.partial{border-color:rgba(245,158,11,.3)}' +
-        '.goal-card.off-track{border-color:rgba(244,63,94,.25)}' +
-        /* Badge earned */
-        '.badge-item.earned{border-color:rgba(0,229,200,.3);background:linear-gradient(135deg,rgba(0,229,200,.06),rgba(124,58,237,.06));box-shadow:0 0 12px rgba(0,229,200,.1)}' +
-        '.badge-item.earned .badge-ico{filter:drop-shadow(0 0 6px rgba(0,229,200,.5))}' +
-        /* Calendar dots */
-        '.cal-day-num{font-size:11px;font-family:var(--font-mono);line-height:1}' +
-        '.cal-dots{display:flex;gap:2px;justify-content:center;margin-top:2px}' +
-        '.cal-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}' +
-        '.dot-done{background:#10b981}.dot-rev{background:#7c3aed}' +
-        /* Streak card base */
-        '.streak-card{border:1px solid rgba(255,255,255,.08);background:var(--bg2);border-radius:var(--r12);padding:14px}';
-      document.head.appendChild(s);
-
-      // ── 2. After all scripts load, fix APP on window + patch switchTab ──
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          // Expose APP globally (const is not on window)
-          if (typeof APP !== 'undefined') window.APP = APP;
-
-          if (!window.APP) return;
-
-          // Wrap switchTab to guarantee panel visibility
-          var _origSwitch = APP.switchTab.bind(APP);
-          APP.switchTab = function(name) {
-            try { _origSwitch(name); } catch(e) { console.error('[switchTab]', e); }
-            // Force the active panel visible regardless of animation state
-            requestAnimationFrame(function() {
-              document.querySelectorAll('.tab-panel').forEach(function(p) {
-                if (p.classList.contains('active')) {
-                  p.style.cssText += ';display:block!important;opacity:1!important;transform:none!important';
-                }
-              });
-            });
-          };
-        }, 800);
-      });
-    })();
-    </script>
     <script>
       // Initialise Lucide icons after DOM is ready
       if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -2546,12 +2413,6 @@
         </div>
       </div>
 
-      <!-- Focus Hours row -->
-      <div id="fab-focus-row">
-        <div id="fab-focus-val">0.0</div>
-        <div id="fab-focus-lbl">Focus Hrs</div>
-      </div>
-
       <!-- Presets -->
       <div id="fab-presets">
         <button class="fab-preset" data-m="15">15m</button>
@@ -2642,19 +2503,6 @@
       } catch(e){}
 
       restorePos();
-
-      // Load and display total focus hours across all roadmaps in FAB
-      (function loadFabFocusHours() {
-        var FOCUS_VAL = document.getElementById('fab-focus-val');
-        if (!FOCUS_VAL) return;
-        var keys = ['pomo_focus_ai','pomo_focus_backend','pomo_focus_dsa','pomo_focus_fe'];
-        var total = 0;
-        keys.forEach(function(k) {
-          try { total += parseFloat(localStorage.getItem(k) || '0') || 0; } catch(e) {}
-        });
-        FOCUS_VAL.textContent = Math.round(total * 10) / 10;
-      })();
-
       setupDrag();
       setupPanel();
       setupPomo();
@@ -2869,32 +2717,12 @@
       pomo.seconds--;
       renderUI();
     }
-    function addFocusHoursToFAB(mins) {
-      var FOCUS_KEYS = ['pomo_focus_ai','pomo_focus_backend','pomo_focus_dsa','pomo_focus_fe'];
-      // We can't know which page we're on in index.html, so we track a generic key
-      var LS_INDEX_FOCUS = 'pomo_focus_index';
-      try {
-        var cur = parseFloat(localStorage.getItem(LS_INDEX_FOCUS) || '0') || 0;
-        cur = Math.round((cur + mins / 60) * 10) / 10;
-        localStorage.setItem(LS_INDEX_FOCUS, cur);
-      } catch(e) {}
-      // Recalculate total for display
-      var total = 0;
-      FOCUS_KEYS.concat(['pomo_focus_index']).forEach(function(k) {
-        try { total += parseFloat(localStorage.getItem(k) || '0') || 0; } catch(e) {}
-      });
-      total = Math.round(total * 10) / 10;
-      var el = document.getElementById('fab-focus-val');
-      if (el) el.textContent = total.toFixed(1);
-    }
-
     function onEnd() {
       START_BTN.style.display = 'flex';
       PAUSE_BTN.style.display = 'none';
       beep();
       openPanel();
       if (!pomo.isBreak) {
-        addFocusHoursToFAB(pomo.workMins);
         pomo.isBreak = true;
         var longBreak = pomo.session >= 4;
         pomo.breakMins = longBreak ? 15 : DEFAULT_BREAK;
@@ -2963,161 +2791,6 @@
   <!-- ============================================================ -->
   <!-- END FLOATING ACTION BUTTON                                    -->
   <!-- ============================================================ -->
-
-  <!-- ============================================================ -->
-  <!-- NAV FIX: Robust tab switching that works even if APP fails   -->
-  <!-- ============================================================ -->
-  <script>
-  (function() {
-    'use strict';
-
-    // Fix 1: Remove the stuck animation from tab panels immediately
-    var style = document.createElement('style');
-    style.textContent = [
-      /* Kill the panelIn animation that gets stuck at opacity:0 */
-      '.tab-panel { animation: none !important; }',
-      /* Ensure active panels are always fully visible */
-      '.tab-panel.active { display: block !important; opacity: 1 !important; transform: none !important; visibility: visible !important; }',
-      /* Ensure nav is always above content and clickable */
-      '#bottom-nav { z-index: 9990 !important; pointer-events: all !important; position: fixed !important; }',
-      '#bottom-nav * { pointer-events: all !important; }',
-      '.nav-item { cursor: pointer !important; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }',
-      /* Content area must NOT overlap nav */
-      '#content { padding-bottom: calc(var(--nav, 60px) + 24px) !important; }',
-      /* Ensure #app doesn't clip the nav */
-      '#app { overflow: visible !important; }',
-    ].join('\n');
-    document.head.appendChild(style);
-
-    // Fix 2: Standalone switchTab — works WITHOUT APP being defined
-    function standaloneSwitch(name) {
-      // Deactivate all panels
-      document.querySelectorAll('.tab-panel').forEach(function(p) {
-        p.classList.remove('active');
-        p.style.display = 'none';
-      });
-      // Deactivate all nav buttons
-      document.querySelectorAll('.nav-item').forEach(function(n) {
-        n.classList.remove('active');
-      });
-
-      // Activate the target panel
-      var panel = document.getElementById('tab-' + name);
-      if (panel) {
-        panel.classList.add('active');
-        panel.style.display = 'block';
-        panel.style.opacity = '1';
-        panel.style.transform = 'none';
-      }
-
-      // Activate nav button
-      var navBtn = document.getElementById('nav-' + name);
-      if (navBtn) {
-        navBtn.classList.add('active');
-        navBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      } else {
-        // Fallback: mark Home active
-        var homeNav = document.getElementById('nav-home');
-        if (homeNav) homeNav.classList.add('active');
-      }
-
-      // Try to call APP.switchTab for data rendering side-effects
-      try {
-        if (window.APP && typeof window.APP.switchTab === 'function') {
-          // Call original for data callbacks (streak render, goals render etc.)
-          // But we've already handled panel visibility above
-          var _orig = window.APP._origSwitchTabData;
-          if (typeof _orig === 'function') _orig(name);
-          else {
-            // Trigger tab-specific renders
-            if (name === 'home' && window.APP.renderHome) window.APP.renderHome();
-            if (name === 'streak' && window.APP.renderStreaks) window.APP.renderStreaks();
-            if (name === 'files' && window.APP.renderFiles) window.APP.renderFiles();
-            if (name === 'calendar' && window.APP.calRender) window.APP.calRender();
-            if (name === 'goals' && window.APP.renderGoals) window.APP.renderGoals();
-            if (name === 'badges' && window.APP.renderBadges) window.APP.renderBadges();
-          }
-        }
-      } catch(e) { console.warn('[navFix] APP render error:', e); }
-    }
-
-    // Fix 3: Override ALL nav button onclick handlers with robust versions
-    // (This runs after DOM is ready so buttons exist)
-    function patchNavButtons() {
-      var navMap = {
-        'nav-home':     'home',
-        'nav-streak':   'streak',
-        'nav-files':    'files',
-        'nav-calendar': 'calendar',
-        'nav-goals':    'goals',
-        'nav-badges':   'badges',
-      };
-
-      Object.keys(navMap).forEach(function(navId) {
-        var tabName = navMap[navId];
-        var btn = document.getElementById(navId);
-        if (!btn) return;
-
-        // Remove existing onclick
-        btn.removeAttribute('onclick');
-        btn.onclick = null;
-
-        // Add both touch and click handlers
-        btn.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          standaloneSwitch(tabName);
-        }, { passive: false });
-
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          standaloneSwitch(tabName);
-        });
-      });
-
-      // Also patch APP.switchTab so future calls use our version
-      function waitForAPP(attempts) {
-        if (attempts <= 0) return;
-        if (window.APP && typeof window.APP.switchTab === 'function') {
-          // Save original data callbacks
-          var _origAPPSwitch = window.APP.switchTab.bind(window.APP);
-          window.APP._origSwitchTabData = function(name) {
-            // Call the original for side effects but override display logic
-            try { _origAPPSwitch(name); } catch(e) {}
-            // Force correct display state
-            requestAnimationFrame(function() {
-              document.querySelectorAll('.tab-panel').forEach(function(p) {
-                if (p.classList.contains('active')) {
-                  p.style.display = 'block';
-                  p.style.opacity = '1';
-                  p.style.transform = 'none';
-                } else {
-                  p.style.display = 'none';
-                }
-              });
-            });
-          };
-          // Replace APP.switchTab with our robust version
-          window.APP.switchTab = standaloneSwitch;
-          window.APP.switchTab._patched = true;
-        } else {
-          setTimeout(function() { waitForAPP(attempts - 1); }, 300);
-        }
-      }
-      waitForAPP(20);
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', patchNavButtons);
-    } else {
-      patchNavButtons();
-    }
-
-    // Also expose standaloneSwitch globally as a fallback
-    window._navSwitch = standaloneSwitch;
-
-  })();
-  </script>
 
   <script>
   // Sync AI Visual Roadmap progress pill from localStorage on load
