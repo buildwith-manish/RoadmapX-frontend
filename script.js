@@ -1269,58 +1269,92 @@ const APP = (function() {
   // Each call to updateStreak (from any roadmap / pomo / project)
   // records one "part" for today in the global streak.
   // A new calendar day with ≥1 part extends the streak by 1.
+  // If the user missed a day (lastDate is before yesterday) the
+  // streak resets to 1 — this is the correct behaviour.
   function updateStreak(type, studied) {
     // type is kept as a parameter for backwards-compat but is no longer used
     // to split the streak — everything feeds one global streak.
     if (!studied) return;
     const streaks = load(KEYS.STREAKS, {});
-    // Migrate legacy per-type data on first run
+
+    // ── Migrate legacy per-type streaks on first run ──────────
     if (!streaks.global) {
-      // Seed global streak from the best existing streak so users don't lose progress
       const legacy = Math.max(
-        streaks.ai?.current  || 0,
-        streaks.dsa?.current || 0,
-        streaks.proj?.current|| 0
+        streaks.ai?.current   || 0,
+        streaks.dsa?.current  || 0,
+        streaks.proj?.current || 0
       );
       const legacyLong = Math.max(
-        streaks.ai?.longest  || 0,
-        streaks.dsa?.longest || 0,
-        streaks.proj?.longest|| 0
+        streaks.ai?.longest   || 0,
+        streaks.dsa?.longest  || 0,
+        streaks.proj?.longest || 0
       );
+      // Merge all per-type history arrays, deduplicate, keep sorted
       const legacyHistory = [
-        ...(streaks.ai?.history  || []),
-        ...(streaks.dsa?.history || []),
-        ...(streaks.proj?.history|| []),
-      ].filter((d,i,a)=>a.indexOf(d)===i).sort();
+        ...(streaks.ai?.history   || []),
+        ...(streaks.dsa?.history  || []),
+        ...(streaks.proj?.history || []),
+      ].filter((d, i, a) => d && a.indexOf(d) === i).sort();
+
+      // Pick the most-recent lastDate across legacy types
+      const legacyLastDate = [
+        streaks.ai?.lastDate,
+        streaks.dsa?.lastDate,
+        streaks.proj?.lastDate,
+      ].filter(Boolean).sort().pop() || null;
+
       streaks.global = {
         current:  legacy,
         longest:  legacyLong,
-        lastDate: streaks.ai?.lastDate || streaks.dsa?.lastDate || null,
+        lastDate: legacyLastDate,
         history:  legacyHistory,
-        // parts: map of date -> count of distinct study actions that day
-        parts:    {},
+        parts:    {},  // date → count of study actions that day
       };
     }
 
     const s = streaks.global;
     const todayStr = today();
 
-    // Record a part for today regardless of streak logic
-    if (!s.parts) s.parts = {};
+    // Ensure sub-objects exist (guard against corrupt storage)
+    if (!s.parts)   s.parts   = {};
+    if (!s.history) s.history = [];
+
+    // ── 1. Record a "part" for today ──────────────────────────
     s.parts[todayStr] = (s.parts[todayStr] || 0) + 1;
+
     // Trim parts older than 60 days to keep storage small
     const cutoff = addDays(todayStr, -60);
     Object.keys(s.parts).forEach(d => { if (d < cutoff) delete s.parts[d]; });
 
-    // Extend streak only once per calendar day
+    // ── 2. Update streak counter — only once per calendar day ─
     if (s.lastDate !== todayStr) {
       const yesterday = addDays(todayStr, -1);
-      s.current = (s.lastDate === yesterday) ? s.current + 1 : 1;
-      s.longest = Math.max(s.longest, s.current);
+
+      if (s.lastDate === yesterday) {
+        // Studied yesterday → extend streak
+        s.current = (s.current || 0) + 1;
+      } else if (!s.lastDate) {
+        // First ever study session
+        s.current = 1;
+      } else {
+        // Missed one or more days → streak resets to 1
+        s.current = 1;
+      }
+
+      // Update longest streak record
+      s.longest = Math.max(s.longest || 0, s.current);
+
+      // Record today in the history array (deduplicated)
+      if (!s.history.includes(todayStr)) {
+        s.history.push(todayStr);
+        s.history.sort();                          // keep chronological
+      }
+      // Cap history at 365 days to avoid unbounded growth
+      if (s.history.length > 365) {
+        s.history = s.history.slice(-365);
+      }
+
       s.lastDate = todayStr;
-      if (!s.history) s.history = [];
-      s.history.push(todayStr);
-      if (s.history.length > 90) s.history = s.history.slice(-90);
     }
 
     save(KEYS.STREAKS, streaks);
@@ -1351,15 +1385,25 @@ const APP = (function() {
     // Parts completed today
     const todayParts = parts[todayStr] || 0;
 
+    // Deduplicate history before counting total days (guards against legacy duplicate entries)
+    const uniqueHistoryDays = [...new Set(s.history || [])].length;
+
+    // ── Streak health warning ──────────────────────────────────
+    // If the user studied before but not today AND not yesterday, streak is broken.
+    const yesterday = addDays(todayStr, -1);
+    const streakBroken = s.lastDate && s.lastDate < yesterday && !isActiveToday;
+
     container.innerHTML = `
-    <div class="streak-card" style="border-color:${isActiveToday?'rgba(0,245,212,.2)':''}">
+    <div class="streak-card" style="border-color:${isActiveToday?'rgba(0,245,212,.2)':streakBroken?'rgba(244,63,94,.2)':''}">
       <div class="streak-top">
         <div>
           <div class="streak-name" style="color:var(--c1)">🔥 Study Streak</div>
           <div style="font-size:10px;color:var(--t2);margin-top:2px">
             ${isActiveToday
               ? `✅ Studied today! (${todayParts} part${todayParts!==1?'s':''} completed)`
-              : '⚠️ Study any part today to keep your streak!'}
+              : streakBroken
+                ? `💔 Streak lost — last studied ${fmtDate(s.lastDate)}. Start fresh today!`
+                : '⚠️ Study any part today to keep your streak!'}
           </div>
         </div>
         <div class="streak-flame" style="${s.current > 0 ? '' : 'opacity:.3'}">
@@ -1377,7 +1421,7 @@ const APP = (function() {
           <div class="streak-num-lbl">Longest</div>
         </div>
         <div class="streak-num">
-          <div class="streak-num-val" style="color:var(--c5)">${(s.history||[]).length}</div>
+          <div class="streak-num-val" style="color:var(--c5)">${uniqueHistoryDays}</div>
           <div class="streak-num-lbl">Total Days</div>
         </div>
         <div class="streak-num">
@@ -1529,12 +1573,17 @@ const APP = (function() {
     const idx = projects.findIndex(p => p.id === id);
     if (idx < 0) return;
     projects[idx].pomoSessions = (projects[idx].pomoSessions || 0) + 1;
-    // Update streak
+    // Update project-level streak
     const todayStr = today();
     if (projects[idx].lastPomoDate !== todayStr) {
       const yesterday = addDays(todayStr, -1);
-      if (projects[idx].lastPomoDate === yesterday) projects[idx].streak = (projects[idx].streak || 0) + 1;
-      else projects[idx].streak = 1;
+      if (projects[idx].lastPomoDate === yesterday) {
+        // Consecutive day — extend streak
+        projects[idx].streak = (projects[idx].streak || 0) + 1;
+      } else {
+        // Missed a day (or first session) — reset to 1
+        projects[idx].streak = 1;
+      }
       projects[idx].lastPomoDate = todayStr;
     }
     save(KEYS.PROJECTS, projects);
