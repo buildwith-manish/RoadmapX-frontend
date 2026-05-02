@@ -268,7 +268,7 @@
 const RD = (() => {
   const API = window.RX_API;
   let _enabled = false;
-  let _hasEmail = false;
+  let _hasEmail = true; // default true — only false if API confirms no email
 
   const TZ_NAMES = {
     'Asia/Kolkata': 'India IST',
@@ -321,10 +321,6 @@ const RD = (() => {
   }
 
   function toggleEnabled() {
-    if (!_hasEmail) {
-      toast('Add an email to your profile first.', true);
-      return;
-    }
     setToggleUI(!_enabled);
     updatePreview();
   }
@@ -333,6 +329,14 @@ const RD = (() => {
     const btn = document.getElementById('save-btn');
     btn.disabled = true;
     btn.textContent = 'Saving...';
+
+    // Warn if no email but don't block
+    if (_enabled && !_hasEmail) {
+      toast('⚠ No email on your account — reminders won\'t send until you add one in Settings.', true);
+      btn.disabled = false;
+      btn.textContent = 'Save Reminder';
+      return;
+    }
 
     try {
       const time = _enabled ? document.getElementById('reminder-time').value : null;
