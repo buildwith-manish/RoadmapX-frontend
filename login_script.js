@@ -132,7 +132,7 @@ async function doLogin() {
     }
   } catch (err) {
     console.error('[login] fetch error:', err);
-    showMsg('login', 'Cannot reach server. Check your connection.', 'error');
+    showMsg('login', 'Server is waking up (free tier). Please wait 20 seconds and try again.', 'error');
     setLoading('login-btn', false);
   }
 }
@@ -216,7 +216,7 @@ async function signupStep2() {
       setLoading('signup-btn', false);
     }
   } catch (err) {
-    showMsg('signup', 'Cannot reach server.', 'error');
+    showMsg('signup', 'Server is waking up (free tier). Please wait 20 seconds and try again.', 'error');
     setLoading('signup-btn', false);
   }
 }
