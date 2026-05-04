@@ -87,7 +87,7 @@ async function doLogin() {
       method:      'POST',
       credentials: 'include',          // sends + receives the session cookie
       headers:     { 'Content-Type': 'application/json' },
-      body:        JSON.stringify({ email: username, password }),
+      body:        JSON.stringify({ username, password }),
     });
 
     const data = await res.json();
@@ -159,14 +159,20 @@ function goStep(n) {
   if (n === 1) {
     document.getElementById('s-password').value = '';
     document.getElementById('s-confirm').value  = '';
+    document.getElementById('s-email') && (document.getElementById('s-email').value = '');
   }
 }
 
 function signupStep1() {
   hideMsg('signup');
   const username = document.getElementById('s-username').value.trim();
+  const email    = document.getElementById('s-email').value.trim();
   if (!username || username.length < 3) {
     showMsg('signup', 'Username must be 3+ characters.', 'error');
+    return;
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showMsg('signup', 'Please enter a valid email address.', 'error');
     return;
   }
   goStep(2);
@@ -176,6 +182,7 @@ function signupStep1() {
 async function signupStep2() {
   hideMsg('signup');
   const username = document.getElementById('s-username').value.trim();
+  const email    = document.getElementById('s-email').value.trim();
   const password = document.getElementById('s-password').value;
   const confirm  = document.getElementById('s-confirm').value;
 
@@ -190,7 +197,7 @@ async function signupStep2() {
       method:      'POST',
       credentials: 'include',
       headers:     { 'Content-Type': 'application/json' },
-      body:        JSON.stringify({ email: username, password }),
+      body:        JSON.stringify({ username, email, password }),
     });
     const data = await res.json();
 
@@ -200,6 +207,7 @@ async function signupStep2() {
         setLoading('signup-btn', false);
         goStep(1);
         document.getElementById('s-username').value = '';
+        document.getElementById('s-email').value = '';
         switchTab('login');
         document.getElementById('l-username').value = username;
       }, 1500);
