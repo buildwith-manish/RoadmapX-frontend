@@ -87,7 +87,7 @@ async function doLogin() {
       method:      'POST',
       credentials: 'include',          // sends + receives the session cookie
       headers:     { 'Content-Type': 'application/json' },
-      body:        JSON.stringify({ username, password }),
+      body:        JSON.stringify({ email: username, password }),
     });
 
     const data = await res.json();
@@ -190,7 +190,7 @@ async function signupStep2() {
       method:      'POST',
       credentials: 'include',
       headers:     { 'Content-Type': 'application/json' },
-      body:        JSON.stringify({ username, password }),
+      body:        JSON.stringify({ email: username, password }),
     });
     const data = await res.json();
 
