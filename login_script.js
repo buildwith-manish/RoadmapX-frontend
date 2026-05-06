@@ -22,6 +22,9 @@
 const API = window.RX_API || "https://roadmapx-backend-3qmc.onrender.com";
 const HOME = 'index.html';
 
+// Used by the EMAIL_NOT_VERIFIED resend flow (avoids XSS via onclick interpolation)
+let _pendingResendUsername = '';
+
 // ── Tab switcher ─────────────────────────────────────────────────────────
 function switchTab(tab) {
   const isLogin = tab === 'login';
@@ -54,7 +57,8 @@ function showMsg(panel, text, type) {
   const box = document.getElementById(panel + '-msg');
   if (!box) return;
   box.className = 'msg-box ' + type + ' visible';
-  document.getElementById(panel + '-msg-text').textContent = text;
+  // Use innerHTML so that HTML links (e.g. Resend email) render correctly.
+  document.getElementById(panel + '-msg-text').innerHTML = text;
 }
 
 function hideMsg(panel) {
@@ -129,10 +133,16 @@ async function doLogin() {
     } else if (data.code === 'EMAIL_NOT_VERIFIED') {
       // FIX: Surface a clear, actionable error for unverified accounts.
       // The backend returns code:"EMAIL_NOT_VERIFIED" in this case.
+      // SECURITY FIX: Do NOT inject username into onclick attribute (XSS vector).
+      // Instead, store it in a module-level variable and reference it safely.
+      _pendingResendUsername = username;
       showMsg('login',
         'Email not verified. Check your inbox (and spam folder) for the confirmation link. ' +
-        '<a href="javascript:void(0)" onclick="resendVerification(\'' + username + '\')" style="color:var(--accent);text-decoration:underline;">Resend email</a>',
+        '<a href="javascript:void(0)" id="resend-link" style="color:var(--accent);text-decoration:underline;">Resend email</a>',
         'error');
+      // Attach event listener on the element — no inline JS, no string interpolation.
+      const resendLink = document.getElementById('resend-link');
+      if (resendLink) resendLink.addEventListener('click', () => resendVerification(_pendingResendUsername));
       setLoading('login-btn', false);
 
     } else {

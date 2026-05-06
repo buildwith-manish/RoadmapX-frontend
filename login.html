@@ -631,7 +631,7 @@
 
   </div>
 
-  <!-- Google Identity Services library -->
+  <!-- Google Identity Services library (ONE-TAP + popup flow) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <script>
@@ -654,63 +654,122 @@
       document.addEventListener('DOMContentLoaded', showAuthForm);
     }
 
-    // ── Google Sign-In ──────────────────────────────────────────────────────
-    // REPLACE 'YOUR_GOOGLE_CLIENT_ID' with your actual Client ID from
-    // https://console.cloud.google.com → APIs & Services → Credentials
+    // ─────────────────────────────────────────────────────────────────────
+    //  GOOGLE SIGN-IN  (v2 — mobile-compatible)
+    //
+    //  STRATEGY:
+    //    1. Try GSI One-Tap / popup (works on desktop Chrome).
+    //    2. If prompt is suppressed/blocked (Android WebView, Samsung Internet,
+    //       Firefox, Safari) → fall back to full OAuth redirect flow via the
+    //       backend /auth/google/redirect endpoint.
+    //
+    //  WHY REDIRECT FALLBACK?
+    //    google.accounts.id.prompt() silently does nothing on many Android
+    //    browsers because they block third-party popups.  A full-page redirect
+    //    to accounts.google.com always works.
+    // ─────────────────────────────────────────────────────────────────────
     const GOOGLE_CLIENT_ID = '659466725316-onvlvclmfn6r6n7h5p7in9ffqdvcbpm3.apps.googleusercontent.com';
-    // FIX: Do NOT capture window.RX_API at parse time (config.js may not have run yet).
-    // Always read it lazily at call time via a getter function.
-    function getAPI() { return window.RX_API || 'https://roadmapx-backend-3qmc.onrender.com'; }
+    const API = window.RX_API || 'https://roadmapx-backend-3qmc.onrender.com';
 
-    function startGoogleSignIn() {
+    // SVG markup for the Google button (stored so we can restore it)
+    const GOOGLE_BTN_INNER =
+      '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>' +
+        '<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>' +
+        '<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>' +
+        '<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>' +
+      '</svg>Continue with Google';
+
+    function _resetGoogleBtn() {
+      const btn = document.getElementById('btn-google');
+      if (!btn) return;
+      btn.classList.remove('google-loading');
+      btn.innerHTML = GOOGLE_BTN_INNER;
+      btn.disabled = false;
+    }
+
+    function _setGoogleBtnLoading() {
       const btn = document.getElementById('btn-google');
       if (!btn) return;
       btn.classList.add('google-loading');
-      btn.textContent = 'Opening Google…';
-
-      // Wait for the GSI library to load
-      const tryInit = () => {
-        if (typeof google === 'undefined' || !google.accounts) {
-          setTimeout(tryInit, 200);
-          return;
-        }
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback:  handleGoogleCredential,
-          auto_select: false,
-        });
-        google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // Prompt was blocked (e.g. Safari) — fall back to popup
-            google.accounts.id.renderButton(
-              document.getElementById('btn-google'),
-              { theme: 'filled_black', size: 'large', width: 320 }
-            );
-          }
-        });
-      };
-      tryInit();
+      btn.innerHTML = '<span style="opacity:.7">Opening Google…</span>';
+      btn.disabled = true;
     }
 
+    // ── Redirect flow (mobile-safe fallback) ─────────────────────────────
+    // This asks our backend to build a Google OAuth URL and redirects the
+    // whole page to it.  Google redirects back to /auth/google/callback,
+    // which sets the session, then redirects to index.html.
+    function _startRedirectFlow() {
+      // Save current scroll/state so user returns to same page
+      sessionStorage.setItem('rx_google_pending', '1');
+      window.location.href = API + '/auth/google/redirect';
+    }
+
+    // ── Primary flow: GSI One-Tap / prompt ───────────────────────────────
+    function startGoogleSignIn() {
+      _setGoogleBtnLoading();
+
+      const LOAD_TIMEOUT = 3000; // ms to wait for GSI library
+
+      const tryInit = (deadline) => {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+          _initGSI();
+        } else if (Date.now() < deadline) {
+          setTimeout(() => tryInit(deadline), 150);
+        } else {
+          // GSI library didn't load (network issue, ad-blocker) → redirect
+          console.warn('[Google] GSI library not loaded, using redirect flow');
+          _startRedirectFlow();
+        }
+      };
+
+      tryInit(Date.now() + LOAD_TIMEOUT);
+    }
+
+    function _initGSI() {
+      google.accounts.id.initialize({
+        client_id:   GOOGLE_CLIENT_ID,
+        callback:    handleGoogleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      // Attempt One-Tap / prompt
+      google.accounts.id.prompt((notification) => {
+        const reason = notification.getNotDisplayedReason
+          ? notification.getNotDisplayedReason()
+          : null;
+
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // Prompt blocked (mobile browser, privacy setting, already dismissed)
+          // → fall back to full-page redirect
+          console.warn('[Google] Prompt not displayed (' + reason + '), redirect flow');
+          _startRedirectFlow();
+        }
+        // If displayed, handleGoogleCredential will be called on success.
+      });
+    }
+
+    // ── Credential handler (called by GSI on success) ─────────────────────
     async function handleGoogleCredential(response) {
-      const btn = document.getElementById('btn-google');
-      if (btn) { btn.classList.add('google-loading'); }
+      _setGoogleBtnLoading();
 
       try {
-        const res = await fetch(getAPI() + '/auth/google', {
-          method: 'POST',
+        const res = await fetch(API + '/auth/google', {
+          method:      'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credential: response.credential }),
+          headers:     { 'Content-Type': 'application/json' },
+          body:        JSON.stringify({ credential: response.credential }),
         });
         const data = await res.json();
 
         if (data.success) {
-          // Write the same keys auth_guard.js reads
+          // Write auth keys BEFORE redirect so auth_guard renders immediately
           localStorage.setItem('rx_token', 'true');
           localStorage.setItem('rx_user', data.username);
 
-          // Let HybridData sync if available (non-blocking)
+          // Non-blocking HybridData sync
           try {
             if (window.HybridData && typeof window.HybridData.onLoginSuccess === 'function') {
               await window.HybridData.onLoginSuccess(data.username);
@@ -719,18 +778,68 @@
 
           window.location.replace('index.html');
         } else {
-          alert('Google sign-in failed: ' + (data.message || 'Unknown error'));
-          if (btn) { btn.classList.remove('google-loading'); btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google'; }
+          _showGoogleError(data.message || 'Google sign-in failed.');
         }
       } catch (err) {
-        alert('Network error. Please try again.');
-        if (btn) { btn.classList.remove('google-loading'); }
+        console.error('[Google] credential exchange error:', err);
+        _showGoogleError('Network error. Please try again.');
       }
     }
+
+    function _showGoogleError(msg) {
+      _resetGoogleBtn();
+      // Reuse the login message box so errors appear inline (not as alert)
+      const box = document.getElementById('login-msg');
+      const txt = document.getElementById('login-msg-text');
+      if (box && txt) {
+        txt.textContent = msg;  // plain text — no HTML in error msgs = no XSS
+        box.className = 'msg-box error visible';
+      } else {
+        alert(msg);
+      }
+    }
+
+    // ── Handle redirect callback result ──────────────────────────────────
+    // After /auth/google/callback the backend redirects to:
+    //   login.html?google=ok&user=USERNAME  or  login.html?google=fail&msg=...
+    (function handleGoogleRedirectReturn() {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has('google')) return;
+
+      // Clean URL immediately so refresh doesn't re-trigger
+      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+      sessionStorage.removeItem('rx_google_pending');
+
+      if (params.get('google') === 'ok') {
+        const username = params.get('user') || '';
+        localStorage.setItem('rx_token', 'true');
+        localStorage.setItem('rx_user', username);
+
+        try {
+          if (window.HybridData && typeof window.HybridData.onLoginSuccess === 'function') {
+            window.HybridData.onLoginSuccess(username).catch(() => {});
+          }
+        } catch (e) { /* ignore */ }
+
+        window.location.replace('index.html');
+      } else {
+        // Show the failure reason in the login message box
+        const reason = params.get('msg') || 'Google sign-in was cancelled.';
+        document.addEventListener('DOMContentLoaded', () => {
+          showAuthForm();
+          const box = document.getElementById('login-msg');
+          const txt = document.getElementById('login-msg-text');
+          if (box && txt) {
+            txt.textContent = reason;
+            box.className = 'msg-box error visible';
+          }
+        });
+      }
+    })();
   </script>
 
-  <script src="config.js"></script>
-  <script src="login_script.js" defer></script>
+  <script src="config.js" defer></script>
+  <script src="login_script.js"></script>
 
 </body>
 </html>
