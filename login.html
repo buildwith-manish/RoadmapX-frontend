@@ -658,7 +658,9 @@
     // REPLACE 'YOUR_GOOGLE_CLIENT_ID' with your actual Client ID from
     // https://console.cloud.google.com → APIs & Services → Credentials
     const GOOGLE_CLIENT_ID = '659466725316-onvlvclmfn6r6n7h5p7in9ffqdvcbpm3.apps.googleusercontent.com';
-    const API = window.RX_API;
+    // FIX: Do NOT capture window.RX_API at parse time (config.js may not have run yet).
+    // Always read it lazily at call time via a getter function.
+    function getAPI() { return window.RX_API || 'https://roadmapx-backend-3qmc.onrender.com'; }
 
     function startGoogleSignIn() {
       const btn = document.getElementById('btn-google');
@@ -695,7 +697,7 @@
       if (btn) { btn.classList.add('google-loading'); }
 
       try {
-        const res = await fetch(API + '/auth/google', {
+        const res = await fetch(getAPI() + '/auth/google', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -727,8 +729,8 @@
     }
   </script>
 
-  <script src="config.js" defer></script>
-  <script src="login_script.js"></script>
+  <script src="config.js"></script>
+  <script src="login_script.js" defer></script>
 
 </body>
 </html>

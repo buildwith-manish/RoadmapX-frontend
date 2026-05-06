@@ -126,6 +126,15 @@ async function doLogin() {
       // immediately (optimistic render) and then confirm via /me.
       setTimeout(() => { window.location.href = HOME; }, 600);
 
+    } else if (data.code === 'EMAIL_NOT_VERIFIED') {
+      // FIX: Surface a clear, actionable error for unverified accounts.
+      // The backend returns code:"EMAIL_NOT_VERIFIED" in this case.
+      showMsg('login',
+        'Email not verified. Check your inbox (and spam folder) for the confirmation link. ' +
+        '<a href="javascript:void(0)" onclick="resendVerification(\'' + username + '\')" style="color:var(--accent);text-decoration:underline;">Resend email</a>',
+        'error');
+      setLoading('login-btn', false);
+
     } else {
       showMsg('login', data.message || 'Login failed. Check credentials.', 'error');
       setLoading('login-btn', false);
@@ -134,6 +143,24 @@ async function doLogin() {
     console.error('[login] fetch error:', err);
     showMsg('login', 'Server is waking up (free tier). Please wait 20 seconds and try again.', 'error');
     setLoading('login-btn', false);
+  }
+}
+
+// ── Resend verification email ─────────────────────────────────────────────
+async function resendVerification(username) {
+  showMsg('login', 'Sending verification email...', 'success');
+  try {
+    const email = prompt('Enter the email address you registered with:');
+    if (!email) return;
+    const res = await fetch(`${API}/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    showMsg('login', data.message || 'Verification email sent. Check your inbox.', 'success');
+  } catch (e) {
+    showMsg('login', 'Failed to resend. Please try again.', 'error');
   }
 }
 
@@ -202,7 +229,7 @@ async function signupStep2() {
     const data = await res.json();
 
     if (data.success) {
-      showMsg('signup', 'Account created! Please log in.', 'success');
+      showMsg('signup', '✅ Account created! Check your inbox to verify your email before logging in.', 'success');
       setTimeout(() => {
         setLoading('signup-btn', false);
         goStep(1);
