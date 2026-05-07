@@ -1002,7 +1002,8 @@
       if (btn) { btn.disabled = true; btn.classList.add('otp-loading'); }
 
       try {
-        var res  = await fetch(getAPI() + '/auth/otp/send', {
+        var apiBase = (window.RX_API || "https://roadmapx-backend-3qmc.onrender.com");
+        var res  = await fetch(apiBase + '/auth/otp/send', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email }),
@@ -1026,7 +1027,7 @@
           _otpSetMsg('email', data.message || 'Failed to send code. Try again.', 'error');
         }
       } catch(e) {
-        _otpSetMsg('email', 'Server starting up — wait 20s and retry.', 'error');
+        _otpSetMsg('email', 'Unable to send OTP. Please try again later.', 'error');
       } finally {
         if (btn) { btn.disabled = false; btn.classList.remove('otp-loading'); }
       }
@@ -1043,7 +1044,8 @@
       if (btn) { btn.disabled = true; btn.classList.add('loading'); }
 
       try {
-        var res  = await fetch(getAPI() + '/auth/otp/verify', {
+        var apiBase = (window.RX_API || "https://roadmapx-backend-3qmc.onrender.com");
+        var res  = await fetch(apiBase + '/auth/otp/verify', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: _otpEmail, otp: code }),
@@ -1104,7 +1106,8 @@
       var btn = document.getElementById('otp-send-btn');
       if (btn) { btn.disabled = true; btn.classList.add('otp-loading'); }
       try {
-        var res  = await fetch(getAPI() + '/auth/otp/send', {
+        var apiBase = (window.RX_API || "https://roadmapx-backend-3qmc.onrender.com");
+        var res  = await fetch(apiBase + '/auth/otp/send', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: _otpEmail }),

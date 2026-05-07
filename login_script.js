@@ -22,6 +22,9 @@
 const API = window.RX_API || "https://roadmapx-backend-3qmc.onrender.com";
 const HOME = 'index.html';
 
+// Helper so both inline scripts and this file share the same base URL
+function getAPI() { return API; }
+
 // Used by the EMAIL_NOT_VERIFIED resend flow (avoids XSS via onclick interpolation)
 let _pendingResendUsername = '';
 
