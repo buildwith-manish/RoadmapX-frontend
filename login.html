@@ -468,21 +468,32 @@
 
       <div class="or-divider">or</div>
 
-      <!-- Secondary action: Sign In -->
-      <button class="btn-signin-secondary" type="button" onclick="showAuthForm()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10 17 15 12 10 7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
-        </svg>
-        Sign In / Create Account
-      </button>
+      <!-- Email magic link -->
+      <div id="email-magic-wrap">
+        <div class="msg-box" id="email-msg" style="margin-bottom:10px;">
+          <span class="msg-icon">⚠</span>
+          <span id="email-msg-text"></span>
+        </div>
+        <div class="input-wrap" style="margin-bottom:10px;">
+          <input type="email" id="email-input" placeholder="Enter your email"
+            autocomplete="email"
+            style="padding:13px 14px;border-radius:10px;font-size:0.94rem;padding-right:14px;"
+            onkeydown="if(event.key==='Enter') doEmailSignIn()" />
+        </div>
+        <button class="btn-signin-secondary" type="button" onclick="doEmailSignIn()" id="email-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          Continue with Email
+        </button>
+      </div>
 
     </div>
     <!-- /guest-first-view -->
 
     <!-- ══ AUTH FORM VIEW (shown after clicking Sign In) ══ -->
-    <div id="auth-form-view">
+    <div id="auth-form-view" style="display:none">
 
       <button class="back-to-guest" type="button" onclick="showGuestFirst()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -651,6 +662,65 @@
 
     if (window.location.hash === '#signin') {
       document.addEventListener('DOMContentLoaded', showAuthForm);
+    }
+
+    // Handle ?magic=fail redirect from backend (link expired/invalid)
+    (function handleMagicFail() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('magic') === 'fail') {
+        history.replaceState({}, '', window.location.pathname);
+        document.addEventListener('DOMContentLoaded', function() {
+          const msg    = params.get('msg') || 'Magic link expired or invalid.';
+          const msgBox = document.getElementById('email-msg');
+          const msgTxt = document.getElementById('email-msg-text');
+          if (msgBox && msgTxt) {
+            msgTxt.textContent = decodeURIComponent(msg).replace(/\+/g, ' ');
+            msgBox.className = 'msg-box error visible';
+          }
+        });
+      }
+    })();
+
+    // ── Email magic link sign-in ──────────────────────────────────────────
+    async function doEmailSignIn() {
+      const emailEl = document.getElementById('email-input');
+      const msgBox  = document.getElementById('email-msg');
+      const msgTxt  = document.getElementById('email-msg-text');
+      const btn     = document.getElementById('email-btn');
+      const email   = emailEl ? emailEl.value.trim() : '';
+
+      function showEmailMsg(text, type) {
+        if (msgTxt) msgTxt.textContent = text;
+        if (msgBox) msgBox.className = 'msg-box ' + type + ' visible';
+      }
+      function hideEmailMsg() { if (msgBox) msgBox.className = 'msg-box'; }
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showEmailMsg('Please enter a valid email address.', 'error');
+        return;
+      }
+
+      hideEmailMsg();
+      if (btn) { btn.disabled = true; btn.classList.add('google-loading'); }
+
+      try {
+        const API = window.RX_API || 'https://roadmapx-backend-3qmc.onrender.com';
+        const res  = await fetch(API + '/auth/email/send-link', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showEmailMsg('✅ Magic link sent! Check your inbox — link expires in 15 minutes.', 'success');
+        } else {
+          showEmailMsg(data.message || 'Failed to send link. Please try again.', 'error');
+        }
+      } catch (err) {
+        showEmailMsg('Server is waking up (free tier). Wait 20 s and retry.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.classList.remove('google-loading'); }
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────────

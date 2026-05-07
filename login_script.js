@@ -32,7 +32,7 @@ function switchTab(tab) {
   document.getElementById('tab-signup').classList.toggle('active', !isLogin);
   document.getElementById('login-panel').classList.toggle('hidden', !isLogin);
   document.getElementById('signup-panel').classList.toggle('hidden', isLogin);
-  document.getElementById('subtitle').textContent = isLogin
+  const sub = document.getElementById('subtitle'); if(sub) sub.textContent = isLogin
     ? '// Track your AI journey'
     : '// Create your account';
   hideMsg('login');
