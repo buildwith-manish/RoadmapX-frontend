@@ -401,12 +401,12 @@
     .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
     .google-loading { opacity: 0.6; pointer-events: none; }
 
-    /* ── EMAIL MAGIC LINK ── */
-    .email-section { display: flex; flex-direction: column; gap: 8px; }
+    /* ── EMAIL OTP SECTION ── */
+    .otp-section { display: flex; flex-direction: column; gap: 8px; }
 
-    input[type="email"] {
+    input[type="email"], input[type="tel"] {
       width: 100%;
-      padding: 12px 14px;
+      padding: 13px 14px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(123,47,255,0.20);
       border-radius: 10px; color: var(--text);
@@ -414,21 +414,66 @@
       outline: none;
       transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
     }
-    input[type="email"]::placeholder { color: var(--text-dim); opacity: 0.55; }
-    input[type="email"]:focus {
+    input[type="email"]::placeholder,
+    input[type="tel"]::placeholder  { color: var(--text-dim); opacity: 0.55; }
+    input[type="email"]:focus,
+    input[type="tel"]:focus {
       border-color: var(--cyan);
       background: rgba(0,245,212,0.03);
       box-shadow: 0 0 0 3px rgba(0,245,212,0.09), 0 0 12px rgba(0,245,212,0.06);
     }
-    .email-msg {
+
+    /* OTP 6-box display */
+    .otp-boxes {
+      display: flex; gap: 8px; justify-content: center;
+    }
+    .otp-box {
+      width: 44px; height: 52px;
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(123,47,255,0.25);
+      border-radius: 10px;
+      font-size: 1.4rem; font-weight: 800;
+      font-family: 'Courier New', monospace;
+      color: var(--cyan); text-align: center;
+      outline: none; caret-color: var(--cyan);
+      transition: border-color var(--transition), box-shadow var(--transition);
+      -webkit-appearance: none;
+    }
+    .otp-box:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0,245,212,0.13), 0 0 12px rgba(0,245,212,0.08);
+    }
+    .otp-box.filled { border-color: rgba(0,245,212,0.45); }
+
+    .otp-msg {
       display: none; align-items: center; gap: 8px;
       padding: 9px 12px; border-radius: 8px;
       font-size: 0.82rem; line-height: 1.4;
       border: 1px solid transparent;
     }
-    .email-msg.error   { display:flex; background:rgba(255,45,110,0.08); border-color:rgba(255,45,110,0.25); color:#ff6b8a; }
-    .email-msg.success { display:flex; background:rgba(0,245,212,0.08); border-color:rgba(0,245,212,0.25); color:var(--cyan); }
-    .email-loading { opacity:0.6; pointer-events:none; }
+    .otp-msg.error   { display:flex; background:rgba(255,45,110,0.08); border-color:rgba(255,45,110,0.25); color:#ff6b8a; }
+    .otp-msg.success { display:flex; background:rgba(0,245,212,0.08); border-color:rgba(0,245,212,0.25); color:var(--cyan); }
+
+    .otp-resend {
+      background: none; border: none; padding: 0;
+      color: var(--text-dim); font-size: 0.78rem;
+      font-family: 'Courier New', monospace;
+      cursor: pointer; text-align: center;
+      transition: color var(--transition);
+    }
+    .otp-resend:hover { color: var(--cyan); }
+    .otp-resend:disabled { opacity: 0.4; cursor: default; }
+
+    .otp-back {
+      background: none; border: none; padding: 0;
+      color: var(--text-dim); font-size: 0.76rem;
+      font-family: 'Courier New', monospace; letter-spacing: 0.04em;
+      cursor: pointer; display: flex; align-items: center; gap: 4px;
+      transition: color var(--transition);
+    }
+    .otp-back:hover { color: var(--cyan); }
+
+    .otp-loading { opacity: 0.6; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -497,19 +542,56 @@
 
       <div class="or-divider">or</div>
 
-      <!-- Email magic link -->
-      <div class="email-section">
-        <div class="email-msg" id="email-msg"><span id="email-msg-text"></span></div>
-        <input type="email" id="email-input" placeholder="Enter your email"
-          autocomplete="email"
-          onkeydown="if(event.key==='Enter')doEmailSignIn()" />
-        <button class="btn-signin-secondary" id="email-btn" type="button" onclick="doEmailSignIn()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2"/>
-            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-          </svg>
-          Continue with Email
-        </button>
+      <!-- Email OTP sign-in -->
+      <div class="otp-section">
+
+        <!-- Step 1: Email input -->
+        <div id="otp-step-email">
+          <div class="otp-msg" id="otp-msg-email"><span id="otp-msg-email-text"></span></div>
+          <input type="email" id="otp-email-input" placeholder="Enter your email"
+            autocomplete="email"
+            onkeydown="if(event.key==='Enter')otpSendCode()" />
+          <button class="btn-signin-secondary" id="otp-send-btn" type="button"
+            onclick="otpSendCode()" style="margin-top:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            Send OTP
+          </button>
+        </div>
+
+        <!-- Step 2: OTP boxes (hidden until code sent) -->
+        <div id="otp-step-code" style="display:none; flex-direction:column; gap:10px;">
+          <div class="otp-msg" id="otp-msg-code"><span id="otp-msg-code-text"></span></div>
+          <p style="font-size:0.78rem;color:var(--text-dim);text-align:center;font-family:'Courier New',monospace;">
+            Enter the 6-digit code sent to<br>
+            <span id="otp-email-display" style="color:var(--cyan)"></span>
+          </p>
+          <div class="otp-boxes">
+            <input class="otp-box" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="ob0"/>
+            <input class="otp-box" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="ob1"/>
+            <input class="otp-box" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="ob2"/>
+            <input class="otp-box" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="ob3"/>
+            <input class="otp-box" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="ob4"/>
+            <input class="otp-box" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="ob5"/>
+          </div>
+          <button class="btn-submit" id="otp-verify-btn" type="button" onclick="otpVerify()"
+            style="background:linear-gradient(90deg,var(--cyan),var(--purple));margin-top:2px;">
+            <span class="btn-text">Verify & Sign In</span>
+            <span class="spinner"></span>
+          </button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
+            <button class="otp-back" type="button" onclick="otpGoBack()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Change email
+            </button>
+            <button class="otp-resend" id="otp-resend-btn" type="button" onclick="otpResend()">
+              Resend code
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -880,59 +962,211 @@
       }
     })();
 
-    // ── Magic link: handle ?magic=fail returned from backend ─────────────
-    (function() {
-      const p = new URLSearchParams(window.location.search);
-      if (p.get('magic') !== 'fail') return;
-      history.replaceState({}, '', window.location.pathname);
-      const raw = p.get('msg') || 'Magic link expired or already used.';
-      const msg = decodeURIComponent(raw).replace(/\+/g, ' ');
-      document.addEventListener('DOMContentLoaded', function() {
-        var el = document.getElementById('email-msg');
-        var tx = document.getElementById('email-msg-text');
-        if (el && tx) { tx.textContent = msg; el.className = 'email-msg error'; }
+    // ════════════════════════════════════════════════════
+    //  EMAIL OTP SIGN-IN
+    // ════════════════════════════════════════════════════
+    let _otpEmail = '';
+
+    // ── helpers ──
+    function _otpSetMsg(step, text, type) {
+      var msg = document.getElementById('otp-msg-' + step);
+      var txt = document.getElementById('otp-msg-' + step + '-text');
+      if (txt) txt.textContent = text;
+      if (msg) msg.className = 'otp-msg ' + (type || '');
+    }
+    function _otpClearMsg(step) { _otpSetMsg(step, '', ''); }
+
+    function _otpGetCode() {
+      return [0,1,2,3,4,5].map(i => {
+        var el = document.getElementById('ob' + i);
+        return el ? el.value : '';
+      }).join('');
+    }
+    function _otpClearBoxes() {
+      [0,1,2,3,4,5].forEach(i => {
+        var el = document.getElementById('ob' + i);
+        if (el) { el.value = ''; el.classList.remove('filled'); }
       });
-    })();
+    }
 
-    // ── Magic link: send link ─────────────────────────────────────────────
-    async function doEmailSignIn() {
-      var el  = document.getElementById('email-input');
-      var msg = document.getElementById('email-msg');
-      var txt = document.getElementById('email-msg-text');
-      var btn = document.getElementById('email-btn');
-      var email = el ? el.value.trim() : '';
-
-      function setMsg(text, type) {
-        if (txt) txt.textContent = text;
-        if (msg) msg.className = 'email-msg ' + type;
-      }
+    // ── Step 1: Send OTP ──
+    async function otpSendCode() {
+      var emailEl = document.getElementById('otp-email-input');
+      var btn     = document.getElementById('otp-send-btn');
+      var email   = emailEl ? emailEl.value.trim() : '';
 
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setMsg('Please enter a valid email address.', 'error'); return;
+        _otpSetMsg('email', 'Please enter a valid email address.', 'error'); return;
       }
-      if (msg) msg.className = 'email-msg'; // hide
-      if (btn) { btn.disabled = true; btn.classList.add('email-loading'); }
+      _otpClearMsg('email');
+      if (btn) { btn.disabled = true; btn.classList.add('otp-loading'); }
 
       try {
-        var API = getAPI();
-        var res  = await fetch(API + '/auth/email/send-link', {
-          method: 'POST',
+        var res  = await fetch(getAPI() + '/auth/otp/send', {
+          method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email }),
         });
         var data = await res.json();
         if (data.success) {
-          setMsg('\u2705 Check your inbox! Magic link expires in 15 minutes.', 'success');
-          if (el) el.value = '';
+          _otpEmail = email;
+          var disp = document.getElementById('otp-email-display');
+          if (disp) disp.textContent = email;
+          document.getElementById('otp-step-email').style.display = 'none';
+          var step2 = document.getElementById('otp-step-code');
+          step2.style.display = 'flex';
+          _otpClearBoxes();
+          _otpClearMsg('code');
+          setTimeout(function() {
+            var first = document.getElementById('ob0');
+            if (first) first.focus();
+          }, 80);
+          _otpStartResendTimer();
         } else {
-          setMsg(data.message || 'Could not send link. Try again.', 'error');
+          _otpSetMsg('email', data.message || 'Failed to send code. Try again.', 'error');
         }
       } catch(e) {
-        setMsg('Server starting up (free tier) — wait 20s and retry.', 'error');
+        _otpSetMsg('email', 'Server starting up — wait 20s and retry.', 'error');
       } finally {
-        if (btn) { btn.disabled = false; btn.classList.remove('email-loading'); }
+        if (btn) { btn.disabled = false; btn.classList.remove('otp-loading'); }
       }
     }
+
+    // ── Step 2: Verify OTP ──
+    async function otpVerify() {
+      var code = _otpGetCode();
+      var btn  = document.getElementById('otp-verify-btn');
+      if (code.length < 6 || !/^\d{6}$/.test(code)) {
+        _otpSetMsg('code', 'Enter all 6 digits.', 'error'); return;
+      }
+      _otpClearMsg('code');
+      if (btn) { btn.disabled = true; btn.classList.add('loading'); }
+
+      try {
+        var res  = await fetch(getAPI() + '/auth/otp/verify', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: _otpEmail, otp: code }),
+        });
+        var data = await res.json();
+        if (data.success) {
+          _otpSetMsg('code', '\u2705 Signed in! Redirecting…', 'success');
+          localStorage.setItem('rx_token', 'true');
+          localStorage.setItem('rx_user', data.username);
+          try {
+            if (window.HybridData && typeof window.HybridData.onLoginSuccess === 'function') {
+              await window.HybridData.onLoginSuccess(data.username);
+            }
+          } catch(e) {}
+          setTimeout(function() { window.location.replace('index.html'); }, 900);
+        } else {
+          _otpSetMsg('code', data.message || 'Incorrect code.', 'error');
+          if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+        }
+      } catch(e) {
+        _otpSetMsg('code', 'Network error. Try again.', 'error');
+        if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+      }
+    }
+
+    // ── Back to email step ──
+    function otpGoBack() {
+      document.getElementById('otp-step-code').style.display = 'none';
+      document.getElementById('otp-step-email').style.display = 'block';
+      _otpClearMsg('email');
+      _otpClearMsg('code');
+      _otpEmail = '';
+    }
+
+    // ── Resend with 30s cooldown ──
+    var _resendTimer = null;
+    function _otpStartResendTimer() {
+      var btn = document.getElementById('otp-resend-btn');
+      if (!btn) return;
+      var secs = 30;
+      btn.disabled = true;
+      btn.textContent = 'Resend in ' + secs + 's';
+      clearInterval(_resendTimer);
+      _resendTimer = setInterval(function() {
+        secs--;
+        if (secs <= 0) {
+          clearInterval(_resendTimer);
+          btn.disabled = false;
+          btn.textContent = 'Resend code';
+        } else {
+          btn.textContent = 'Resend in ' + secs + 's';
+        }
+      }, 1000);
+    }
+    async function otpResend() {
+      _otpClearMsg('code');
+      _otpClearBoxes();
+      var btn = document.getElementById('otp-send-btn');
+      if (btn) { btn.disabled = true; btn.classList.add('otp-loading'); }
+      try {
+        var res  = await fetch(getAPI() + '/auth/otp/send', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: _otpEmail }),
+        });
+        var data = await res.json();
+        if (data.success) {
+          _otpSetMsg('code', 'New code sent! Check your inbox.', 'success');
+          _otpStartResendTimer();
+          setTimeout(function() {
+            var first = document.getElementById('ob0');
+            if (first) first.focus();
+          }, 80);
+        } else {
+          _otpSetMsg('code', data.message || 'Failed to resend.', 'error');
+        }
+      } catch(e) {
+        _otpSetMsg('code', 'Network error. Try again.', 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.classList.remove('otp-loading'); }
+      }
+    }
+
+    // ── OTP box keyboard navigation ──
+    document.addEventListener('DOMContentLoaded', function() {
+      [0,1,2,3,4,5].forEach(function(i) {
+        var box = document.getElementById('ob' + i);
+        if (!box) return;
+
+        box.addEventListener('input', function(e) {
+          var val = box.value.replace(/\D/g,'');
+          // Handle paste of full 6-digit code
+          if (val.length > 1) {
+            var digits = val.slice(0, 6).split('');
+            digits.forEach(function(d, idx) {
+              var b = document.getElementById('ob' + idx);
+              if (b) { b.value = d; b.classList.toggle('filled', !!d); }
+            });
+            var last = document.getElementById('ob' + (Math.min(digits.length, 5)));
+            if (last) last.focus();
+            if (_otpGetCode().length === 6) otpVerify();
+            return;
+          }
+          box.value = val;
+          box.classList.toggle('filled', !!val);
+          if (val && i < 5) {
+            var next = document.getElementById('ob' + (i + 1));
+            if (next) next.focus();
+          }
+          if (_otpGetCode().length === 6) otpVerify();
+        });
+
+        box.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && !box.value && i > 0) {
+            var prev = document.getElementById('ob' + (i - 1));
+            if (prev) { prev.value = ''; prev.classList.remove('filled'); prev.focus(); }
+          }
+        });
+
+        box.addEventListener('focus', function() { box.select(); });
+      });
+    });
+
   </script>
 
   <!-- config.js MUST load first (no defer) so window.RX_API is set before any other script -->
