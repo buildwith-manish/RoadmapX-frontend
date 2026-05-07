@@ -1000,14 +1000,18 @@
       }
       _otpClearMsg('email');
       if (btn) { btn.disabled = true; btn.classList.add('otp-loading'); }
+      _otpSetMsg('email', 'Sending code… (server may take ~20s to wake up)', 'success');
 
       try {
-        var apiBase = (window.RX_API || "https://roadmapx-backend-3qmc.onrender.com");
-        var res  = await fetch(apiBase + '/auth/otp/send', {
+        var controller = new AbortController();
+        var timeout = setTimeout(function() { controller.abort(); }, 30000);
+        var res  = await fetch(getAPI() + '/auth/otp/send', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email }),
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
         var data = await res.json();
         if (data.success) {
           _otpEmail = email;
@@ -1027,7 +1031,11 @@
           _otpSetMsg('email', data.message || 'Failed to send code. Try again.', 'error');
         }
       } catch(e) {
-        _otpSetMsg('email', 'Unable to send OTP. Please try again later.', 'error');
+        if (e.name === 'AbortError') {
+          _otpSetMsg('email', 'Server is waking up (free tier). Please wait 20 seconds and try again.', 'error');
+        } else {
+          _otpSetMsg('email', 'Unable to reach server. Check your connection and try again.', 'error');
+        }
       } finally {
         if (btn) { btn.disabled = false; btn.classList.remove('otp-loading'); }
       }
@@ -1044,8 +1052,7 @@
       if (btn) { btn.disabled = true; btn.classList.add('loading'); }
 
       try {
-        var apiBase = (window.RX_API || "https://roadmapx-backend-3qmc.onrender.com");
-        var res  = await fetch(apiBase + '/auth/otp/verify', {
+        var res  = await fetch(getAPI() + '/auth/otp/verify', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: _otpEmail, otp: code }),
@@ -1106,8 +1113,7 @@
       var btn = document.getElementById('otp-send-btn');
       if (btn) { btn.disabled = true; btn.classList.add('otp-loading'); }
       try {
-        var apiBase = (window.RX_API || "https://roadmapx-backend-3qmc.onrender.com");
-        var res  = await fetch(apiBase + '/auth/otp/send', {
+        var res  = await fetch(getAPI() + '/auth/otp/send', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: _otpEmail }),
