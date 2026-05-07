@@ -181,8 +181,6 @@
     .btn-signin-secondary svg { width: 15px; height: 15px; flex-shrink: 0; }
 
     /* ── AUTH FORM VIEW (hidden by default) ── */
-    #auth-form-view { display: none; flex-direction: column; gap: 0; }
-    #auth-form-view.visible { display: flex; animation: slideUp 0.35s cubic-bezier(0.22,1,0.36,1) both; }
 
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(16px); }
@@ -211,21 +209,7 @@
       gap: 4px;
     }
 
-    .tab-btn {
-      flex: 1; padding: 9px;
-      background: none; border: none; border-radius: 7px;
-      font-size: 0.84rem; font-weight: 600;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.04em;
-      cursor: pointer; color: var(--text-dim);
-      transition: background var(--transition), color var(--transition), box-shadow var(--transition);
-    }
 
-    .tab-btn.active {
-      background: linear-gradient(90deg, rgba(0,245,212,0.10), rgba(123,47,255,0.13));
-      color: var(--text);
-      box-shadow: 0 0 12px rgba(0,245,212,0.07);
-    }
 
     .panels { position: relative; }
 
@@ -309,8 +293,6 @@
       letter-spacing: 0.04em; cursor: pointer; overflow: hidden;
       transition: box-shadow var(--transition), transform var(--transition), opacity var(--transition);
     }
-    #login-panel  .btn-submit { background: linear-gradient(90deg, var(--cyan) 0%, var(--purple) 100%); }
-    #signup-panel .btn-submit { background: linear-gradient(90deg, var(--purple) 0%, var(--cyan) 100%); }
 
     .btn-submit::before {
       content: ''; position: absolute; inset: 0;
@@ -597,153 +579,6 @@
     </div>
     <!-- /guest-first-view -->
 
-    <!-- ══ AUTH FORM VIEW (shown after clicking Sign In) ══ -->
-    <div id="auth-form-view" style="display:none">
-
-      <button class="back-to-guest" type="button" onclick="showGuestFirst()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Back
-      </button>
-
-      <div class="tabs" role="tablist">
-        <button class="tab-btn active" id="tab-login"
-          role="tab" aria-selected="true" aria-controls="login-panel"
-          onclick="switchTab('login')">Login</button>
-        <button class="tab-btn" id="tab-signup"
-          role="tab" aria-selected="false" aria-controls="signup-panel"
-          onclick="switchTab('signup')">Sign Up</button>
-      </div>
-
-      <div class="panels">
-
-        <!-- LOGIN PANEL -->
-        <div class="panel" id="login-panel" role="tabpanel">
-
-          <div class="msg-box" id="login-msg">
-            <span class="msg-icon">⚠</span>
-            <span id="login-msg-text"></span>
-          </div>
-
-          <div class="field">
-            <label for="l-username">Username</label>
-            <div class="input-wrap">
-              <input type="text" id="l-username" placeholder="your_username" autocomplete="username" />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="l-password">Password</label>
-            <div class="input-wrap">
-              <input type="password" id="l-password" placeholder="••••••••••••" autocomplete="current-password" />
-              <button type="button" class="eye-btn" data-target="l-password" aria-label="Toggle password visibility">
-                <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-                <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <label class="remember">
-            <input type="checkbox" id="l-remember" />
-            <span>Remember me</span>
-          </label>
-
-          <div class="divider"></div>
-
-          <button class="btn-submit" id="login-btn" type="button" onclick="doLogin()">
-            <span class="btn-text">Login</span>
-            <span class="spinner"></span>
-          </button>
-
-        </div>
-
-        <!-- SIGNUP PANEL -->
-        <div class="panel hidden" id="signup-panel" role="tabpanel">
-
-          <div class="msg-box" id="signup-msg">
-            <span class="msg-icon">⚠</span>
-            <span id="signup-msg-text"></span>
-          </div>
-
-          <div class="signup-progress">
-            <div class="sdot active" id="sdot-1">1</div>
-            <div class="sline" id="sline-1"></div>
-            <div class="sdot" id="sdot-2">2</div>
-          </div>
-
-          <!-- Step 1: Username + Email -->
-          <div class="s-step active" id="s-step-1">
-            <div class="field">
-              <label for="s-username">Choose a Username</label>
-              <div class="input-wrap">
-                <input type="text" id="s-username" placeholder="your_username" autocomplete="username" />
-              </div>
-            </div>
-            <div class="field">
-              <label for="s-email">Email Address</label>
-              <div class="input-wrap">
-                <input type="email" id="s-email" placeholder="you@example.com" autocomplete="email" />
-              </div>
-            </div>
-            <div class="divider"></div>
-            <button class="btn-submit" type="button" onclick="signupStep1()">
-              <span class="btn-text">Continue →</span>
-              <span class="spinner"></span>
-            </button>
-          </div>
-
-          <!-- Step 2: Password -->
-          <div class="s-step" id="s-step-2">
-            <div class="field">
-              <label for="s-password">Password</label>
-              <div class="input-wrap">
-                <input type="password" id="s-password" placeholder="••••••••••••" autocomplete="new-password" />
-                <button type="button" class="eye-btn" data-target="s-password" aria-label="Toggle password visibility">
-                  <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                    <line x1="1" y1="1" x2="23" y2="23"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="field">
-              <label for="s-confirm">Confirm Password</label>
-              <div class="input-wrap">
-                <input type="password" id="s-confirm" placeholder="••••••••••••" autocomplete="new-password" />
-                <button type="button" class="eye-btn" data-target="s-confirm" aria-label="Toggle confirm password visibility">
-                  <svg class="eye-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  <svg class="eye-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                    <line x1="1" y1="1" x2="23" y2="23"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="divider"></div>
-            <button class="btn-submit" id="signup-btn" type="button" onclick="signupStep2()">
-              <span class="btn-text">Create Account</span>
-              <span class="spinner"></span>
-            </button>
-            <button class="btn-back" type="button" onclick="goStep(1)">&larr; Back</button>
-          </div>
-
-        </div>
-
-      </div>
-    </div>
-    <!-- /auth-form-view -->
 
   </div>
 
@@ -751,23 +586,9 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <script>
-    // ── View switching ──
-    function showAuthForm() {
-      document.getElementById('guest-first-view').style.display = 'none';
-      const authView = document.getElementById('auth-form-view');
-      authView.style.display = 'flex';
-      authView.classList.add('visible');
-    }
-
-    function showGuestFirst() {
-      document.getElementById('auth-form-view').style.display = 'none';
-      document.getElementById('auth-form-view').classList.remove('visible');
-      document.getElementById('guest-first-view').style.display = 'flex';
-    }
-
-    if (window.location.hash === '#signin') {
-      document.addEventListener('DOMContentLoaded', showAuthForm);
-    }
+    // ── View switching (auth-form-view removed) ──
+    function showAuthForm() { /* removed */ }
+    function showGuestFirst() { /* removed */ }
 
     // ─────────────────────────────────────────────────────────────────────
     //  GOOGLE SIGN-IN  (v3 — redirect-first, always works on Android)
