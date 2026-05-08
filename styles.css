@@ -837,7 +837,18 @@ textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.6; }
   color: var(--c1);
 }
 .home-logo svg { width: 28px; height: 28px; }
-.home-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--t1); }
+/* ── HOME TITLE — "Roadmap" cyan · "X" purple, matching login page ── */
+.home-title {
+  font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+  /* Exact same gradient as login page .app-title */
+  background: linear-gradient(90deg, #00f5d4 0%, #a78bfa 55%, #7b2fff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: #00f5d4; /* fallback */
+}
+/* span inside .home-title inherits gradient — no override needed */
+.home-title-x { }
 .home-subtitle { font-size: 13px; color: var(--t2); margin-top: 6px; margin-bottom: 20px; text-align: center; }
 
 .home-paths { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-bottom: 16px; }
@@ -4344,3 +4355,887 @@ canvas.mini-chart  { width:100% !important; height:80px !important; display:bloc
 .pomo-stat-label { font-size: 11px; color: var(--t2); }
 .pomo-stat-val   { font-size: 13px; font-weight: 800; color: var(--c2); font-family: var(--font-mono); }
 
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ROADMAPX — 10-STEP VISUAL ENHANCEMENT LAYER
+   Zero breaking changes. Pure additive CSS.
+   Step 1  → Richer design tokens (depth shadows, glow animations, shimmer)
+   Step 2  → Animated background (moving grid + ambient orbs)
+   Step 3  → Header scan-line animation & glow pulse
+   Step 4  → Cards with hover glow, shimmer, glassmorphism
+   Step 5  → Nav with active pulse indicator & smoother transitions
+   Step 6  → Progress bars with animated shine
+   Step 7  → Buttons & interactive elements micro-interactions
+   Step 8  → Typography refinements & text glow effects
+   Step 9  → Section titles with animated underline
+   Step 10 → Scrollbar polish & global finish layer
+═══════════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════
+   STEP 1 — RICHER DESIGN TOKENS
+   Depth shadows, extended glow vars,
+   shimmer + scan keyframes
+══════════════════════════════════════════ */
+
+:root {
+  /* Extended shadow depth */
+  --sh-card-hover:
+    0 0 0 1px rgba(0,229,200,0.08),
+    0 4px 24px rgba(0,0,0,0.55),
+    0 0 40px rgba(0,229,200,0.04);
+  --sh-card-glow-c1:
+    0 0 0 1px rgba(0,229,200,0.18),
+    0 4px 32px rgba(0,0,0,0.5),
+    0 0 28px rgba(0,229,200,0.1);
+  --sh-card-glow-c2:
+    0 0 0 1px rgba(124,58,237,0.18),
+    0 4px 32px rgba(0,0,0,0.5),
+    0 0 28px rgba(124,58,237,0.1);
+
+  /* Shimmer gradient (reusable) */
+  --shimmer-grad: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255,255,255,0.035) 40%,
+    rgba(0,229,200,0.04) 50%,
+    rgba(255,255,255,0.035) 60%,
+    transparent 100%
+  );
+
+  /* Glow pulse for accents */
+  --glow-pulse-c1: 0 0 16px rgba(0,229,200,0.55), 0 0 40px rgba(0,229,200,0.25);
+  --glow-pulse-c2: 0 0 16px rgba(124,58,237,0.55), 0 0 40px rgba(124,58,237,0.25);
+  --glow-pulse-cf: 0 0 16px rgba(249,115,22,0.55), 0 0 40px rgba(249,115,22,0.25);
+}
+
+/* ── Shimmer sweep keyframe ── */
+@keyframes shimmerSweep {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Glow breathe ── */
+@keyframes glowBreathe {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+
+/* ── Scan line sweep ── */
+@keyframes scanSweep {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(100vw);  opacity: 0; }
+}
+
+/* ── Grid drift ── */
+@keyframes gridDrift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 48px 48px; }
+}
+
+/* ── Pulse ring ── */
+@keyframes pulseRing {
+  0%   { transform: translateX(-50%) scaleX(0.4); opacity: 0.8; }
+  100% { transform: translateX(-50%) scaleX(1);   opacity: 0; }
+}
+
+/* ── Float in ── */
+@keyframes floatIn {
+  0%   { opacity: 0; transform: translateY(6px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* ── Underline grow ── */
+@keyframes underlineGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ── Progress shine sweep ── */
+@keyframes shineSweep {
+  0%   { left: -60%; }
+  100% { left: 120%; }
+}
+
+/* ── Number count up shimmer ── */
+@keyframes valGlow {
+  0%, 100% { text-shadow: none; }
+  50%       { text-shadow: 0 0 12px var(--c1), 0 0 24px rgba(0,229,200,0.35); }
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 2 — ANIMATED BACKGROUND
+   Moving grid + ambient ambient orbs
+══════════════════════════════════════════ */
+
+body::before {
+  background-image:
+    linear-gradient(rgba(0,229,200,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,200,0.022) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridDrift 18s linear infinite;
+  will-change: background-position;
+}
+
+/* ── Ambient top-right orb ── */
+body::after {
+  content: '';
+  position: fixed;
+  top: -120px;
+  right: -80px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(124,58,237,0.07) 0%,
+    rgba(0,229,200,0.04) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+  animation: orbPulse 9s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 3 — HEADER: SCAN-LINE + GLOW PULSE
+══════════════════════════════════════════ */
+
+/* Scan-line sweep across header */
+#header::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 60px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0,229,200,0.05),
+    transparent
+  );
+  animation: scanSweep 8s ease-in-out infinite;
+  animation-delay: 2s;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header bottom gradient line — pulsing glow */
+#header::after {
+  opacity: 0.5;
+  animation: glowBreathe 3.5s ease-in-out infinite;
+}
+
+/* ── Header title glow on hover ── */
+.hdr-title {
+  transition: text-shadow var(--dur);
+}
+.hdr-title:hover {
+  text-shadow: 0 0 14px rgba(0,229,200,0.55), 0 0 28px rgba(0,229,200,0.25);
+}
+
+/* ── Streak badge animated border ── */
+.hdr-streak {
+  position: relative;
+  overflow: hidden;
+}
+.hdr-streak::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--shimmer-grad);
+  background-size: 200% 100%;
+  animation: shimmerSweep 3s linear infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Header button refined hover ── */
+.hdr-btn:hover {
+  background: rgba(0,229,200,0.08);
+  border-color: rgba(0,229,200,0.22);
+  color: var(--c1);
+  box-shadow: 0 0 12px rgba(0,229,200,0.1);
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 4 — CARDS: HOVER GLOW + GLASSMORPHISM
+══════════════════════════════════════════ */
+
+/* ── Base card enhanced ── */
+.card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.25s var(--spring),
+    box-shadow 0.25s var(--ease),
+    border-color 0.25s var(--ease);
+}
+
+/* Shimmer layer on card */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--shimmer-grad);
+  background-size: 300% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  border-radius: inherit;
+  animation: shimmerSweep 4s linear infinite;
+  animation-play-state: paused;
+}
+.card:hover::after {
+  opacity: 1;
+  animation-play-state: running;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-card-hover);
+  border-color: rgba(0,229,200,0.12);
+}
+
+/* ── Home path cards — accent glow on hover ── */
+.home-path-card.ai-card:hover  { box-shadow: var(--sh-card-glow-c1); border-color: rgba(0,229,200,0.25);   }
+.home-path-card.dsa-card:hover { box-shadow: var(--sh-card-glow-c2); border-color: rgba(124,58,237,0.25); }
+.home-path-card.fe-card:hover  {
+  box-shadow: 0 0 0 1px rgba(249,115,22,0.18), 0 4px 32px rgba(0,0,0,0.5), 0 0 28px rgba(249,115,22,0.1);
+  border-color: rgba(249,115,22,0.25);
+}
+
+/* ── AI/DSA week cards glow ── */
+.ai-week-card:hover,
+.dsa-week-card:hover,
+.ai-s-day-card:hover {
+  box-shadow: var(--sh-card-glow-c1);
+}
+.dsa-week-card:hover { box-shadow: var(--sh-card-glow-c2); }
+
+/* ── Day card left stripe animate on hover ── */
+.day-card:hover::before,
+.ai-s-day-card:hover::before {
+  box-shadow: 0 0 14px rgba(0,229,200,0.35);
+}
+
+/* ── Goal/stats card hover glow ── */
+.goal-card:hover,
+.hours-card:hover,
+.home-stat-pill:hover {
+  border-color: rgba(0,229,200,0.15);
+  box-shadow: 0 0 20px rgba(0,229,200,0.06), 0 4px 16px rgba(0,0,0,0.4);
+  transition: all 0.25s var(--ease);
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 5 — BOTTOM NAV: PULSE INDICATOR
+══════════════════════════════════════════ */
+
+/* ── Nav active top indicator: double pulse ── */
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(0,229,200,0.5);
+  animation: pulseRing 1.8s ease-out infinite;
+}
+
+/* ── Nav label color transition ── */
+.nav-item {
+  transition: color 0.2s var(--ease), transform 0.15s var(--spring);
+}
+.nav-item:not(.active):hover {
+  color: rgba(0,229,200,0.5);
+}
+
+/* ── Nav icon spring on activate ── */
+.nav-item.active .nav-ico {
+  animation: navPop 0.35s var(--spring) both;
+}
+@keyframes navPop {
+  0%   { transform: scale(0.8) translateY(2px); }
+  60%  { transform: scale(1.2) translateY(-2px); }
+  100% { transform: scale(1.12) translateY(0); }
+}
+
+/* ── Nav background glow behind active tab ── */
+.nav-item.active {
+  background: radial-gradient(ellipse 80% 120% at 50% 100%, rgba(0,229,200,0.08), transparent);
+  border-radius: var(--r10);
+}
+
+/* ── Bottom nav top border shimmer ── */
+#bottom-nav::before {
+  animation: glowBreathe 4s ease-in-out infinite;
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 6 — PROGRESS BARS: ANIMATED SHINE
+══════════════════════════════════════════ */
+
+/* ── Standard prog-fill: shine layer ── */
+.prog-fill,
+.home-card-prog-fill,
+.goal-prog-fill,
+.proj-progress-fill,
+.ai-week-prog-fill,
+.ai-week-mini-fill,
+.dsa-wk-mini-fill,
+.dsa-wk-full-fill,
+.ai-sum-prog-fill,
+.ai-wsum-prog-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.prog-fill::after,
+.home-card-prog-fill::after,
+.goal-prog-fill::after,
+.proj-progress-fill::after,
+.ai-week-prog-fill::after,
+.ai-week-mini-fill::after,
+.dsa-wk-mini-fill::after,
+.dsa-wk-full-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -60%;
+  width: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: shineSweep 2.5s ease-in-out infinite;
+  animation-delay: 0.8s;
+  border-radius: inherit;
+}
+
+/* ── Prog track subtle glow on hover ── */
+.prog-track:hover .prog-fill,
+.prog-wrap:hover .prog-fill {
+  filter: brightness(1.15);
+}
+
+/* ── Thicker track on hover for better visibility ── */
+.prog-track {
+  transition: height 0.2s var(--ease);
+}
+.prog-wrap:hover .prog-track {
+  height: 5px;
+}
+
+/* ── Goal progress glow ── */
+.goal-prog-track:hover .goal-prog-fill {
+  box-shadow: 0 0 8px rgba(0,229,200,0.4);
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 7 — BUTTONS: REFINED MICRO-INTERACTIONS
+══════════════════════════════════════════ */
+
+/* ── Primary button shimmer + glow ── */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.18s var(--spring),
+    box-shadow 0.2s var(--ease),
+    filter 0.2s;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--shimmer-grad);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.3s;
+  animation: shimmerSweep 2s linear infinite;
+  animation-play-state: paused;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0,229,200,0.3), 0 0 0 1px rgba(0,229,200,0.2);
+  filter: brightness(1.08);
+}
+.btn-primary:hover::before {
+  opacity: 1;
+  animation-play-state: running;
+}
+.btn-primary:active {
+  transform: scale(0.97) translateY(0);
+  box-shadow: 0 2px 10px rgba(0,229,200,0.2);
+  filter: brightness(0.95);
+}
+
+/* ── Secondary button hover ── */
+.btn-secondary:hover {
+  border-color: rgba(255,255,255,0.15);
+  background: var(--bg5);
+  color: var(--t1);
+}
+
+/* ── Notes save button glow ── */
+.notes-save-btn:hover {
+  box-shadow: 0 0 16px rgba(0,229,200,0.25);
+  filter: brightness(1.1);
+}
+
+/* ── Goals save button ── */
+.goals-save-btn:hover {
+  box-shadow: 0 0 16px rgba(0,229,200,0.25);
+  transform: translateY(-1px);
+}
+
+/* ── Checkbox spring animation ── */
+.cb {
+  transition:
+    background 0.2s var(--spring),
+    border-color 0.2s var(--spring),
+    box-shadow 0.25s var(--ease),
+    transform 0.15s var(--spring);
+}
+.cb:active { transform: scale(0.82); }
+.cb.checked {
+  animation: cbPop 0.3s var(--spring) both;
+}
+@keyframes cbPop {
+  0%   { transform: scale(0.7); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ── Back home button hover ── */
+.back-home-btn:hover {
+  border-color: rgba(0,229,200,0.2);
+  background: rgba(0,229,200,0.06);
+  color: var(--c1);
+}
+
+/* ── Data action buttons enhanced hover ── */
+.data-action-btn:hover {
+  background: rgba(0,229,200,0.04);
+  box-shadow: 0 0 20px rgba(0,229,200,0.06);
+}
+
+/* ── File download button refined ── */
+.file-dl-btn:hover {
+  background: rgba(0,229,200,0.14);
+  box-shadow: 0 0 12px rgba(0,229,200,0.15);
+}
+
+/* ── Modal primary action button ── */
+.ai-ask-btn {
+  position: relative; overflow: hidden;
+}
+.ai-ask-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--shimmer-grad);
+  background-size: 200% 100%;
+  animation: shimmerSweep 2.2s linear infinite;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.ai-ask-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0,229,200,0.3);
+  filter: brightness(1.06);
+}
+
+/* ── Section subtab active glow ── */
+.section-subtab.active {
+  box-shadow:
+    0 0 16px rgba(0,229,200,0.14),
+    inset 0 0 12px rgba(0,229,200,0.04);
+}
+.section-subtab:not(.active):hover {
+  border-color: rgba(255,255,255,0.12);
+  background: var(--bg4);
+  color: var(--t1);
+}
+
+/* ── Day mentor button shimmer ── */
+.day-mentor-btn {
+  position: relative; overflow: hidden;
+}
+.day-mentor-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--shimmer-grad);
+  background-size: 200% 100%;
+  animation: shimmerSweep 3s linear infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.day-mentor-btn:hover {
+  box-shadow: 0 0 20px rgba(0,229,200,0.18);
+  transform: translateY(-1px) scale(1.005);
+}
+
+/* ── Continue button home ── */
+.home-continue-btn:hover {
+  background: rgba(0,229,200,0.16);
+  box-shadow: 0 0 20px rgba(0,229,200,0.18);
+  transform: translateY(-1px);
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 8 — TYPOGRAPHY REFINEMENTS
+   Text glow, better readability hierarchy
+══════════════════════════════════════════ */
+
+/* ── Home title — exact login page gradient (Step 8 override) ── */
+.home-title {
+  background: linear-gradient(90deg, #00f5d4 0%, #a78bfa 55%, #7b2fff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.home-title-x { /* span inherits parent gradient, no override needed */ }
+
+/* ── Mono values glow on key stat cards ── */
+.home-stat-pill-val,
+.hours-val,
+.att-stat-val.green,
+.dsa-sum-val,
+.ai-sum-val {
+  transition: text-shadow 0.3s var(--ease);
+}
+.home-stat-pill:hover .home-stat-pill-val,
+.hours-card:hover .hours-val {
+  animation: valGlow 1.8s ease-in-out infinite;
+}
+
+/* ── Section title readability ── */
+.section-title {
+  text-shadow: 0 0 20px rgba(0,229,200,0.25);
+  letter-spacing: 1.8px;
+}
+
+/* ── Day title hover ── */
+.day-title,
+.ai-s-day-title,
+.dsa-wk-title {
+  transition: color 0.2s var(--ease);
+}
+.day-card:hover .day-title,
+.ai-s-day-card:hover .ai-s-day-title,
+.dsa-week-card:hover .dsa-wk-title {
+  color: #fff;
+}
+
+/* ── Day number value brightness ── */
+.day-num-val,
+.ai-s-day-val,
+.dsa-wk-val,
+.ai-week-num-val {
+  transition: text-shadow 0.3s var(--ease);
+}
+.day-card:hover .day-num-val {
+  text-shadow: 0 0 12px rgba(0,229,200,0.5);
+}
+.dsa-week-card:hover .dsa-wk-val {
+  text-shadow: 0 0 12px rgba(124,58,237,0.5);
+}
+
+/* ── Card title subtle glow on hover ── */
+.card-title,
+.proj-card-title {
+  transition: color 0.2s var(--ease);
+}
+.card:hover .card-title { color: #fff; }
+
+/* ── XP Toast text shimmer ── */
+.xp-toast {
+  background: linear-gradient(135deg, var(--c1), var(--c2), var(--c1));
+  background-size: 200% auto;
+  animation-name: shimmerSweep;
+  /* re-apply only when shown */
+}
+.xp-toast.show {
+  animation: shimmerSweep 2s linear infinite;
+}
+
+/* ── AI level name on hover ── */
+.ai-level-card:hover .ai-level-name {
+  color: #fff;
+}
+
+/* ── Home card title hover ── */
+.home-path-card:hover .home-card-title { color: #fff; }
+
+
+/* ══════════════════════════════════════════
+   STEP 9 — SECTION TITLES: ANIMATED UNDERLINE
+══════════════════════════════════════════ */
+
+/* ── Section title after line — animated grow ── */
+.section-title::after {
+  transform-origin: left;
+  animation: underlineGrow 0.6s var(--ease) both;
+}
+
+/* ── Section title left accent dot ── */
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--c1);
+  box-shadow: 0 0 8px rgba(0,229,200,0.8);
+  flex-shrink: 0;
+  animation: glowBreathe 2s ease-in-out infinite;
+}
+
+/* ── Section title svg glow ── */
+.section-title svg {
+  filter: drop-shadow(0 0 4px rgba(0,229,200,0.5));
+  animation: glowBreathe 3s ease-in-out infinite;
+}
+
+/* ── DSA topic section title — purple variant ── */
+.dsa-topic-section-title {
+  text-shadow: 0 0 14px rgba(124,58,237,0.4);
+}
+.dsa-topic-section-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--c2);
+  box-shadow: 0 0 8px rgba(124,58,237,0.8);
+  flex-shrink: 0;
+}
+.dsa-topic-section-title::after {
+  background: linear-gradient(90deg, rgba(124,58,237,0.4), transparent);
+  animation: underlineGrow 0.5s var(--ease) both;
+  transform-origin: left;
+}
+
+/* ── Back home title accent ── */
+.back-home-title svg {
+  filter: drop-shadow(0 0 6px rgba(0,229,200,0.55));
+  animation: glowBreathe 2.5s ease-in-out infinite;
+}
+
+/* ── Home logo icon pulse ── */
+.home-logo svg {
+  filter: drop-shadow(0 0 8px rgba(0,229,200,0.5));
+  animation: glowBreathe 3s ease-in-out infinite;
+}
+
+/* ── AI level dot refined pulse ── */
+.ai-level-dot {
+  animation: glowBreathe 2.5s ease-in-out infinite;
+}
+.beginner-card    .ai-level-dot { animation-delay: 0s; }
+.intermediate-card .ai-level-dot { animation-delay: -0.8s; }
+.advanced-card     .ai-level-dot { animation-delay: -1.6s; }
+
+/* ── Home path card icon container glow ── */
+.ai-card:hover  .home-card-ico { box-shadow: 0 0 18px rgba(0,229,200,0.25); }
+.dsa-card:hover .home-card-ico { box-shadow: 0 0 18px rgba(124,58,237,0.25); }
+.fe-card:hover  .home-card-ico { box-shadow: 0 0 18px rgba(249,115,22,0.25); }
+
+/* ── Level card arrow pulse on hover ── */
+.ai-level-card:hover .ai-level-arrow {
+  animation: arrowPulse 0.6s var(--spring) both;
+}
+@keyframes arrowPulse {
+  0%  { transform: translateX(0); opacity: 0.6; }
+  50% { transform: translateX(5px); opacity: 1; }
+  100%{ transform: translateX(3px); opacity: 0.9; }
+}
+
+/* ── Day number badge on completed: emerald glow ── */
+.day-card.completed .day-num,
+.ai-s-day-card.s-done .ai-s-day-num {
+  box-shadow: 0 0 14px rgba(16,185,129,0.2);
+}
+
+/* ── Revision-due badge pulsing border ── */
+.day-card.revision-due,
+.ai-s-day-card.topic-rev-due {
+  animation: revPulse 3s ease-in-out infinite;
+}
+@keyframes revPulse {
+  0%, 100% { border-color: rgba(244,63,94,0.28); }
+  50%       { border-color: rgba(244,63,94,0.5);  box-shadow: 0 0 20px rgba(244,63,94,0.08); }
+}
+
+
+/* ══════════════════════════════════════════
+   STEP 10 — SCROLLBAR POLISH + GLOBAL FINISH
+══════════════════════════════════════════ */
+
+/* ── Scrollbar refined ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--c1), var(--c2));
+  border-radius: 4px;
+  opacity: 0.5;
+}
+::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+  background: linear-gradient(180deg, var(--c1), var(--c2));
+  box-shadow: 0 0 6px rgba(0,229,200,0.4);
+}
+
+/* ── Focus rings — accessible & branded ── */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(0,229,200,0.55);
+  outline-offset: 2px;
+  border-radius: var(--r4);
+}
+
+/* ── Modal overlay enhanced blur ── */
+.modal-overlay,
+.ai-modal-overlay,
+#modal-confirm {
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+
+/* ── Modal sheet bottom glow ── */
+.modal,
+.ai-modal {
+  box-shadow:
+    0 -8px 40px rgba(0,0,0,0.7),
+    0 0 0 1px var(--border-default),
+    0 0 60px rgba(0,229,200,0.04);
+}
+
+/* ── Toast refined shadow ── */
+#toast,
+#fe-toast {
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.6),
+    0 0 0 1px var(--border-default),
+    0 0 20px rgba(0,229,200,0.06);
+  backdrop-filter: blur(20px);
+}
+
+/* ── XP toast refined ── */
+.xp-toast {
+  box-shadow:
+    0 4px 24px rgba(0,229,200,0.35),
+    0 0 40px rgba(0,229,200,0.12);
+}
+
+/* ── PWA banner refined ── */
+.pwa-banner {
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 8px 40px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(0,229,200,0.1);
+}
+
+/* ── Settings toggle glow on active ── */
+.toggle.on {
+  box-shadow: 0 0 12px rgba(0,229,200,0.35);
+}
+
+/* ── Input focus glow ── */
+.field-input:focus {
+  box-shadow:
+    0 0 0 3px rgba(0,229,200,0.1),
+    0 0 14px rgba(0,229,200,0.08);
+}
+
+/* ── Notes textarea glow ── */
+.notes-ta:focus {
+  box-shadow:
+    0 0 0 2px rgba(0,229,200,0.08),
+    0 0 14px rgba(0,229,200,0.06);
+}
+
+/* ── Global active-state haptic feel ── */
+button:active,
+.nav-item:active {
+  transition-duration: 0.08s !important;
+}
+
+/* ── Tab panel entrance animation ── */
+.tab-panel.active {
+  animation: floatIn 0.3s var(--ease) both;
+}
+/* Override for panels that disable anim */
+#tab-home.active,
+#tab-fe.active,
+#tab-dsa-rm.active,
+#tab-ai-rm.active {
+  animation: floatIn 0.28s var(--ease) both !important;
+}
+
+/* ── Resource link hover: full glow ── */
+.resource:hover,
+.resource-link:hover {
+  background: var(--bg4);
+  border-color: rgba(0,229,200,0.18);
+  box-shadow: 0 0 16px rgba(0,229,200,0.08);
+  transform: translateX(2px);
+}
+
+/* ── ai-s-section entrance stagger ── */
+.ai-s-body-inner .ai-s-section:nth-child(1) { animation: floatIn 0.25s var(--ease) 0.05s both; }
+.ai-s-body-inner .ai-s-section:nth-child(2) { animation: floatIn 0.25s var(--ease) 0.10s both; }
+.ai-s-body-inner .ai-s-section:nth-child(3) { animation: floatIn 0.25s var(--ease) 0.15s both; }
+.ai-s-body-inner .ai-s-section:nth-child(4) { animation: floatIn 0.25s var(--ease) 0.20s both; }
+.ai-s-body-inner .ai-s-section:nth-child(5) { animation: floatIn 0.25s var(--ease) 0.25s both; }
+
+/* ── DSA topic section stagger ── */
+.dsa-week-body-inner .dsa-topic-section:nth-child(1) { animation: floatIn 0.25s var(--ease) 0.05s both; }
+.dsa-week-body-inner .dsa-topic-section:nth-child(2) { animation: floatIn 0.25s var(--ease) 0.10s both; }
+.dsa-week-body-inner .dsa-topic-section:nth-child(3) { animation: floatIn 0.25s var(--ease) 0.15s both; }
+
+/* ── Completion badge shimmer ── */
+.day-complete-badge,
+.ai-s-done-badge {
+  position: relative; overflow: hidden;
+}
+.day-complete-badge::after,
+.ai-s-done-badge::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--shimmer-grad);
+  background-size: 200% 100%;
+  animation: shimmerSweep 2.5s linear infinite;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ── reduce motion: respect user preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.1ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   END OF 10-STEP ENHANCEMENT LAYER
+═══════════════════════════════════════════ */
