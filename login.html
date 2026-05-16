@@ -573,45 +573,19 @@
         btn.disabled = true;
       }
 
-      // ── Capacitor native Google Sign-In ──
+      // ── Capacitor: open Google OAuth in system browser (Chrome), NOT WebView ──
+      // This avoids Google's "disallowed_useragent" error in the embedded WebView.
       if (typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
         try {
-          const { CapacitorGoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
-          CapacitorGoogleAuth.initialize({
-            clientId: GOOGLE_CLIENT_ID,
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({
+            url: getAPI() + '/auth/google'
           });
-          const result = await CapacitorGoogleAuth.signIn();
-
-          if (result && result.authentication && result.authentication.idToken) {
-            // Send native ID token to backend (same flow as web GSI)
-            const res = await fetch(getAPI() + '/auth/google', {
-              method:      'POST',
-              credentials: 'include',
-              headers:     { 'Content-Type': 'application/json' },
-              body:        JSON.stringify({ credential: result.authentication.idToken }),
-            });
-            const data = await res.json();
-
-            if (data.success) {
-              localStorage.setItem('rx_token', 'true');
-              localStorage.setItem('rx_user', data.username);
-              try {
-                if (window.HybridData && typeof window.HybridData.onLoginSuccess === 'function') {
-                  await window.HybridData.onLoginSuccess(data.username);
-                }
-              } catch (e) { /* ignore */ }
-              window.location.replace('index.html');
-              return;
-            } else {
-              _showGoogleError(data.message || 'Google sign-in failed.');
-              return;
-            }
-          } else {
-            _showGoogleError('No ID token from native Google Sign-In.');
-            return;
-          }
+          // Button will reset when user returns to the app
+          _resetGoogleBtn();
+          return;
         } catch (err) {
-          console.error('[Capacitor Google Auth] Error:', err);
+          console.error('[Capacitor Browser] Error:', err);
           // Fall through to web flow
           _resetGoogleBtn();
         }
@@ -743,6 +717,42 @@
         });
       }
     })();
+
+    // ── Capacitor: listen for app returning to foreground after OAuth ──
+    // When the user completes Google Sign-In in Chrome and returns to the app,
+    // check if they are now logged in via the session cookie.
+    if (typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      import('@capacitor/app').then(function(module) {
+        module.App.addListener('appStateChange', async function(state) {
+          if (state.isActive) {
+            try {
+              var res = await fetch(getAPI() + '/me', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Accept': 'application/json' }
+              });
+              if (res.ok) {
+                var data = await res.json();
+                if (data && data.success && data.username) {
+                  localStorage.setItem('rx_token', 'true');
+                  localStorage.setItem('rx_user', data.username);
+                  try {
+                    if (window.HybridData && typeof window.HybridData.onLoginSuccess === 'function') {
+                      await window.HybridData.onLoginSuccess(data.username);
+                    }
+                  } catch (e) { /* ignore */ }
+                  window.location.replace('index.html');
+                }
+              }
+            } catch (err) {
+              console.warn('[Capacitor] appStateChange auth check failed:', err);
+            }
+          }
+        });
+      }).catch(function(err) {
+        console.warn('[Capacitor] Could not import @capacitor/app:', err);
+      });
+    }
 
   </script>
 

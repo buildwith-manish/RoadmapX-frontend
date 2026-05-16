@@ -17,6 +17,7 @@
     "webContentsDebuggingEnabled": false
   },
   "plugins": {
+    "Browser": {},
     "SplashScreen": {
       "launchShowDuration": 2000,
       "backgroundColor": "#05050f",

@@ -36,6 +36,16 @@
                 <data android:scheme="com.roadmapx.app" />
             </intent-filter>
 
+            <!-- OAuth callback redirect from Google -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="roadmapx-backend-3qmc.onrender.com"
+                      android:pathPrefix="/auth/google/callback" />
+            </intent-filter>
+
         </activity>
 
         <provider
