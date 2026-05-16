@@ -1,0 +1,54 @@
+{
+  "appId": "com.roadmapx.app",
+  "appName": "RoadmapX",
+  "webDir": "www",
+  "server": {
+    "url": "https://roadmapx-frontend.pages.dev",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": [
+      "roadmapx-frontend.pages.dev",
+      "roadmapx-backend-3qmc.onrender.com"
+    ]
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "roadmapx.keystore",
+      "keystoreAlias": "roadmapx",
+      "keystorePassword": "",
+      "keyPassword": ""
+    },
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#05050f",
+      "showSpinner": false,
+      "androidSpinnerStyle": "small",
+      "spinnerColor": "#ffffff",
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#05050f"
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "659466725316-onvlvclmfn6r6n7h5p7in9ffqdvcbpm3.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_launcher_foreground",
+      "iconColor": "#00e5c8",
+      "sound": "default"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

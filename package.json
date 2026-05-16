@@ -1,0 +1,44 @@
+{
+  "name": "roadmapx",
+  "version": "1.0.0",
+  "description": "RoadmapX — Learn & Track Tech Skills",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Static site — no build step required'",
+    "cap:init": "npx cap init RoadmapX com.roadmapx.app --web-dir .",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:copy": "npx cap copy",
+    "android:build:debug": "cd android && ./gradlew assembleDebug",
+    "android:build:release": "cd android && ./gradlew assembleRelease",
+    "android:bundle:release": "cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/browser": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0",
+    "@capacitor/network": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor/share": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor/toast": "^6.0.0",
+    "@codetrix-studio/capacitor-google-auth": "3.4.0-rc.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  },
+  "keywords": [
+    "roadmapx",
+    "capacitor",
+    "android",
+    "learning",
+    "roadmap"
+  ],
+  "author": "RoadmapX",
+  "license": "MIT"
+}

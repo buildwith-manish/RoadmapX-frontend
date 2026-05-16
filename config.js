@@ -13,6 +13,12 @@
 // ═══════════════════════════════════════════════════════
 
 (function () {
+  // ── Capacitor detection ────────────────────────────────
+  // When running inside the Capacitor native shell, always
+  // use the production backend regardless of hostname.
+  const isCapacitor = typeof window.Capacitor !== 'undefined' &&
+                      window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+
   // ── Environment detection ──────────────────────────────
   // Cloudflare Pages preview URLs contain "pages.dev".
   // Local dev runs on localhost or 127.0.0.1.
@@ -21,7 +27,10 @@
 
   let apiBase;
 
-  if (host === 'localhost' || host === '127.0.0.1') {
+  if (isCapacitor) {
+    // Capacitor native app — always use production backend
+    apiBase = 'https://roadmapx-backend-3qmc.onrender.com';
+  } else if (host === 'localhost' || host === '127.0.0.1') {
     // Local development — point at the local backend
     apiBase = 'http://localhost:5000';
   } else {
@@ -31,4 +40,7 @@
 
   // Expose globally — never ends with a trailing slash
   window.RX_API = apiBase;
+
+  // Expose Capacitor flag for other scripts (OAuth, etc.)
+  window.RX_IS_CAPACITOR = isCapacitor;
 })();

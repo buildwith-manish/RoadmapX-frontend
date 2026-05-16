@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- No cleartext traffic allowed by default -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Allowed HTTPS domains -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">roadmapx-backend-3qmc.onrender.com</domain>
+        <domain includeSubdomains="true">roadmapx-frontend.pages.dev</domain>
+        <domain includeSubdomains="true">accounts.google.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+
+    <!-- Pulse/heartbeat line icon representing learning progress -->
+    <!-- Accent color: #00e5c8 (RoadmapX teal) -->
+
+    <!-- Subtle glow behind the pulse line -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18,60 L38,60 L44,60 L48,36 L54,84 L60,30 L66,72 L70,48 L76,60 L90,60"
+        android:strokeColor="#1a00e5c8"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Main pulse/heartbeat line -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18,60 L38,60 L44,60 L48,36 L54,84 L60,30 L66,72 L70,48 L76,60 L90,60"
+        android:strokeColor="#00e5c8"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Small dot at the pulse peak (learning milestone) -->
+    <path
+        android:fillColor="#00e5c8"
+        android:pathData="M59,27 A3,3 0 1,1 59,33 A3,3 0 1,1 59,27 Z" />
+
+    <!-- Bottom horizontal baseline (foundation) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M14,64 L94,64"
+        android:strokeColor="#0d00e5c8"
+        android:strokeWidth="1"
+        android:strokeLineCap="round" />
+
+    <!-- Small upward arrow at the end (progress direction) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M86,60 L90,56 L94,60"
+        android:strokeColor="#00e5c8"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+</vector>

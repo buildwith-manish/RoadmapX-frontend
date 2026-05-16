@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#05050f">
+<!-- PWA / Mobile Meta -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RoadmapX">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Offline Detection -->
+<script src="/offline.js" defer></script>
+
   <title>RoadmapX — Sign In</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -404,6 +417,10 @@
     }
 
   </style>
+<style>
+  button, a, [onclick] { touch-action: manipulation; }
+  [style*="overflow"], .scroll-container, #content { -webkit-overflow-scrolling: touch; }
+</style>
 </head>
 <body>
 
@@ -548,12 +565,61 @@
     }
 
     // ── MAIN ENTRY POINT ─────────────────────────────────────────────────
-    function startGoogleSignIn() {
+    async function startGoogleSignIn() {
       const btn = document.getElementById('btn-google');
       if (btn) {
         btn.classList.add('google-loading');
-        btn.innerHTML = '<span>Redirecting to Google…</span>';
+        btn.innerHTML = '<span>Signing in…</span>';
         btn.disabled = true;
+      }
+
+      // ── Capacitor native Google Sign-In ──
+      if (typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        try {
+          const { CapacitorGoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+          CapacitorGoogleAuth.initialize({
+            clientId: GOOGLE_CLIENT_ID,
+          });
+          const result = await CapacitorGoogleAuth.signIn();
+
+          if (result && result.authentication && result.authentication.idToken) {
+            // Send native ID token to backend (same flow as web GSI)
+            const res = await fetch(getAPI() + '/auth/google', {
+              method:      'POST',
+              credentials: 'include',
+              headers:     { 'Content-Type': 'application/json' },
+              body:        JSON.stringify({ credential: result.authentication.idToken }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+              localStorage.setItem('rx_token', 'true');
+              localStorage.setItem('rx_user', data.username);
+              try {
+                if (window.HybridData && typeof window.HybridData.onLoginSuccess === 'function') {
+                  await window.HybridData.onLoginSuccess(data.username);
+                }
+              } catch (e) { /* ignore */ }
+              window.location.replace('index.html');
+              return;
+            } else {
+              _showGoogleError(data.message || 'Google sign-in failed.');
+              return;
+            }
+          } else {
+            _showGoogleError('No ID token from native Google Sign-In.');
+            return;
+          }
+        } catch (err) {
+          console.error('[Capacitor Google Auth] Error:', err);
+          // Fall through to web flow
+          _resetGoogleBtn();
+        }
+      }
+
+      // ── Web flow ──
+      if (btn) {
+        btn.innerHTML = '<span>Redirecting to Google…</span>';
       }
 
       if (isMobile()) {
