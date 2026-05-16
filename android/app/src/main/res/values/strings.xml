@@ -4,5 +4,4 @@
     <string name="title_activity_main">RoadmapX</string>
     <string name="package_name">com.roadmapx.app</string>
     <string name="custom_url_scheme">com.roadmapx.app</string>
-    <string name="server_client_id">659466725316-onvlvclmfn6r6n7h5p7in9ffqdvcbpm3.apps.googleusercontent.com</string>
 </resources>

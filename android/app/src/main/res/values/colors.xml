@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_background">#05050f</color>
-    <color name="status_bar_color">#05050f</color>
-    <color name="navigation_bar_color">#05050f</color>
+    <color name="colorPrimary">#05050f</color>
+    <color name="colorPrimaryDark">#05050f</color>
+    <color name="colorAccent">#00e5c8</color>
 </resources>

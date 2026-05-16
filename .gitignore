@@ -1,28 +1,6 @@
-# Dependencies
 node_modules/
-
-# Build artifacts
-android/app/build/
 android/.gradle/
+android/app/build/
 android/build/
-
-# IDE
-.idea/
-*.iml
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Keystores (NEVER commit these)
 *.keystore
-!android/app/debug.keystore
-
-# Environment
-.env
-.env.local
-
-# Logs
-*.log
-npm-debug.log*
+*.jks
